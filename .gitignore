@@ -1,0 +1,13 @@
+.DS_Store
+/backups
+/cache
+/file-history
+/history.jsonl
+/plans
+/projects
+/plugins
+/settings.json
+/settings.local.json
+/mcp-needs-auth-cache.json
+/sessions
+/shell-snapshots
