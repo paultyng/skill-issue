@@ -1,0 +1,159 @@
+---
+name: review-all
+description: Perform a comprehensive security, reliability, code, and documentation review by orchestrating individual review skills (review-security, review-reliability, review-code, review-database, review-documentation) as parallel subagents. Use when the user asks for a deep review, full review, comprehensive review, production readiness assessment, full audit, or to review everything.
+---
+
+# Full Review
+
+Orchestrate all domain-specific review skills as parallel subagents, then consolidate into a unified report.
+
+## Workflow
+
+### 1. Scope and explore
+
+- Confirm scope with the user: full codebase, specific packages/directories, changed files only (PR or branch diff), or specific concern.
+- **Resolve scope to a file/package list.** Based on what the user requested:
+  - **Changed files (PR or branch):** Run `git diff --name-only --diff-filter=d <base>...HEAD` to get changed files (default `<base>` is `main`). If the user references a PR number, use `gh pr diff <number> --name-only` instead. Derive affected Go packages from the file paths (unique parent directories containing `.go` files).
+  - **Explicit paths/packages:** The user may specify directories (e.g. `internal/auth/`), Go package patterns (e.g. `./internal/auth/...`), or individual files. When given a directory or package pattern, include all files under it. Derive Go package paths for static analysis tool invocations.
+  - **Full codebase:** No filtering — explore everything (default).
+- **Pass the resolved scope** (file list, derived package paths, and file-type flags below) to each review subagent in step 3 so they skip their own scope confirmation and use the provided scope directly.
+- **Classify the resolved files** to determine which reviews to launch:
+  - `has_code`: any source files (`.go`, `.rs`, `.ts`, `.tsx`, `.js`, `.jsx`, `.swift`, `.kt`, `.kts`, `.py`, `.rb`)
+  - `has_go`: any `.go` files
+  - `has_proto`: any `.proto` files
+  - `has_sql`: any `.sql` files
+  - `has_infra`: any Dockerfiles, k8s manifests, Terraform (`.tf`), or CI config files
+  - `has_docs`: any `.md` files or OpenAPI/Swagger specs
+  - `has_changes`: true when scope is "changed files (PR or branch)", or when scope is "explicit paths" and those paths have a diff against the base ref (run `git diff --name-only --diff-filter=d <base>...HEAD -- <paths>` to check; default base is `main`). False for full-codebase reviews with no diff baseline.
+- Determine which review types are applicable using these flags:
+  - **review-security**: applicable if `has_code` or `has_infra`
+  - **review-reliability**: applicable if `has_code` or `has_infra`
+  - **review-code**: applicable if `has_code` or `has_proto`
+  - **review-database**: applicable if `has_sql`, or database-interacting code exists (check imports for DB drivers like `pgx`, `pq`, `database/sql`, `sqlx`, `diesel`, `sqlalchemy`, etc.)
+  - **review-documentation**: always applicable
+
+### 2. System overview
+
+Produce a brief architecture summary covering:
+- Services, ports, and transport (gRPC, HTTP, etc.)
+- Data stores and external dependencies
+- Authentication and authorization mechanisms
+- Deployment model (if discernible)
+
+Map the critical hot paths:
+
+```
+Client → Transport
+  → step 1 (local / I/O annotation)
+  → step 2 (DB round-trip #1)
+  → step 3 (external call, round-trip #2)
+  → response
+```
+
+Annotate each step: local vs. I/O, serial vs. parallel, cached vs. uncached.
+
+This system overview is shared context for all review subagents.
+
+### 3. Launch review subagents in parallel
+
+Launch applicable review skills concurrently using the Task tool (max 4 at a time; if more than 4, launch the first 4 and the remaining after one completes). Each subagent is `subagent_type="generalPurpose"`.
+
+For each subagent, include in its prompt:
+- The system overview and flow mapping from step 2
+- The resolved file list and package paths from step 1 (the subagent should use this scope directly and skip its own scope confirmation)
+- The `has_changes` flag, base ref, and changed file list from step 1 (so change-aware subagents like review-code's Regression History can use them)
+- Instructions to follow the corresponding skill's workflow (read the SKILL.md for reference on what each skill does)
+- Request that it return the full findings output (including tracking annotations and tool availability sections)
+
+**Review subagents to launch:**
+
+| Subagent | Skill | Condition |
+|----------|-------|-----------|
+| Security | review-security | `has_code` or `has_infra` |
+| Reliability | review-reliability | `has_code` or `has_infra` |
+| Code | review-code | `has_code` or `has_proto` |
+| Database | review-database | `has_sql` or DB code in scope |
+| Documentation | review-documentation | Always |
+
+Each subagent should NOT write its own output file — it returns findings to this orchestrator.
+
+### 4. Launch summarization subagent
+
+After all review subagents complete, launch a single summarization subagent (`subagent_type="generalPurpose"`) with the full findings from each review subagent.
+
+Prompt it to:
+1. **Deduplicate** overlapping findings across all reviews (many findings appear in multiple analyses, e.g. security and reliability, or security and Go best practices).
+2. **Cross-reference** each deduplicated finding to its source review and IDs.
+3. **Preserve tracking status** — a finding is tracked if any source review marked it as tracked.
+4. **Prioritize** — produce consolidated findings tables ordered by severity/priority, grouped by category (security, reliability, code, documentation).
+5. **Recommend fix order** — considering dependencies between findings and effort estimates. Already-tracked findings may be deprioritized if the existing TODO indicates a plan.
+6. **Tool Availability summary** — consolidate from all reviews into a summary listing which automated tools ran successfully, which were skipped, and why.
+
+### 5. Present results
+
+Create the output directory (`mkdir -p reviews`) and write the summarization output to `reviews/SUMMARY.md`, structured as:
+1. Tool availability summary
+2. System overview (from step 2)
+3. Consolidated findings tables (with tracking status inline), grouped by category
+4. Recommended fix order
+
+Present the report to the user. Overwrite if `reviews/SUMMARY.md` already exists.
+
+---
+
+## Output Templates
+
+### Consolidated security findings
+
+```markdown
+| Severity | ID | Finding | STRIDE | OWASP | Tracked |
+|----------|----|---------|--------|-------|---------|
+| CRITICAL | 1 | Description with code references | S1, E1 | A01, A07 | — |
+| HIGH | 2 | Description with code references | T2 | A04 | TODO in file:line |
+```
+
+### Consolidated reliability findings
+
+```markdown
+| Priority | Finding | Impact | Effort | Tracked |
+|----------|---------|--------|--------|---------|
+| P0 | Description with code references | Impact on availability/latency | trivial / small / moderate / large | — |
+```
+
+### Consolidated code findings
+
+```markdown
+| Severity | ID | Finding | Source | Tracked |
+|----------|----|---------|--------|---------|
+| HIGH | 1 | Description with code references | ARCH1, DEP2 | — |
+| MEDIUM | 2 | Description with code references | GO1, SA3 | TODO in file:line |
+| MEDIUM | 3 | Description with code references | PB2, PBL1 | — |
+| HIGH | 4 | Description with code references | REG1 | — |
+```
+
+### Consolidated documentation findings
+
+```markdown
+| Severity | ID | Finding | Source | Tracked |
+|----------|----|---------|--------|---------|
+| HIGH | 1 | Description with code references | DOC1, DOC4 | — |
+| MEDIUM | 2 | Description with code references | DOC2 | TODO in file:line |
+```
+
+### Re-evaluation table (for follow-up reviews)
+
+```markdown
+| Finding | Status | What Changed |
+|---------|--------|--------------|
+| ~~1. Description~~ | FIXED | Brief explanation of the fix |
+| 2. Description | Still applicable | No changes |
+```
+
+---
+
+## Guidelines
+
+- Search the organization's codebase (Sourcegraph, GitHub) for existing patterns before recommending new dependencies or approaches.
+- Cross-reference findings between reviews to avoid duplicate entries in the consolidated tables.
+- Include effort estimates to help prioritize implementation.
+- When the user asks for a follow-up review, read the existing `reviews/SUMMARY.md`, re-evaluate all prior findings against the current code state, and update with the re-evaluation table appended.
