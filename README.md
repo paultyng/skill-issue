@@ -47,6 +47,7 @@ Rules load automatically every session (or on file-path match) and shape agent b
 | [minimal-changes](rules/minimal-changes.md) | Only make the changes that were requested. |
 | [no-generated-file-edits](rules/no-generated-file-edits.md) | Never modify generated files — fix generator inputs instead. |
 | [parallelize-subagents](rules/parallelize-subagents.md) | Launch independent subagents in parallel, not sequentially. |
+| [prefer-jq](rules/prefer-jq.md) | Prefer jq over Python for JSON/JSONL processing in shell commands. |
 | [research-tools](rules/research-tools.md) | Pick the right tool: Sourcegraph, web search, or Notion. |
 | [taskfile-not-make](rules/taskfile-not-make.md) | Use go-task (`Taskfile.yaml`), not Makefiles. |
 | [terse-output](rules/terse-output.md) | Concise, direct output. No filler. |

@@ -1,6 +1,7 @@
 ---
 name: analyze-sessions
 description: Use when reviewing past agent sessions, auditing chat history for friction, identifying repeated corrections or commands, or proposing new skills and rules from usage patterns.
+disable-model-invocation: true
 ---
 
 # Analyze Sessions
@@ -51,7 +52,11 @@ Split transcripts into batches of ~25-30 for parallel processing.
 
 1. Launch up to 4 parallel subagents, one per batch
 2. Each subagent receives a file list and the extraction schema below
-3. For large transcripts (>100k chars), read in chunks or grep for user messages (`"role":"user"`)
+3. Use `jq` for JSONL extraction instead of reading raw content or using Python:
+   - User messages: `jq -c 'select(.role == "human" or .role == "user") | .content' < file.jsonl`
+   - Tool use: `jq -c 'select(.type == "tool_use") | {tool: .name}' < file.jsonl`
+   - Message counts: `jq -c '.role' < file.jsonl | sort | uniq -c`
+   - Truncate large fields: pipe through `jq '.content |= (tostring | .[0:500])'`
 
 ### Extraction Schema
 

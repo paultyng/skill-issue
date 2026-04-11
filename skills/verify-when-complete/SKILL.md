@@ -31,13 +31,11 @@ Before claiming any status or expressing satisfaction:
 - Relying on a previous run, not a fresh one
 - Trusting subagent success reports without independent verification
 
-## Detect Toolchain
+## Detected Toolchain
 
-Determine the project's task runner by checking (in order):
+!`if [ -f Taskfile.yaml ]; then echo "taskfile"; elif [ -f Makefile ]; then echo "makefile"; else echo "raw"; fi`
 
-1. `Taskfile.yaml` exists -> use `task`
-2. `Makefile` exists -> use `make`
-3. Neither -> fall back to raw `go` commands
+Use the detected toolchain above to select commands from the tables below.
 
 ## Verification Steps
 
