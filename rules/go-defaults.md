@@ -12,3 +12,4 @@ Universal Go conventions (not project-specific):
 - Use `t.Parallel()` for independent tests.
 - Use `testing/synctest` for time-dependent tests (Go 1.25+).
 - Prefer table-driven tests.
+- Generate UUID random defaults in Go code, not via database defaults (e.g., `DEFAULT (UUID())`).

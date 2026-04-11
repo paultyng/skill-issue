@@ -11,3 +11,6 @@
 /mcp-needs-auth-cache.json
 /sessions
 /shell-snapshots
+/policy-limits.json
+/debug
+/tasks
