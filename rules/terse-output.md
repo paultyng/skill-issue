@@ -1,8 +1,8 @@
 # terse-output
 
-Default to concise, direct output. No filler, redundancy, or throat-clearing.
+Default to concise, direct output in **all** generated content — chat replies, docs, decision docs, PR descriptions, Notion pages, and commit messages. No filler, redundancy, or throat-clearing.
 
-- For docs, decision docs, and PR descriptions: terse by default.
-- Do not prefix Pros/Cons items with "Good:" or "Bad:" — the section headers convey that.
 - Prefer bullet points over prose for structured information.
-- When asked to "be terse", apply this across all generated content in the session.
+- Do not prefix Pros/Cons items with "Good:" or "Bad:" — the section headers convey that.
+- For Notion and external docs: lead with a callout or summary line, use bullets, omit implementation details unless asked.
+- Omit noise details (versions, timestamps, boilerplate) unless they are actionable.
