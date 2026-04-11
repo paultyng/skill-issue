@@ -1,0 +1,33 @@
+{
+  "model": "claude-opus-4-6",
+  "permissions": {
+    "allow": [
+      "Bash(task *)"
+    ]
+  },
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    }
+  },
+  "autoUpdatesChannel": "stable",
+  "enabledPlugins": {
+    "gopls-lsp@claude-plugins-official": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash(git push*)",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "STOP. Before pushing, confirm: have you run the verify-when-complete workflow (fmt, lint, build, test) since the last rebase, merge, or code change? If not, do so now. Only proceed if all checks passed."
+          }
+        ]
+      }
+    ]
+  }
+}
