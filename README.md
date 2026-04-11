@@ -39,11 +39,13 @@ Rules load automatically every session (or on file-path match) and shape agent b
 
 | Rule | Description |
 |------|-------------|
+| [auto-verify-after-rebase](rules/auto-verify-after-rebase.md) | Run fmt/lint/build automatically after rebase, merge, or cherry-pick. |
 | [draft-prs](rules/draft-prs.md) | Always create draft PRs unless explicitly told otherwise. |
 | [escalation](rules/escalation.md) | Stop and ask a human before making ambiguous or architectural decisions. |
 | [git-no-amend](rules/git-no-amend.md) | No `--amend` unless asked. Conventional Commits format. |
 | [go-defaults](rules/go-defaults.md) | Universal Go conventions: context, error wrapping, testing. |
 | [minimal-changes](rules/minimal-changes.md) | Only make the changes that were requested. |
+| [no-generated-file-edits](rules/no-generated-file-edits.md) | Never modify generated files — fix generator inputs instead. |
 | [parallelize-subagents](rules/parallelize-subagents.md) | Launch independent subagents in parallel, not sequentially. |
 | [research-tools](rules/research-tools.md) | Pick the right tool: Sourcegraph, web search, or Notion. |
 | [taskfile-not-make](rules/taskfile-not-make.md) | Use go-task (`Taskfile.yaml`), not Makefiles. |
