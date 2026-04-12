@@ -25,6 +25,15 @@ Orchestrate all domain-specific review skills as parallel subagents, then consol
   - `has_infra`: any Dockerfiles, k8s manifests, Terraform (`.tf`), or CI config files
   - `has_docs`: any `.md` files or OpenAPI/Swagger specs
   - `has_changes`: true when scope is "changed files (PR or branch)", or when scope is "explicit paths" and those paths have a diff against the base ref (run `git diff --name-only --diff-filter=d <base>...HEAD -- <paths>` to check; default base is `main`). False for full-codebase reviews with no diff baseline.
+### 1b. Load REVIEW.md (if present)
+
+Check for a `REVIEW.md` file at the repository root. If it exists, read it and extract:
+- **Always check** rules — these become mandatory check items passed to all subagents (flagged at HIGH severity)
+- **Skip** rules — filter these paths/patterns out of scope before passing to subagents (apply alongside the file-type classification above)
+- **Domain-specific sections** (Security, Reliability, Database, Protobuf & API, Go conventions, Documentation) — route each section to the corresponding review subagent as additional context
+
+If no `REVIEW.md` exists, proceed without it — all review skills have their own reference checklists.
+
 - Determine which review types are applicable using these flags:
   - **review-security**: applicable if `has_code` or `has_infra`
   - **review-reliability**: applicable if `has_code` or `has_infra`
@@ -62,6 +71,7 @@ For each subagent, include in its prompt:
 - The system overview and flow mapping from step 2
 - The resolved file list and package paths from step 1 (the subagent should use this scope directly and skip its own scope confirmation)
 - The `has_changes` flag, base ref, and changed file list from step 1 (so change-aware subagents like review-code's Regression History can use them)
+- If `REVIEW.md` was loaded in step 1b: the "Always check" rules (for all subagents) and the relevant domain-specific section for that subagent (e.g. Security section → review-security, Database section → review-database). Instruct the subagent to treat "Always check" rules as HIGH severity and domain-specific rules as MEDIUM severity, in addition to its own reference checklist.
 - Instructions to follow the corresponding skill's workflow (read the SKILL.md for reference on what each skill does)
 - Request that it return the full findings output (including tracking annotations and tool availability sections)
 

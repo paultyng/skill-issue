@@ -161,3 +161,4 @@ Present the report to the user. Overwrite if `reviews/CODE-REVIEW.md` already ex
 - When the user asks for a follow-up review, read the existing `reviews/CODE-REVIEW.md`, re-evaluate all prior findings, and update with the re-evaluation table appended.
 - For detailed checklists, see [reference-architecture.md](reference-architecture.md), [reference-go.md](reference-go.md), and [reference-protobuf.md](reference-protobuf.md).
 - For documentation quality (doc comments, examples, README), see **review-documentation**.
+- **REVIEW.md integration**: If a `REVIEW.md` context section was provided by the review-all orchestrator (or exists at the repository root when running standalone), treat its rules as additional review criteria. "Always check" items are HIGH severity; domain-specific items (Go conventions, Protobuf & API) are MEDIUM severity. "Skip" patterns exclude matching files from review scope.
