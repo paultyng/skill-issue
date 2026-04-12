@@ -75,3 +75,4 @@ Present the report to the user. Overwrite if `reviews/DATABASE-REVIEW.md` alread
 - Include effort estimates to help prioritize implementation.
 - When the user asks for a follow-up review, read the existing `reviews/DATABASE-REVIEW.md`, re-evaluate all prior findings, and update with the re-evaluation table appended.
 - For detailed framework categories, see [reference.md](reference.md).
+- **REVIEW.md integration**: If a `REVIEW.md` context section was provided by the review-all orchestrator (or exists at the repository root when running standalone), treat its rules as additional review criteria. "Always check" items are HIGH severity; domain-specific items (Database section) are MEDIUM severity. "Skip" patterns exclude matching files from review scope.
