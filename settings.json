@@ -2,7 +2,22 @@
   "model": "claude-opus-4-6",
   "permissions": {
     "allow": [
-      "Bash(task *)"
+      "Bash(task *)",
+      "mcp__sourcegraph__keyword_search",
+      "mcp__sourcegraph__nls_search",
+      "mcp__sourcegraph__list_repos",
+      "mcp__sourcegraph__list_files",
+      "mcp__sourcegraph__read_file",
+      "mcp__sourcegraph__commit_search",
+      "mcp__sourcegraph__diff_search",
+      "mcp__sourcegraph__deepsearch_read",
+      "mcp__notion__notion-search",
+      "mcp__notion__notion-fetch",
+      "mcp__notion__notion-get-comments",
+      "mcp__notion__notion-get-teams",
+      "mcp__notion__notion-get-users",
+      "mcp__notion__notion-query-data-sources",
+      "mcp__notion__notion-query-meeting-notes"
     ]
   },
   "extraKnownMarketplaces": {
