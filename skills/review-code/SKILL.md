@@ -75,6 +75,7 @@ Prompt the subagent to run all 6 automated Go analysis tools via **parallel Shel
 - **nilaway**: `go run go.uber.org/nilaway/cmd/nilaway@latest ./...` — nil pointer dereference detection via type-flow inference.
 - **exhaustive**: `go run github.com/nishanths/exhaustive/cmd/exhaustive@latest ./...` — non-exhaustive enum switch statements and map literal keys.
 - **deadcode**: `go run golang.org/x/tools/cmd/deadcode@latest -filter=$(go list -m) ./...` — unreachable functions via call graph analysis.
+- **revive**: if a `.golangci.yml` enables revive, run `go run github.com/mgechev/revive@latest ./...` with the project's revive config. If no revive config is found, skip and note in Tool Availability.
 - If a tool fails, skip it but note why in a **Tool Availability** section.
 - For each finding, search nearby code and project documentation for existing TODOs or notes.
 - Return findings using the **per-category findings** template with `SA-` prefixed IDs.

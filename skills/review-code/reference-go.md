@@ -113,6 +113,22 @@ Exhaustive checks that switch statements on enum types cover all values. Run via
 
 ---
 
+## Revive
+
+Reference: [revive](https://github.com/mgechev/revive)
+
+Revive is a fast, extensible Go linter that replaces `golint`. Run via `go run github.com/mgechev/revive@latest ./...` (no install required). Only run if the project's `.golangci.yml` enables it — use the project's revive config.
+
+Notable rules to look for:
+- `argument-limit` — functions with too many parameters should use functional options or a config struct
+- `function-result-limit` — functions returning too many values should consolidate into a struct
+- `context-as-argument`, `context-keys-type` — context usage correctness
+- `error-return`, `error-naming` — error convention enforcement
+- `unexported-return`, `exported` — visibility and doc comment enforcement
+- `import-shadowing`, `waitgroup-by-value` — common bug patterns
+
+---
+
 ## Cross-references
 
 - For documentation quality (doc comments, examples, README sync): see **review-documentation**
