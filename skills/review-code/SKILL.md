@@ -105,7 +105,7 @@ Prompt the subagent to:
 **Subagent G — Conformance Check** (`subagent_type="generalPurpose"`, requires code files)
 
 Prompt the subagent to:
-- Load explicit conformance rules from: REVIEW.md (if provided by review-all or present at repo root), CLAUDE.md (if present at repo root), and all files in `.claude/rules/` (if directory exists). These are the **explicit rules**.
+- Load explicit conformance rules from: REVIEW.md (if provided by review-all or present at repo root), CLAUDE.md (if present at repo root), AGENTS.md (if present at repo root), and all files in `.claude/rules/` (if directory exists). These are the **explicit rules**.
 - Determine conformance mode:
   - **Lightweight** (default, or when `conformance_mode` is `lightweight`): For each in-scope file, read sibling files in the same package to infer local patterns. Require at least 3 sibling files showing the same pattern before flagging a deviation. Check whether the in-scope file conforms to both explicit rules and inferred local patterns.
   - **Full** (when `conformance_mode` is `full`): Read the patterns document at `reviews/PATTERNS.md` (run `/discover-patterns` first if it does not exist). Check all in-scope files against both explicit rules and the discovered patterns.
@@ -115,7 +115,7 @@ Prompt the subagent to:
 - Return findings using the **per-category findings** template with `CONF-` prefixed IDs.
 - Every finding must include: the pattern being violated, an exemplar of the correct pattern (file:line), the violating code (file:line), and tracking status.
 - Severity mapping:
-  - CRITICAL: explicit rule violation (from REVIEW.md, CLAUDE.md, or `.claude/rules/`)
+  - CRITICAL: explicit rule violation (from REVIEW.md, CLAUDE.md, AGENTS.md, or `.claude/rules/`)
   - HIGH: deviation from ESTABLISHED pattern (>80% conformance)
   - MEDIUM: deviation from EMERGING pattern (50-80% conformance)
 
