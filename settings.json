@@ -33,6 +33,17 @@
     "gopls-lsp@claude-plugins-official": true
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Detect the current git branch and run /set-session-context to set session name and color."
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash(git push*)",
@@ -40,6 +51,26 @@
           {
             "type": "prompt",
             "prompt": "STOP. Before pushing, confirm: have you run the verify-when-complete workflow (fmt, lint, build, test) since the last rebase, merge, or code change? If not, do so now. Only proceed if all checks passed."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash(git checkout*)",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "The git branch just changed. Run /set-session-context to update session name and color."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(git switch*)",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "The git branch just changed. Run /set-session-context to update session name and color."
           }
         ]
       }
