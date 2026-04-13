@@ -25,6 +25,10 @@ Orchestrate all domain-specific review skills as parallel subagents, then consol
   - `has_infra`: any Dockerfiles, k8s manifests, Terraform (`.tf`), or CI config files
   - `has_docs`: any `.md` files or OpenAPI/Swagger specs
   - `has_changes`: true when scope is "changed files (PR or branch)", or when scope is "explicit paths" and those paths have a diff against the base ref (run `git diff --name-only --diff-filter=d <base>...HEAD -- <paths>` to check; default base is `main`). False for full-codebase reviews with no diff baseline.
+### 1a. Detect conformance mode
+
+If the user's request includes phrases like "full conformance", "pattern discovery", "check patterns", or "discover patterns", set `conformance_mode` to `full`. Otherwise default to `lightweight`. This flag is passed to review-code in step 3.
+
 ### 1b. Load REVIEW.md (if present)
 
 Check for a `REVIEW.md` file at the repository root. If it exists, read it and extract:
@@ -63,6 +67,10 @@ Annotate each step: local vs. I/O, serial vs. parallel, cached vs. uncached.
 
 This system overview is shared context for all review subagents.
 
+### 2b. Run pattern discovery (if full conformance mode)
+
+If `conformance_mode` is `full`, launch a `/discover-patterns` subagent (`subagent_type="generalPurpose"`) with the resolved scope before launching review subagents. This writes `reviews/PATTERNS.md` which review-code's Conformance Check subagent will read. Other review subagents (security, reliability, database, documentation) can launch in parallel with this step since they don't depend on it — only review-code must wait for it to complete.
+
 ### 3. Launch review subagents in parallel
 
 Launch applicable review skills concurrently using the Task tool (max 4 at a time; if more than 4, launch the first 4 and the remaining after one completes). Each subagent is `subagent_type="generalPurpose"`.
@@ -71,6 +79,7 @@ For each subagent, include in its prompt:
 - The system overview and flow mapping from step 2
 - The resolved file list and package paths from step 1 (the subagent should use this scope directly and skip its own scope confirmation)
 - The `has_changes` flag, base ref, and changed file list from step 1 (so change-aware subagents like review-code's Regression History can use them)
+- The `conformance_mode` flag from step 1a (for review-code only)
 - If `REVIEW.md` was loaded in step 1b: the "Always check" rules (for all subagents) and the relevant domain-specific section for that subagent (e.g. Security section → review-security, Database section → review-database). Instruct the subagent to treat "Always check" rules as HIGH severity and domain-specific rules as MEDIUM severity, in addition to its own reference checklist.
 - Instructions to follow the corresponding skill's workflow (read the SKILL.md for reference on what each skill does)
 - Request that it return the full findings output (including tracking annotations and tool availability sections)
@@ -139,6 +148,7 @@ Present the report to the user. Overwrite if `reviews/SUMMARY.md` already exists
 | MEDIUM | 2 | Description with code references | GO1, SA3 | TODO in file:line |
 | MEDIUM | 3 | Description with code references | PB2, PBL1 | — |
 | HIGH | 4 | Description with code references | REG1 | — |
+| MEDIUM | 5 | Description with code references | CONF1, CONF2 | — |
 ```
 
 ### Consolidated documentation findings

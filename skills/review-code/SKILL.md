@@ -27,6 +27,7 @@ Structured code review covering architecture, Go best practices, and protobuf/AP
   - **Go Static Analysis**: applicable if `.go` files exist in scope
   - **Protobuf Linting**: applicable if `.proto` files exist in scope
   - **Regression History**: applicable if code files exist in scope and `has_changes` is true
+  - **Conformance Check**: applicable if code files exist in scope (lightweight mode by default; full mode when `conformance_mode` is `full`)
 
 ### 2. Launch investigation subagents in parallel
 
@@ -101,6 +102,24 @@ Prompt the subagent to:
 - Return findings using the **per-category findings** template with `REG-` prefixed IDs.
 - Every finding must include the historical fix commit hash and message (for regression reintroductions), the file and line region affected, why the current change appears to unwind the fix or reduce test coverage, a severity rating (CRITICAL / HIGH / MEDIUM / LOW), and tracking status.
 
+**Subagent G — Conformance Check** (`subagent_type="generalPurpose"`, requires code files)
+
+Prompt the subagent to:
+- Load explicit conformance rules from: REVIEW.md (if provided by review-all or present at repo root), CLAUDE.md (if present at repo root), and all files in `.claude/rules/` (if directory exists). These are the **explicit rules**.
+- Determine conformance mode:
+  - **Lightweight** (default, or when `conformance_mode` is `lightweight`): For each in-scope file, read sibling files in the same package to infer local patterns. Require at least 3 sibling files showing the same pattern before flagging a deviation. Check whether the in-scope file conforms to both explicit rules and inferred local patterns.
+  - **Full** (when `conformance_mode` is `full`): Read the patterns document at `reviews/PATTERNS.md` (run `/discover-patterns` first if it does not exist). Check all in-scope files against both explicit rules and the discovered patterns.
+- When `has_changes` is true (diff mode): focus findings on changed/added lines only. For each deviation, reference the established pattern with an exemplar.
+- When `has_changes` is false (full mode): identify outlier files/packages that deviate from the majority pattern.
+- For each finding, search nearby code for TODOs or notes.
+- Return findings using the **per-category findings** template with `CONF-` prefixed IDs.
+- Every finding must include: the pattern being violated, an exemplar of the correct pattern (file:line), the violating code (file:line), and tracking status.
+- Severity mapping:
+  - CRITICAL: explicit rule violation (from REVIEW.md, CLAUDE.md, or `.claude/rules/`)
+  - HIGH: deviation from ESTABLISHED pattern (>80% conformance)
+  - MEDIUM: deviation from EMERGING pattern (50-80% conformance)
+  - LOW: style inconsistency
+
 ### 3. Summarize
 
 After all subagents complete, deduplicate overlapping findings, produce a consolidated table ordered by severity, and recommend fix order.
@@ -130,6 +149,7 @@ Present the report to the user. Overwrite if `reviews/CODE-REVIEW.md` already ex
 | SA1 | Description with code reference. | LOW | — |
 | PBL1 | Description with code reference. | LOW | — |
 | REG1 | Description with code reference and historical commit. | HIGH | — |
+| CONF1 | Description with pattern exemplar and violating code. | MEDIUM | — |
 ```
 
 ### Consolidated findings
@@ -140,6 +160,7 @@ Present the report to the user. Overwrite if `reviews/CODE-REVIEW.md` already ex
 | HIGH | 1 | Description with code references | ARCH1, DEP3 | — |
 | HIGH | 2 | Description with code references | REG1 | — |
 | MEDIUM | 3 | Description with code references | GO5, SA2 | TODO in file:line |
+| MEDIUM | 4 | Description with code references | CONF1, CONF2 | — |
 ```
 
 **Tracked column values:** Use `—` for new findings. For already-captured findings: `TODO in file:line`, `FIXME in file:line`, `README`, `#123` (issue reference), etc.
