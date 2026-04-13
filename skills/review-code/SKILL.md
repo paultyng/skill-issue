@@ -118,7 +118,6 @@ Prompt the subagent to:
   - CRITICAL: explicit rule violation (from REVIEW.md, CLAUDE.md, or `.claude/rules/`)
   - HIGH: deviation from ESTABLISHED pattern (>80% conformance)
   - MEDIUM: deviation from EMERGING pattern (50-80% conformance)
-  - LOW: style inconsistency
 
 ### 3. Summarize
 

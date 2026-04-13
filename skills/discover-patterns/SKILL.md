@@ -27,7 +27,7 @@ Launch up to 4 concurrent subagents (`subagent_type="generalPurpose"`), each cov
 | Structure & Layering | STRUCT | Any source files |
 | Error Handling & Observability | ERR, OBS | Any source files |
 | Config & DI | CFG, DI | Any source files |
-| Testing & Naming | TEST, NAME | Any source + test files |
+| Testing | TEST | Any source + test files |
 | Transport | XPORT | HTTP/gRPC code present |
 
 Each subagent receives:
@@ -86,9 +86,6 @@ Create the output directory (`mkdir -p reviews`) and write to `reviews/PATTERNS.
 ...
 
 ## TEST — Testing
-...
-
-## NAME — Naming
 ...
 
 ## XPORT — Transport

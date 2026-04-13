@@ -116,26 +116,6 @@ Heuristics for discovering implicit codebase patterns. Each category describes w
 - Inline test data when everything else uses `testdata/` fixtures
 - A test that doesn't use the project's test helper for DB setup
 
-## NAME — Naming
-
-**What to look for:**
-- Receiver names: 1-2 letter abbreviations (`s` for `*Service`) — consistent?
-- Acronym casing: `ID` vs `Id`, `URL` vs `Url`, `HTTP` vs `Http`
-- Package naming: matches directory name? Short, lowercase, no underscores?
-- Function naming: verb-first for actions? `Get`/`List`/`Create`/`Update`/`Delete` for CRUD?
-- Variable naming: short in narrow scope, descriptive in wide scope?
-- Exported vs unexported: consistent boundary? Are there unexported types that should be exported or vice versa?
-
-**How to assess:**
-- Grep for receiver declarations across 20+ types
-- Check acronym casing consistency across all identifiers
-- Look for naming outliers in specific packages
-
-**Counter-example signals:**
-- A type using `this` as receiver when everything else uses abbreviations
-- Mixed `ID`/`Id` usage across packages
-- A CRUD function named `FetchUser` when everything else uses `GetUser`
-
 ## XPORT — Transport
 
 **What to look for:**
