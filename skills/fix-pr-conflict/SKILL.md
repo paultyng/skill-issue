@@ -76,3 +76,16 @@ gh pr view <number> --json mergeable,mergeStateStatus
 ```
 
 Report the result. If GitHub still reports conflicts (can take a few seconds to recompute), wait and re-check once.
+
+## 7. Summarize Semantic Resolutions
+
+If any conflict resolutions were **semantic** (changed logic, adapted APIs, reconciled incompatible changes) rather than purely mechanical:
+
+1. Ask the user whether a summary of the conflict resolutions should be added as a comment on the PR.
+2. If yes, post a concise comment:
+   ```bash
+   gh pr comment <number> --body "..."
+   ```
+   The comment should summarize what was resolved and any decisions made during resolution. Keep it brief — focus on what a reviewer needs to know.
+
+If all resolutions were mechanical (adjacent-line merges, independent additions), skip this step.
