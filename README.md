@@ -21,6 +21,7 @@ Clone or symlink this repo to the user-level config directory:
 | [create-jira-item](skills/create-jira-item/SKILL.md) | Create Jira issues (stories, epics, initiatives) with custom field introspection. |
 | [create-rule](skills/create-rule/SKILL.md) | Create or update Claude Code rule files with proper format and path scoping. |
 | [create-skill](skills/create-skill/SKILL.md) | Create well-structured Cursor agent skills following best practices. |
+| [discover-patterns](skills/discover-patterns/SKILL.md) | Explore a codebase's architecture, audit consistency, and generate a patterns document for conformance checking. |
 | [fix-pr-conflict](skills/fix-pr-conflict/SKILL.md) | Resolve merge conflicts on a pull request by rebasing onto the base branch. |
 | [push-and-watch](skills/push-and-watch/SKILL.md) | Push local commits to the remote, ensure a draft PR exists, and monitor the GitHub Actions run until completion. |
 | [rebase-pr-chain](skills/rebase-pr-chain/SKILL.md) | Rebase a chain of dependent PRs sequentially, fixing conflicts along the way. |
@@ -30,6 +31,7 @@ Clone or symlink this repo to the user-level config directory:
 | [review-documentation](skills/review-documentation/SKILL.md) | Review documentation quality and sync with implementation across Go doc comments, proto comments, OpenAPI specs, markdown files, and example tests. |
 | [review-reliability](skills/review-reliability/SKILL.md) | Review reliability covering graceful shutdown, gRPC production patterns, and stability patterns/anti-patterns. |
 | [review-security](skills/review-security/SKILL.md) | Security review using STRIDE threat modeling, OWASP Top 10 analysis, and automated scanning (gosec, govulncheck). |
+| [set-session-context](skills/set-session-context/SKILL.md) | Set session name and color based on the current branch context. Auto-invoked on branch switches. |
 | [ship-it](skills/ship-it/SKILL.md) | End-to-end shipping workflow: fmt, lint, test, changelog, commit (conventional commits), push, update PR, and suggest reviewers. |
 | [verify-when-complete](skills/verify-when-complete/SKILL.md) | Run format, lint, build, and test verification before claiming work is complete. Detects project toolchain automatically. |
 
@@ -49,6 +51,7 @@ Rules load automatically every session (or on file-path match) and shape agent b
 | [parallelize-subagents](rules/parallelize-subagents.md) | Launch independent subagents in parallel, not sequentially. |
 | [prefer-jq](rules/prefer-jq.md) | Prefer jq over Python for JSON/JSONL processing in shell commands. |
 | [research-tools](rules/research-tools.md) | Pick the right tool: Sourcegraph, web search, or Notion. |
+| [session-context](rules/session-context.md) | Auto-invoke `/set-session-context` on branch switches or hook prompts. |
 | [taskfile-not-make](rules/taskfile-not-make.md) | Use go-task (`Taskfile.yaml`), not Makefiles. |
 | [terse-output](rules/terse-output.md) | Concise, direct output. No filler. |
 | [testing-philosophy](rules/testing-philosophy.md) | Real code over mocks. Tests may use a real database. |
