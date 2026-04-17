@@ -111,25 +111,6 @@ if [ -n "$cwd" ] && git -C "$cwd" rev-parse --is-inside-work-tree >/dev/null 2>&
         jira=$(echo "$branch" | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | head -1)
         [ -n "$jira" ] && out+=" ${white}${jira}${reset}"
 
-        # PR number — cached per repo+branch, 60s TTL
-        cache_dir="/tmp/claude"
-        mkdir -p "$cache_dir" 2>/dev/null
-        cache_key=$(printf '%s:%s' "$repo" "$branch" | shasum -a 256 2>/dev/null || printf '%s:%s' "$repo" "$branch" | sha256sum 2>/dev/null)
-        cache_key=$(echo "$cache_key" | cut -c1-12)
-        pr_cache="$cache_dir/pr-${cache_key}"
-
-        pr_num=""
-        if [ -f "$pr_cache" ]; then
-            cache_age=$(( $(date +%s) - $(stat -c %Y "$pr_cache" 2>/dev/null || stat -f %m "$pr_cache" 2>/dev/null) ))
-            if [ "$cache_age" -lt 60 ]; then
-                pr_num=$(cat "$pr_cache")
-            fi
-        fi
-        if [ -z "$pr_num" ]; then
-            pr_num=$(gh pr view --json number -q '.number' 2>/dev/null || true)
-            printf '%s' "${pr_num:-}" > "$pr_cache" 2>/dev/null
-        fi
-        [ -n "$pr_num" ] && out+=" ${dim}PR:${reset}${white}#${pr_num}${reset}"
     fi
 fi
 
