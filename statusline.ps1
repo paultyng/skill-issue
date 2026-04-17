@@ -107,35 +107,6 @@ if ($cwd) {
                     $out += " ${white}$($Matches[1])${reset}"
                 }
 
-                # PR number — cached per repo+branch, 60s TTL
-                $cacheDir = Join-Path $env:TEMP "claude"
-                if (-not (Test-Path $cacheDir)) { New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null }
-
-                $cacheKeyRaw = "${repo}:${branch}"
-                $sha = [System.Security.Cryptography.SHA256]::Create()
-                $hashBytes = $sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($cacheKeyRaw))
-                $cacheKey = ($hashBytes | ForEach-Object { $_.ToString("x2") }) -join ""
-                $cacheKey = $cacheKey.Substring(0, 12)
-                $prCache = Join-Path $cacheDir "pr-${cacheKey}"
-
-                $prNum = $null
-                if (Test-Path $prCache) {
-                    $cacheAge = ((Get-Date) - (Get-Item $prCache).LastWriteTime).TotalSeconds
-                    if ($cacheAge -lt 60) {
-                        $prNum = Get-Content $prCache -Raw
-                    }
-                }
-                if (-not $prNum) {
-                    try {
-                        $prNum = gh pr view --json number -q '.number' 2>$null
-                    } catch {}
-                    if ($prNum) {
-                        $prNum | Set-Content $prCache -Force
-                    } else {
-                        "" | Set-Content $prCache -Force
-                    }
-                }
-                if ($prNum) { $out += " ${dim}PR:${reset}${white}#${prNum}${reset}" }
             }
         }
     } catch {}
