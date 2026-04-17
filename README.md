@@ -57,6 +57,20 @@ Rules load automatically every session (or on file-path match) and shape agent b
 | [terse-output](rules/terse-output.md) | Concise, direct output. No filler. |
 | [testing-philosophy](rules/testing-philosophy.md) | Real code over mocks. Tests may use a real database. |
 
+## Statusline
+
+Custom status line scripts (`statusline.sh` / `statusline.ps1`) that display live session info below the prompt. No API calls — all data comes from stdin JSON and local git/gh commands.
+
+**Segments displayed:**
+
+- **Model** — current model name (context size suffix stripped)
+- **Git** — `repo@branch`, linked Jira ticket (extracted from branch name), and PR number (cached, 60s TTL)
+- **Context usage** — tokens used / total with percentage, color-coded green → yellow → orange → red
+- **Effort level** — current reasoning effort setting
+- **Rate limits** — 5-hour and 7-day usage percentages with reset times
+
+Inspired by [ClaudeCodeStatusLine](https://github.com/daniel3303/ClaudeCodeStatusLine).
+
 ## Suggested MCP Servers
 
 Some skills expect these MCP servers to be available. All are optional -- skills degrade gracefully without them.
