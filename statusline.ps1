@@ -39,6 +39,18 @@ function Get-UsageColor([int]$pct) {
     else { return $green }
 }
 
+function Get-DefaultBranch([string]$cwd) {
+    $ref = git -C $cwd symbolic-ref refs/remotes/origin/HEAD 2>$null
+    if ($LASTEXITCODE -eq 0 -and $ref) {
+        return ($ref -replace 'refs/remotes/origin/', '')
+    }
+    $null = git -C $cwd rev-parse --verify refs/heads/main 2>$null
+    if ($LASTEXITCODE -eq 0) { return "main" }
+    $null = git -C $cwd rev-parse --verify refs/heads/master 2>$null
+    if ($LASTEXITCODE -eq 0) { return "master" }
+    return $null
+}
+
 function Format-EpochTime([object]$epoch, [string]$style) {
     if ($null -eq $epoch -or "$epoch" -eq "null" -or "$epoch" -eq "0" -or "$epoch" -eq "") { return $null }
     try {
@@ -53,6 +65,8 @@ function Format-EpochTime([object]$epoch, [string]$style) {
 
 # ===== Parse stdin JSON =====
 $data = $input | ConvertFrom-Json
+
+$gitWorktree = $data.workspace.git_worktree
 
 $modelName = if ($data.model.display_name) { $data.model.display_name } else { "Claude" }
 $modelName = ($modelName -replace '\s*\(\d+\.?\d*[kKmM]*\s+context\)', '').Trim()
@@ -107,6 +121,27 @@ if ($cwd) {
                     $out += " ${white}$($Matches[1])${reset}"
                 }
 
+                # Worktree indicator
+                if ($gitWorktree) {
+                    $out += " ${dim}wt${reset}"
+                }
+
+                # Git diff stat vs default branch
+                $defaultBranch = Get-DefaultBranch $cwd
+                if ($defaultBranch -and $branch -ne $defaultBranch) {
+                    $diffStat = git -C $cwd diff --shortstat "${defaultBranch}...HEAD" 2>$null
+                    if ($LASTEXITCODE -eq 0 -and $diffStat) {
+                        $ins = if ($diffStat -match '(\d+) insertion') { $Matches[1] } else { $null }
+                        $del = if ($diffStat -match '(\d+) deletion') { $Matches[1] } else { $null }
+                        $diffPart = ""
+                        if ($ins) { $diffPart += "${green}+${ins}${reset}" }
+                        if ($del) {
+                            if ($diffPart) { $diffPart += " " }
+                            $diffPart += "${red}-${del}${reset}"
+                        }
+                        if ($diffPart) { $out += " $diffPart" }
+                    }
+                }
             }
         }
     } catch {}
