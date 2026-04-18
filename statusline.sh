@@ -50,6 +50,22 @@ usage_color() {
     fi
 }
 
+# Detect default branch name (no network calls)
+detect_default_branch() {
+    local cwd="$1"
+    local ref
+    ref=$(git -C "$cwd" symbolic-ref refs/remotes/origin/HEAD 2>/dev/null)
+    if [ -n "$ref" ]; then
+        echo "${ref##refs/remotes/origin/}"
+        return
+    fi
+    if git -C "$cwd" rev-parse --verify refs/heads/main >/dev/null 2>&1; then
+        echo "main"
+    elif git -C "$cwd" rev-parse --verify refs/heads/master >/dev/null 2>&1; then
+        echo "master"
+    fi
+}
+
 # Format epoch timestamp to local HH:MM
 format_epoch_time() {
     local epoch="$1"
@@ -66,6 +82,8 @@ format_epoch_datetime() {
 }
 
 # ===== Extract data from stdin JSON =====
+git_worktree=$(echo "$input" | jq -r '.workspace.git_worktree // empty')
+
 model_name=$(echo "$input" | jq -r '.model.display_name // "Claude"')
 model_name=$(echo "$model_name" | sed 's/ *([0-9.]*[kKmM]* context)//')
 
@@ -111,6 +129,25 @@ if [ -n "$cwd" ] && git -C "$cwd" rev-parse --is-inside-work-tree >/dev/null 2>&
         jira=$(echo "$branch" | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | head -1)
         [ -n "$jira" ] && out+=" ${white}${jira}${reset}"
 
+        # Worktree indicator
+        [ -n "$git_worktree" ] && out+=" ${dim}wt${reset}"
+
+        # Git diff stat vs default branch
+        default_branch=$(detect_default_branch "$cwd")
+        if [ -n "$default_branch" ] && [ "$branch" != "$default_branch" ]; then
+            diff_stat=$(git -C "$cwd" diff --shortstat "${default_branch}...HEAD" 2>/dev/null)
+            if [ -n "$diff_stat" ]; then
+                insertions=$(echo "$diff_stat" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+')
+                deletions=$(echo "$diff_stat" | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+')
+                diff_part=""
+                [ -n "$insertions" ] && diff_part="${green}+${insertions}${reset}"
+                if [ -n "$deletions" ]; then
+                    [ -n "$diff_part" ] && diff_part+=" "
+                    diff_part+="${red}-${deletions}${reset}"
+                fi
+                [ -n "$diff_part" ] && out+=" ${diff_part}"
+            fi
+        fi
     fi
 fi
 
