@@ -64,7 +64,7 @@ Custom status line scripts (`statusline.sh` / `statusline.ps1`) that display liv
 **Segments displayed:**
 
 - **Model** — current model name (context size suffix stripped)
-- **Git** — `repo@branch` and linked Jira ticket (extracted from branch name)
+- **Git** — `repo@branch` with Jira ticket (extracted from branch name), worktree indicator, and diff stats (`+N -M`) vs default branch. Default branch renders dim; feature branches render orange.
 - **Context usage** — tokens used / total with percentage, color-coded green → yellow → orange → red
 - **Effort level** — current reasoning effort setting
 - **Rate limits** — 5-hour and 7-day usage percentages with reset times
