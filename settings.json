@@ -1,5 +1,4 @@
 {
-  "model": "claude-opus-4-6",
   "permissions": {
     "allow": [
       "Bash(curl -sL 'https://aws.amazon.com/aup/')",
@@ -24,18 +23,8 @@
       "mcp__sourcegraph__read_file"
     ]
   },
-  "extraKnownMarketplaces": {
-    "claude-plugins-official": {
-      "source": {
-        "source": "github",
-        "repo": "anthropics/claude-plugins-official"
-      }
-    }
-  },
-  "autoUpdatesChannel": "stable",
-  "enabledPlugins": {
-    "gopls-lsp@claude-plugins-official": true
-  },
+  "model": "opus[1m]",
+  "effortLevel": "high",
   "hooks": {
     "SessionStart": [
       {
@@ -83,5 +72,17 @@
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.sh"
-  }
+  },
+  "enabledPlugins": {
+    "gopls-lsp@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    }
+  },
+  "autoUpdatesChannel": "stable"
 }
