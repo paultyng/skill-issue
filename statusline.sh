@@ -19,6 +19,7 @@ cyan='\033[38;2;46;149;153m'
 red='\033[38;2;255;85;85m'
 yellow='\033[38;2;230;200;0m'
 white='\033[38;2;220;220;220m'
+purple='\033[38;2;180;130;255m'
 dim='\033[2m'
 reset='\033[0m'
 
@@ -99,17 +100,21 @@ used_tokens=$(format_tokens "$current")
 total_tokens=$(format_tokens "$size")
 pct_used=$(( size > 0 ? current * 100 / size : 0 ))
 
-# Effort level
-effort_level="medium"
-if [ -n "$CLAUDE_CODE_EFFORT_LEVEL" ]; then
+# Effort level: prefer stdin JSON, then env var, then settings.json
+effort_level=""
+effort_val=$(echo "$input" | jq -r '.effort // empty' 2>/dev/null)
+[ -n "$effort_val" ] && effort_level="$effort_val"
+if [ -z "$effort_level" ] && [ -n "$CLAUDE_CODE_EFFORT_LEVEL" ]; then
     effort_level="$CLAUDE_CODE_EFFORT_LEVEL"
-else
+fi
+if [ -z "$effort_level" ]; then
     settings_path="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
     if [ -f "$settings_path" ]; then
         effort_val=$(jq -r '.effortLevel // empty' "$settings_path" 2>/dev/null)
         [ -n "$effort_val" ] && effort_level="$effort_val"
     fi
 fi
+[ -z "$effort_level" ] && effort_level="medium"
 
 # ===== Build output =====
 sep=" ${dim}|${reset} "
@@ -160,6 +165,8 @@ out+="${sep}effort: "
 case "$effort_level" in
     low)    out+="${dim}${effort_level}${reset}" ;;
     medium) out+="${orange}med${reset}" ;;
+    high)   out+="${green}${effort_level}${reset}" ;;
+    xhigh)  out+="${purple}${effort_level}${reset}" ;;
     max)    out+="${red}${effort_level}${reset}" ;;
     *)      out+="${green}${effort_level}${reset}" ;;
 esac

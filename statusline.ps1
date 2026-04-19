@@ -18,6 +18,7 @@ $cyan   = "${esc}[38;2;46;149;153m"
 $red    = "${esc}[38;2;255;85;85m"
 $yellow = "${esc}[38;2;230;200;0m"
 $white  = "${esc}[38;2;220;220;220m"
+$purple = "${esc}[38;2;180;130;255m"
 $dim    = "${esc}[2m"
 $reset  = "${esc}[0m"
 
@@ -83,12 +84,14 @@ $usedTokens  = Format-Tokens $current
 $totalTokens = Format-Tokens $size
 $pctUsed = if ($size -gt 0) { [math]::Floor($current * 100 / $size) } else { 0 }
 
-# Effort level
-$claudeConfigDir = if ($env:CLAUDE_CONFIG_DIR) { $env:CLAUDE_CONFIG_DIR } else { Join-Path $env:USERPROFILE ".claude" }
-$effortLevel = "medium"
-if ($env:CLAUDE_CODE_EFFORT_LEVEL) {
+# Effort level: prefer stdin JSON, then env var, then settings.json
+$effortLevel = $null
+if ($data.effort) { $effortLevel = $data.effort }
+if (-not $effortLevel -and $env:CLAUDE_CODE_EFFORT_LEVEL) {
     $effortLevel = $env:CLAUDE_CODE_EFFORT_LEVEL
-} else {
+}
+if (-not $effortLevel) {
+    $claudeConfigDir = if ($env:CLAUDE_CONFIG_DIR) { $env:CLAUDE_CONFIG_DIR } else { Join-Path $env:USERPROFILE ".claude" }
     $settingsPath = Join-Path $claudeConfigDir "settings.json"
     if (Test-Path $settingsPath) {
         try {
@@ -97,6 +100,7 @@ if ($env:CLAUDE_CODE_EFFORT_LEVEL) {
         } catch {}
     }
 }
+if (-not $effortLevel) { $effortLevel = "medium" }
 
 # ===== Build output =====
 $sep = " ${dim}|${reset} "
@@ -156,6 +160,8 @@ $out += "${sep}effort: "
 switch ($effortLevel) {
     "low"    { $out += "${dim}${effortLevel}${reset}" }
     "medium" { $out += "${orange}med${reset}" }
+    "high"   { $out += "${green}${effortLevel}${reset}" }
+    "xhigh"  { $out += "${purple}${effortLevel}${reset}" }
     "max"    { $out += "${red}${effortLevel}${reset}" }
     default  { $out += "${green}${effortLevel}${reset}" }
 }
