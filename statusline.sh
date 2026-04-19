@@ -126,9 +126,15 @@ if [ -n "$cwd" ] && git -C "$cwd" rev-parse --is-inside-work-tree >/dev/null 2>&
     repo=$(basename "$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)")
     branch=$(git -C "$cwd" rev-parse --abbrev-ref HEAD 2>/dev/null)
 
+    default_branch=$(detect_default_branch "$cwd")
+
     out+="${sep}${cyan}${repo}${reset}"
     if [ -n "$branch" ]; then
-        out+="${dim}@${reset}${green}${branch}${reset}"
+        if [ "$branch" = "$default_branch" ]; then
+            out+="${dim}@${branch}${reset}"
+        else
+            out+="${dim}@${reset}${orange}${branch}${reset}"
+        fi
 
         # Jira ticket from branch name (e.g. PROJ-123)
         jira=$(echo "$branch" | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | head -1)
@@ -138,7 +144,6 @@ if [ -n "$cwd" ] && git -C "$cwd" rev-parse --is-inside-work-tree >/dev/null 2>&
         [ -n "$git_worktree" ] && out+=" ${dim}wt${reset}"
 
         # Git diff stat vs default branch
-        default_branch=$(detect_default_branch "$cwd")
         if [ -n "$default_branch" ] && [ "$branch" != "$default_branch" ]; then
             diff_stat=$(git -C "$cwd" diff --shortstat "${default_branch}...HEAD" 2>/dev/null)
             if [ -n "$diff_stat" ]; then
@@ -150,7 +155,7 @@ if [ -n "$cwd" ] && git -C "$cwd" rev-parse --is-inside-work-tree >/dev/null 2>&
                     [ -n "$diff_part" ] && diff_part+=" "
                     diff_part+="${red}-${deletions}${reset}"
                 fi
-                [ -n "$diff_part" ] && out+=" ${diff_part}"
+                [ -n "$diff_part" ] && out+=" ${dim}|${reset} ${diff_part}"
             fi
         fi
     fi

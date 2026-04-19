@@ -116,9 +116,15 @@ if ($cwd) {
             $repo = Split-Path $repoRoot -Leaf
             $branch = git -C $cwd rev-parse --abbrev-ref HEAD 2>$null
 
+            $defaultBranch = Get-DefaultBranch $cwd
+
             $out += "${sep}${cyan}${repo}${reset}"
             if ($branch) {
-                $out += "${dim}@${reset}${green}${branch}${reset}"
+                if ($branch -eq $defaultBranch) {
+                    $out += "${dim}@${branch}${reset}"
+                } else {
+                    $out += "${dim}@${reset}${orange}${branch}${reset}"
+                }
 
                 # Jira ticket from branch name
                 if ($branch -match '([A-Z][A-Z0-9]+-\d+)') {
@@ -131,7 +137,6 @@ if ($cwd) {
                 }
 
                 # Git diff stat vs default branch
-                $defaultBranch = Get-DefaultBranch $cwd
                 if ($defaultBranch -and $branch -ne $defaultBranch) {
                     $diffStat = git -C $cwd diff --shortstat "${defaultBranch}...HEAD" 2>$null
                     if ($LASTEXITCODE -eq 0 -and $diffStat) {
@@ -143,7 +148,7 @@ if ($cwd) {
                             if ($diffPart) { $diffPart += " " }
                             $diffPart += "${red}-${del}${reset}"
                         }
-                        if ($diffPart) { $out += " $diffPart" }
+                        if ($diffPart) { $out += " ${dim}|${reset} $diffPart" }
                     }
                 }
             }
