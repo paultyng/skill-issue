@@ -16,7 +16,7 @@ Clone or symlink this repo to the user-level config directory:
 | Skill | Description |
 |-------|-------------|
 | [analyze-knowledge](skills/analyze-knowledge/SKILL.md) | Analyze git history to surface code expertise, suggest reviewers, and assess knowledge concentration risk. |
-| [analyze-sessions](skills/analyze-sessions/SKILL.md) | Analyze past agent sessions to identify friction and recommend new skills and rules. |
+| [audit-history](skills/audit-history/SKILL.md) | Audit past agent sessions and memory health — surface friction, stale memories, and gaps; optionally clean up. |
 | [ci-debug-loop](skills/ci-debug-loop/SKILL.md) | Watch a CI run, diagnose failures, apply fixes, and re-trigger until green or escalate. |
 | [create-decision-document](skills/create-decision-document/SKILL.md) | Create or update a Notion decision doc with a terse options/pros/cons/recommendation template. |
 | [create-jira-item](skills/create-jira-item/SKILL.md) | Create Jira issues (stories, epics, initiatives) with custom field introspection. |
