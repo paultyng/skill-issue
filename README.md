@@ -43,6 +43,7 @@ Rules load automatically every session (or on file-path match) and shape agent b
 | Rule | Description |
 |------|-------------|
 | [auto-verify-after-rebase](rules/auto-verify-after-rebase.md) | Run fmt/lint/build automatically after rebase, merge, or cherry-pick. |
+| [confirm-before-implementing](rules/confirm-before-implementing.md) | Confirm the plan before writing code. Halt on "wait"/"stop"/"actually". |
 | [draft-prs](rules/draft-prs.md) | Always create draft PRs unless explicitly told otherwise. |
 | [escalation](rules/escalation.md) | Stop and ask a human before making ambiguous or architectural decisions. |
 | [git-no-amend](rules/git-no-amend.md) | No `--amend` unless asked. Conventional Commits format. |
@@ -51,6 +52,7 @@ Rules load automatically every session (or on file-path match) and shape agent b
 | [no-generated-file-edits](rules/no-generated-file-edits.md) | Never modify generated files — fix generator inputs instead. |
 | [parallelize-subagents](rules/parallelize-subagents.md) | Launch independent subagents in parallel, not sequentially. |
 | [prefer-jq](rules/prefer-jq.md) | Prefer jq over Python for JSON/JSONL processing in shell commands. |
+| [reduce-output-scope](rules/reduce-output-scope.md) | Include only what was asked for in output, plans, and recommendations. |
 | [research-tools](rules/research-tools.md) | Pick the right tool: Sourcegraph, web search, or Notion. |
 | [session-context](rules/session-context.md) | Auto-invoke `/set-session-context` on branch switches or hook prompts. |
 | [taskfile-not-make](rules/taskfile-not-make.md) | Use go-task (`Taskfile.yaml`), not Makefiles. |
