@@ -1,6 +1,6 @@
 ---
 name: audit-history
-description: Use when reviewing past agent sessions, auditing memory health, identifying repeated corrections or friction, cleaning up stale memories, or proposing new skills and rules from usage patterns.
+description: Use when reviewing past agent sessions, auditing memory health, identifying repeated corrections or friction, cleaning up stale memories, proposing new skills and rules from usage patterns, or identifying mechanical improvements (testing, linting, static analysis, tooling) that could improve outcomes.
 disable-model-invocation: true
 ---
 
@@ -154,21 +154,33 @@ After all subagents complete:
 
 ## Phase 4 -- Synthesize Recommendations
 
-### Skill vs Rule vs Memory
+### Recommendation Types
 
 - **Skill**: reusable multi-step workflow the agent executes
 - **Rule**: behavioral guidance that shapes how the agent works
 - **Memory**: project-specific context that should be created, updated, or promoted to a global rule
+- **Mechanical improvement**: tooling, configuration, or infrastructure change that prevents classes of errors without agent behavioral changes (e.g. linter rules, static analysis checks, git hooks, pre-commit hooks, test coverage for friction-prone areas, CI checks)
 
 ### For Each Recommendation
 
 Provide:
 - **Name**: following verb-first / gerund naming convention
-- **Type**: skill, rule, or memory
+- **Type**: skill, rule, memory, or mechanical
 - **Evidence**: session count + example quotes from transcripts, or memory analysis findings
-- **Proposed content outline**: key sections and what they'd cover
+- **Proposed content outline**: key sections and what they'd cover (for skills/rules/memory) or specific tooling/config change (for mechanical)
 
 Use the `create-skill` skill to author any recommended skills.
+
+### Mechanical Improvement Signals
+
+Look for these patterns in transcripts that indicate a mechanical fix would help:
+
+- **Same error corrected multiple times** → linter rule or static analysis check could catch it automatically
+- **Manual formatting or style corrections** → formatter config or pre-commit hook
+- **Repeated test failures in the same area** → missing test coverage or flaky test infrastructure
+- **Agent repeatedly running the same verification steps** → CI check, git hook, or hook automation
+- **Type errors or nil panics discovered late** → stricter compiler flags, `staticcheck`, `golangci-lint` rules
+- **Proto/API issues caught in review** → `buf lint` or `buf breaking` rules
 
 ### Output Format
 
@@ -197,13 +209,14 @@ Present findings as a plan with three sections:
 **Recommendations:**
 
 ```markdown
-### N. `name` (type: skill|rule|memory)
+### N. `name` (type: skill|rule|memory|mechanical)
 
 Evidence: appeared in ~N sessions / found in memory analysis
 - "quoted correction" (session UUID)
 
 Proposed content:
 - Section 1: ...
+- (for mechanical: specific tool, config change, or hook to add)
 ```
 
 ## Phase 5 -- Memory Cleanup Plan
