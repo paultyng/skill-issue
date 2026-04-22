@@ -81,13 +81,22 @@ Prompt it to:
 
 ### 5. Present results
 
-Create the output directory (`mkdir -p reviews`) and write the summarization output to `reviews/SECURITY-REVIEW.md`, structured as:
+Resolve the review output directory:
+
+```sh
+REVIEW_DATE=$(date +%Y-%m-%d)
+REVIEW_DIR="reviews/${REVIEW_DATE}"
+if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR="reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+mkdir -p "$REVIEW_DIR"
+```
+
+Write the summarization output to `${REVIEW_DIR}/SECURITY-REVIEW.md`, structured as:
 1. Tool availability summary
 2. System overview (from step 2)
 3. Consolidated findings table (with tracking status inline)
 4. Recommended fix order
 
-Present the report to the user. Overwrite if `reviews/SECURITY-REVIEW.md` already exists.
+Present the report to the user.
 
 ---
 
@@ -135,6 +144,6 @@ When the user requests a follow-up review after fixes:
 - Search the organization's codebase (Sourcegraph, GitHub) for existing patterns before recommending new approaches.
 - Cross-reference findings between STRIDE and OWASP to avoid duplicate entries in the consolidated table.
 - Include effort estimates to help prioritize implementation.
-- When the user asks for a follow-up review, read the existing `reviews/SECURITY-REVIEW.md`, re-evaluate all prior findings, and update with the re-evaluation table appended.
+- When the user asks for a follow-up review, find the most recent review directory (`ls -d reviews/*/ 2>/dev/null | sort | tail -1`) containing `SECURITY-REVIEW.md`, re-evaluate all prior findings, and update with the re-evaluation table appended.
 - For detailed framework categories, see [reference.md](reference.md).
 - **REVIEW.md integration**: If a `REVIEW.md` context section was provided by the review-all orchestrator (or exists at the repository root when running standalone), treat its rules as additional review criteria. "Always check" items are HIGH severity; domain-specific items (Security section) are MEDIUM severity. "Skip" patterns exclude matching files from review scope.

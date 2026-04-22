@@ -52,12 +52,21 @@ Prompt it to:
 
 ### 4. Present results
 
-Create the output directory (`mkdir -p reviews`) and write the output to `reviews/RELIABILITY-REVIEW.md`, structured as:
+Resolve the review output directory:
+
+```sh
+REVIEW_DATE=$(date +%Y-%m-%d)
+REVIEW_DIR="reviews/${REVIEW_DATE}"
+if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR="reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+mkdir -p "$REVIEW_DIR"
+```
+
+Write the output to `${REVIEW_DIR}/RELIABILITY-REVIEW.md`, structured as:
 1. System overview and flow mapping
 2. Reliability findings table
 3. Recommended fix order
 
-Present the report to the user. Overwrite if `reviews/RELIABILITY-REVIEW.md` already exists.
+Present the report to the user.
 
 ---
 
@@ -89,6 +98,6 @@ Present the report to the user. Overwrite if `reviews/RELIABILITY-REVIEW.md` alr
 
 - Search the organization's codebase (Sourcegraph, GitHub) for existing patterns before recommending new approaches.
 - Include effort estimates to help prioritize implementation.
-- When the user asks for a follow-up review, read the existing `reviews/RELIABILITY-REVIEW.md`, re-evaluate all prior findings, and update with the re-evaluation table appended.
+- When the user asks for a follow-up review, find the most recent review directory (`ls -d reviews/*/ 2>/dev/null | sort | tail -1`) containing `RELIABILITY-REVIEW.md`, re-evaluate all prior findings, and update with the re-evaluation table appended.
 - For detailed framework categories, see [reference.md](reference.md).
 - **REVIEW.md integration**: If a `REVIEW.md` context section was provided by the review-all orchestrator (or exists at the repository root when running standalone), treat its rules as additional review criteria. "Always check" items are HIGH severity; domain-specific items (Reliability section) are MEDIUM severity. "Skip" patterns exclude matching files from review scope.

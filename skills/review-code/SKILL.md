@@ -108,7 +108,7 @@ Prompt the subagent to:
 - Load explicit conformance rules from: REVIEW.md (if provided by review-all or present at repo root), CLAUDE.md (if present at repo root), AGENTS.md (if present at repo root), and all files in `.claude/rules/` (if directory exists). These are the **explicit rules**.
 - Determine conformance mode:
   - **Lightweight** (default, or when `conformance_mode` is `lightweight`): For each in-scope file, read sibling files in the same package to infer local patterns. Require at least 3 sibling files showing the same pattern before flagging a deviation. Check whether the in-scope file conforms to both explicit rules and inferred local patterns.
-  - **Full** (when `conformance_mode` is `full`): Read the patterns document at `reviews/PATTERNS.md` (run `/discover-patterns` first if it does not exist). Check all in-scope files against both explicit rules and the discovered patterns.
+  - **Full** (when `conformance_mode` is `full`): If `REVIEW_DIR` was provided by the review-all orchestrator, read `${REVIEW_DIR}/PATTERNS.md`. Otherwise, find the most recent patterns file (`ls -t reviews/*/PATTERNS.md 2>/dev/null | head -1`); if none exists, run `/discover-patterns` first. Check all in-scope files against both explicit rules and the discovered patterns.
 - When `has_changes` is true (diff mode): focus findings on changed/added lines only. For each deviation, reference the established pattern with an exemplar.
 - When `has_changes` is false (full mode): identify outlier files/packages that deviate from the majority pattern.
 - For each finding, search nearby code for TODOs or notes.
@@ -125,12 +125,21 @@ After all subagents complete, deduplicate overlapping findings, produce a consol
 
 ### 4. Present results
 
-Create the output directory (`mkdir -p reviews`) and write the output to `reviews/CODE-REVIEW.md`, structured as:
+Resolve the review output directory (skip if `REVIEW_DIR` was provided by the review-all orchestrator):
+
+```sh
+REVIEW_DATE=$(date +%Y-%m-%d)
+REVIEW_DIR="reviews/${REVIEW_DATE}"
+if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR="reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+mkdir -p "$REVIEW_DIR"
+```
+
+Write the output to `${REVIEW_DIR}/CODE-REVIEW.md`, structured as:
 1. Tool availability summary
 2. Consolidated findings table (with tracking status inline)
 3. Recommended fix order
 
-Present the report to the user. Overwrite if `reviews/CODE-REVIEW.md` already exists.
+Present the report to the user.
 
 ---
 
@@ -179,7 +188,7 @@ Present the report to the user. Overwrite if `reviews/CODE-REVIEW.md` already ex
 
 - Search the organization's codebase (Sourcegraph, GitHub) for existing patterns before recommending changes.
 - Include effort estimates to help prioritize implementation.
-- When the user asks for a follow-up review, read the existing `reviews/CODE-REVIEW.md`, re-evaluate all prior findings, and update with the re-evaluation table appended.
+- When the user asks for a follow-up review, find the most recent review directory (`ls -d reviews/*/ 2>/dev/null | sort | tail -1`) containing `CODE-REVIEW.md`, re-evaluate all prior findings, and update with the re-evaluation table appended.
 - For detailed checklists, see [reference-architecture.md](reference-architecture.md), [reference-go.md](reference-go.md), and [reference-protobuf.md](reference-protobuf.md).
 - For documentation quality (doc comments, examples, README), see **review-documentation**.
 - **REVIEW.md integration**: If a `REVIEW.md` context section was provided by the review-all orchestrator (or exists at the repository root when running standalone), treat its rules as additional review criteria. "Always check" items are HIGH severity; domain-specific items (Go conventions, Protobuf & API) are MEDIUM severity. "Skip" patterns exclude matching files from review scope.
