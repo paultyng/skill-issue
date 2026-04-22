@@ -47,7 +47,16 @@ Merge subagent outputs. Deduplicate overlapping patterns (e.g., a DI pattern tha
 
 ### 4. Write output
 
-Create the output directory (`mkdir -p reviews`) and write to `reviews/PATTERNS.md`. Overwrite if it already exists. Present the report to the user.
+If `REVIEW_DIR` was provided by the review-all orchestrator, use it. Otherwise, resolve it:
+
+```sh
+REVIEW_DATE=$(date +%Y-%m-%d)
+REVIEW_DIR="reviews/${REVIEW_DATE}"
+if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR="reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+mkdir -p "$REVIEW_DIR"
+```
+
+Write to `${REVIEW_DIR}/PATTERNS.md`. Present the report to the user.
 
 ## Output Template
 

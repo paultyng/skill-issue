@@ -69,7 +69,16 @@ This system overview is shared context for all review subagents.
 
 ### 2b. Run pattern discovery (if full conformance mode)
 
-If `conformance_mode` is `full`, launch a `/discover-patterns` subagent (`subagent_type="generalPurpose"`) with the resolved scope before launching review subagents. This writes `reviews/PATTERNS.md` which review-code's Conformance Check subagent will read. Other review subagents (security, reliability, database, documentation) can launch in parallel with this step since they don't depend on it — only review-code must wait for it to complete.
+If `conformance_mode` is `full`, resolve the review output directory first:
+
+```sh
+REVIEW_DATE=$(date +%Y-%m-%d)
+REVIEW_DIR="reviews/${REVIEW_DATE}"
+if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR="reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+mkdir -p "$REVIEW_DIR"
+```
+
+Then launch a `/discover-patterns` subagent (`subagent_type="generalPurpose"`) with the resolved scope and `REVIEW_DIR`, instructing it to write to `${REVIEW_DIR}/PATTERNS.md`. Pass `REVIEW_DIR` to review-code's prompt so its Conformance Check subagent reads `${REVIEW_DIR}/PATTERNS.md`. Other review subagents (security, reliability, database, documentation) can launch in parallel with this step since they don't depend on it — only review-code must wait for it to complete.
 
 ### 3. Launch review subagents in parallel
 
@@ -110,13 +119,22 @@ Prompt it to:
 
 ### 5. Present results
 
-Create the output directory (`mkdir -p reviews`) and write the summarization output to `reviews/SUMMARY.md`, structured as:
+If `REVIEW_DIR` was resolved in step 2b, reuse it. Otherwise, resolve it now:
+
+```sh
+REVIEW_DATE=$(date +%Y-%m-%d)
+REVIEW_DIR="reviews/${REVIEW_DATE}"
+if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR="reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+mkdir -p "$REVIEW_DIR"
+```
+
+Write the summarization output to `${REVIEW_DIR}/SUMMARY.md`, structured as:
 1. Tool availability summary
 2. System overview (from step 2)
 3. Consolidated findings tables (with tracking status inline), grouped by category
 4. Recommended fix order
 
-Present the report to the user. Overwrite if `reviews/SUMMARY.md` already exists.
+Present the report to the user.
 
 ---
 
@@ -176,4 +194,4 @@ Present the report to the user. Overwrite if `reviews/SUMMARY.md` already exists
 - Search the organization's codebase (Sourcegraph, GitHub) for existing patterns before recommending new dependencies or approaches.
 - Cross-reference findings between reviews to avoid duplicate entries in the consolidated tables.
 - Include effort estimates to help prioritize implementation.
-- When the user asks for a follow-up review, read the existing `reviews/SUMMARY.md`, re-evaluate all prior findings against the current code state, and update with the re-evaluation table appended.
+- When the user asks for a follow-up review, find the most recent review directory (`ls -d reviews/*/ 2>/dev/null | sort | tail -1`) containing `SUMMARY.md`, re-evaluate all prior findings against the current code state, and update with the re-evaluation table appended.
