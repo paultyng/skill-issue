@@ -1,6 +1,6 @@
 ---
 name: review-all
-description: Perform a comprehensive security, reliability, code, and documentation review by orchestrating individual review skills (review-security, review-reliability, review-code, review-database, review-documentation) as parallel subagents. Use when the user asks for a deep review, full review, comprehensive review, production readiness assessment, full audit, or to review everything.
+description: Perform a comprehensive security, reliability, code, coverage, and documentation review by orchestrating individual review skills (review-security, review-reliability, review-code, review-database, review-coverage, review-documentation) as parallel subagents. Use when the user asks for a deep review, full review, comprehensive review, production readiness assessment, full audit, or to review everything.
 ---
 
 # Full Review
@@ -43,6 +43,7 @@ If no `REVIEW.md` exists, proceed without it — all review skills have their ow
   - **review-reliability**: applicable if `has_code` or `has_infra`
   - **review-code**: applicable if `has_code` or `has_proto`
   - **review-database**: applicable if `has_sql`, or database-interacting code exists (check imports for DB drivers like `pgx`, `pq`, `database/sql`, `sqlx`, `diesel`, `sqlalchemy`, etc.)
+  - **review-coverage**: applicable if `has_go` and `has_changes`
   - **review-documentation**: always applicable
 
 ### 2. System overview
@@ -101,6 +102,7 @@ For each subagent, include in its prompt:
 | Reliability | review-reliability | `has_code` or `has_infra` |
 | Code | review-code | `has_code` or `has_proto` |
 | Database | review-database | `has_sql` or DB code in scope |
+| Coverage | review-coverage | `has_go` and `has_changes` |
 | Documentation | review-documentation | Always |
 
 Each subagent should NOT write its own output file — it returns findings to this orchestrator.
@@ -110,7 +112,7 @@ Each subagent should NOT write its own output file — it returns findings to th
 After all review subagents complete, launch a single summarization subagent (`subagent_type="generalPurpose"`) with the full findings from each review subagent.
 
 Prompt it to:
-1. **Deduplicate** overlapping findings across all reviews (many findings appear in multiple analyses, e.g. security and reliability, or security and Go best practices).
+1. **Deduplicate** overlapping findings across all reviews (many findings appear in multiple analyses, e.g. security and reliability, security and Go best practices, or a coverage gap on a function flagged by reliability/security as risky).
 2. **Cross-reference** each deduplicated finding to its source review and IDs.
 3. **Preserve tracking status** — a finding is tracked if any source review marked it as tracked.
 4. **Prioritize** — produce consolidated findings tables ordered by severity/priority, grouped by category (security, reliability, code, documentation).
@@ -176,6 +178,27 @@ Present the report to the user.
 |----------|----|---------|--------|---------|
 | HIGH | 1 | Description with code references | DOC1, DOC4 | — |
 | MEDIUM | 2 | Description with code references | DOC2 | TODO in file:line |
+```
+
+### Consolidated coverage findings
+
+Per-package coverage (omit Delta column when no prior baseline exists):
+
+```markdown
+| Package | Coverage | Delta | Affected Functions |
+|---------|----------|-------|--------------------|
+| internal/auth | 78.4% | +2.1% | 3 changed, 1 uncovered |
+| internal/store | 64.2% | — | 5 changed, 4 uncovered |
+```
+
+Uncovered functions (grouped by package, sorted by severity):
+
+```markdown
+| Severity | ID | Package | Function | File:Line | Tracked |
+|----------|----|---------|----------|-----------|---------|
+| HIGH | COV1 | internal/auth | `verifyToken` | auth/verify.go:42 | — |
+| MEDIUM | COV2 | internal/render | `(*Page).Render` | render/page.go:104 | — |
+| LOW | COV3 | internal/store | `formatRowKey` | store/key.go:18 | TODO in store/key.go:15 |
 ```
 
 ### Re-evaluation table (for follow-up reviews)
