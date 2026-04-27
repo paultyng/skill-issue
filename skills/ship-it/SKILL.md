@@ -34,7 +34,7 @@ Common types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`, `build`.
 
 Always create a new commit. Never amend.
 
-## 4. Push and Update PR
+## 4. Push and PR
 
 Push the current branch:
 
@@ -42,11 +42,13 @@ Push the current branch:
 git push -u origin HEAD
 ```
 
-If a PR exists for the current branch, update its title and description to reflect the current state of the changes:
+If a PR exists for the current branch, update its title and description to reflect the current state:
 
 ```bash
-gh pr edit --title "<title>" --body "<body>"
+gh pr edit --title "<title>" --body-file /tmp/pr-body.md
 ```
+
+If no PR exists, run [create-pr](../create-pr/SKILL.md) to open one.
 
 ## 5. Suggest Reviewers
 
