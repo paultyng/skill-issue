@@ -47,17 +47,20 @@ If the rebase completes with no conflicts, skip to step 5.
 When the rebase stops on a conflict:
 
 1. **List conflicting files**: `git diff --name-only --diff-filter=U`
-2. **For each conflicting file**, understand both sides:
+2. **Check for generated files first**: if a conflicting file is code-generated (look for `// Code generated ... DO NOT EDIT.` headers, or paths matching known generator outputs like `*.pb.go`, `*_gen.go`, sqlc/openapi output dirs), do **not** attempt to merge the conflict markers. Instead:
+   - Accept either side to unblock the rebase (e.g. `git checkout --theirs <file>` or `git checkout --ours <file>`), `git add <file>`, and continue.
+   - After the rebase completes, regenerate the file from its source (`buf generate`, `go generate`, `sqlc generate`, etc.) and amend or add a follow-up commit with the regenerated output.
+3. **For each remaining conflicting file**, understand both sides:
    - Read the file to see the conflict markers.
    - Check what the base branch changed: `git log --oneline origin/<baseRefName> -- <file>` and read the relevant commits.
    - Check what the PR branch changed: review the current commit being applied (`git log --oneline -1 REBASE_HEAD`).
-3. **Classify the conflict**:
+4. **Classify the conflict**:
    - **Mechanical**: both sides changed nearby lines but the intent is independent (e.g. adjacent import additions, unrelated function changes). Resolve by keeping both changes with correct formatting.
    - **Semantic**: both sides changed the same logic or API in incompatible ways. Attempt to resolve if the correct outcome is clear from context.
    - **Ambiguous**: the conflict involves a design decision, requirement tradeoff, or unclear intent. **Stop, abort the rebase** (`git rebase --abort`), and escalate to the user with a description of the conflict and what options exist.
-4. **After resolving each file**: `git add <file>`
-5. **Continue the rebase**: `git rebase --continue`
-6. **Repeat** until the rebase completes or an ambiguous conflict requires escalation.
+5. **After resolving each file**: `git add <file>`
+6. **Continue the rebase**: `git rebase --continue`
+7. **Repeat** until the rebase completes or an ambiguous conflict requires escalation.
 
 ## 5. Verify
 
