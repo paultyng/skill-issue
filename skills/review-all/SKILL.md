@@ -17,6 +17,7 @@ Orchestrate all domain-specific review skills as parallel subagents, then consol
   - **Explicit paths/packages:** The user may specify directories (e.g. `internal/auth/`), Go package patterns (e.g. `./internal/auth/...`), or individual files. When given a directory or package pattern, include all files under it. Derive Go package paths for static analysis tool invocations.
   - **Full codebase:** No filtering — explore everything (default).
 - **Pass the resolved scope** (file list, derived package paths, and file-type flags below) to each review subagent in step 3 so they skip their own scope confirmation and use the provided scope directly.
+- **Resolve `pr_url` for deep-linking** (display-only — used in the final consolidated report). Run `gh pr view --json url -q .url 2>/dev/null` to capture the PR URL for the current branch (or for the PR number the user supplied via `gh pr view <num> --json url -q .url`). Empty string if no PR exists. Pass `pr_url` to each subagent in step 3 and to the summarization subagent in step 4. Subagents wrap finding `path:line` references using `~/.claude/scripts/pr-deeplink.sh "$pr_url" <path> <line>` — see [Finding link wrapping](#finding-link-wrapping) below.
 - **Classify the resolved files** to determine which reviews to launch:
   - `has_code`: any source files (`.go`, `.rs`, `.ts`, `.tsx`, `.js`, `.jsx`, `.swift`, `.kt`, `.kts`, `.py`, `.rb`)
   - `has_go`: any `.go` files
@@ -89,6 +90,7 @@ For each subagent, include in its prompt:
 - The system overview and flow mapping from step 2
 - The resolved file list and package paths from step 1 (the subagent should use this scope directly and skip its own scope confirmation)
 - The `has_changes` flag, base ref, and changed file list from step 1 (so change-aware subagents like review-code's Regression History can use them)
+- The `pr_url` from step 1 (used to wrap `path:line` finding references via `~/.claude/scripts/pr-deeplink.sh`; empty string disables wrapping)
 - The `conformance_mode` flag from step 1a (for review-code only)
 - If `REVIEW.md` was loaded in step 1b: the "Always check" rules (for all subagents) and the relevant domain-specific section for that subagent (e.g. Security section → review-security, Database section → review-database). Instruct the subagent to treat "Always check" rules as HIGH severity and domain-specific rules as MEDIUM severity, in addition to its own reference checklist.
 - Instructions to follow the corresponding skill's workflow (read the SKILL.md for reference on what each skill does)
@@ -109,7 +111,7 @@ Each subagent should NOT write its own output file — it returns findings to th
 
 ### 4. Launch summarization subagent
 
-After all review subagents complete, launch a single summarization subagent (`subagent_type="generalPurpose"`) with the full findings from each review subagent.
+After all review subagents complete, launch a single summarization subagent (`subagent_type="generalPurpose"`) with the full findings from each review subagent. Pass `pr_url` so it can preserve and apply the [Finding link wrapping](#finding-link-wrapping) convention when rewriting tables.
 
 Prompt it to:
 1. **Deduplicate** overlapping findings across all reviews (many findings appear in multiple analyses, e.g. security and reliability, security and Go best practices, or a coverage gap on a function flagged by reliability/security as risky).
@@ -130,13 +132,70 @@ if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR="reviews/${REVIEW_DATE}-$(date +%H%M)";
 mkdir -p "$REVIEW_DIR"
 ```
 
+Capture run metadata for the output header (see [Run metadata header](#run-metadata-header) below). When scope is diff-based, also capture `BASE_REF` and `BASE_COMMIT=$(git rev-parse "$BASE_REF")`.
+
 Write the summarization output to `${REVIEW_DIR}/SUMMARY.md`, structured as:
-1. Tool availability summary
-2. System overview (from step 2)
-3. Consolidated findings tables (with tracking status inline), grouped by category
-4. Recommended fix order
+1. Run metadata header
+2. Tool availability summary
+3. System overview (from step 2)
+4. Consolidated findings tables (with tracking status inline), grouped by category
+5. Recommended fix order
 
 Present the report to the user.
+
+---
+
+## Run metadata header
+
+Capture once near `REVIEW_DIR` resolution and prepend to every output document this skill writes (and require subagents that write their own files to do the same):
+
+```sh
+RUN_DATETIME=$(date -u +"%Y-%m-%d %H:%M UTC")
+GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+GIT_COMMIT=$(git rev-parse --short HEAD)
+GIT_COMMIT_FULL=$(git rev-parse HEAD)
+GIT_SUBJECT=$(git log -1 --pretty=%s)
+# When scope is diff-based, also capture:
+# BASE_REF=<base, e.g. main>; BASE_COMMIT=$(git rev-parse --short "$BASE_REF")
+```
+
+Header template (place at the very top of the output `.md`, before the H1 title):
+
+```markdown
+> **Run:** {RUN_DATETIME}
+> **Branch:** {GIT_BRANCH} @ {GIT_COMMIT} (`{GIT_COMMIT_FULL}`)
+> **Subject:** {GIT_SUBJECT}
+> **Base:** {BASE_REF} @ {BASE_COMMIT}   <!-- omit when scope is not diff-based -->
+> **Scope:** {scope description, e.g. "changed files (PR #42)" or "full codebase" or "./internal/auth/..."}
+```
+
+---
+
+## Finding link wrapping
+
+When `pr_url` is non-empty (resolved in step 1), every `path:line` reference inside finding cells in the consolidated tables below is wrapped as a Markdown link to the PR's "Files changed" tab, anchored at the line. The display text stays `path:line` — only the link target carries the URL, so table widths don't blow up.
+
+Use the helper to build each link:
+
+```sh
+~/.claude/scripts/pr-deeplink.sh "$pr_url" <path> <line>
+# → [path:line](https://github.com/owner/repo/pull/N/files#diff-<hash>R<line>)
+
+~/.claude/scripts/pr-deeplink.sh "$pr_url" <path>
+# → [path](https://github.com/owner/repo/pull/N/files#diff-<hash>)   (file-level)
+
+~/.claude/scripts/pr-deeplink.sh "" <path> <line>
+# → path:line   (no PR scope; plain text)
+```
+
+Notes:
+- Right-side anchor (`R<line>`) is the default and almost always correct — findings call out added/modified code.
+- Use `L` as the fourth argument only when a finding is specifically about removed code on the left side of the diff.
+- The diff anchor format (`#diff-<sha256(path).first32>`) is GitHub's stable but undocumented convention. If GitHub ever changes it, only `pr-deeplink.sh` needs updating.
+- For file-level findings (no specific line), call the helper without `<line>` to emit a file-anchor link.
+- `Tracked` column entries that include `path:line` (e.g. `TODO in foo.go:42`) follow the same wrapping rule.
+
+This applies to the consolidated tables below **and** to per-category finding tables emitted by each subagent (which are reproduced into the consolidated report).
 
 ---
 

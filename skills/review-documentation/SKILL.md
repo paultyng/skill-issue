@@ -84,12 +84,54 @@ if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR="reviews/${REVIEW_DATE}-$(date +%H%M)";
 mkdir -p "$REVIEW_DIR"
 ```
 
+Capture run metadata (see [Run metadata header](#run-metadata-header) below) and prepend the rendered block to `${REVIEW_DIR}/DOCUMENTATION-REVIEW.md`.
+
 Write the output to `${REVIEW_DIR}/DOCUMENTATION-REVIEW.md`, structured as:
-1. Tool availability summary
-2. Consolidated findings table (with tracking status inline)
-3. Recommended fix order
+1. Run metadata header
+2. Tool availability summary
+3. Consolidated findings table (with tracking status inline)
+4. Recommended fix order
 
 Present the report to the user.
+
+---
+
+## Run metadata header
+
+Capture once near `REVIEW_DIR` resolution and prepend the rendered block to the output document:
+
+```sh
+RUN_DATETIME=$(date -u +"%Y-%m-%d %H:%M UTC")
+GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+GIT_COMMIT=$(git rev-parse --short HEAD)
+GIT_COMMIT_FULL=$(git rev-parse HEAD)
+GIT_SUBJECT=$(git log -1 --pretty=%s)
+# When scope is diff-based, also: BASE_REF=<base>; BASE_COMMIT=$(git rev-parse --short "$BASE_REF")
+```
+
+Header template (placed at the top of the output `.md`, before the H1 title):
+
+```markdown
+> **Run:** {RUN_DATETIME}
+> **Branch:** {GIT_BRANCH} @ {GIT_COMMIT} (`{GIT_COMMIT_FULL}`)
+> **Subject:** {GIT_SUBJECT}
+> **Base:** {BASE_REF} @ {BASE_COMMIT}   <!-- omit when scope is not diff-based -->
+> **Scope:** {scope description}
+```
+
+---
+
+## Finding link wrapping (PR mode)
+
+When the review is scoped to a GitHub PR — `pr_url` is provided by the caller, or, when run standalone, `gh pr view --json url -q .url 2>/dev/null` returns one — wrap every `path:line` reference inside the finding tables below as a Markdown link:
+
+```sh
+~/.claude/scripts/pr-deeplink.sh "$pr_url" <path> <line>
+# pr_url set   → [path:line](https://github.com/.../pull/N/files#diff-<hash>R<line>)
+# pr_url empty → path:line   (plain text, unchanged)
+```
+
+The display text stays `path:line` so plain and linked tables look identical; only the URL goes in the link target. Pass `L` as the fourth argument for findings about removed code (default is `R`). Omit `<line>` for file-level findings to get a file-anchor link. Apply the same wrapping to `path:line` references inside the Tracked column (e.g. `TODO in foo.go:42`).
 
 ---
 
