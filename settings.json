@@ -28,11 +28,11 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "",
+        "matcher": "startup",
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "Detect the current git branch and run /set-session-context to set session name and color."
+            "type": "command",
+            "command": "echo 'Detect the current git branch and run /set-session-context to set session name and color.'"
           }
         ]
       }
