@@ -35,7 +35,15 @@ On failure, fetch logs for the failed job(s):
 gh run view <run_id> --log-failed
 ```
 
-Identify the root cause from the logs. Common failure categories:
+**Delegate log analysis to a subagent** when the failed-log output is more than ~200 lines. CI logs flood main context fast and the parent only needs the root cause, not the raw output. Per `parallelize-subagents` and `delegate-investigation`:
+
+- Spawn an `Explore` subagent per failed job (parallel if multiple jobs failed).
+- Prompt per `subagent-prompt-contract`: paste the **command to fetch the log** (not the log itself) plus the failure categories below; ask for "first failing assertion + likely root cause + file:line if identifiable, ≤100 words, prefixed with `Status: ...`".
+- Parent receives the summary, decides the fix.
+
+For short logs (<200 lines), inspect inline.
+
+Common failure categories:
 - **Build errors**: compilation failures, missing dependencies
 - **Test failures**: assertion errors, timeouts, flaky tests
 - **Auth/permissions**: token scopes, registry auth, SSH keys
@@ -71,3 +79,5 @@ Then watch it (back to step 2).
 - The fix would require changes to a different repository or CI configuration not in this repo
 
 Report what was tried, what failed, and what options remain.
+
+**Escalate to `bisect`** when log analysis can't pinpoint *which change* broke the job — typical signs: failure looks unrelated to the recent diff, error message points at code untouched in the branch, or a previously-green test on the same branch is now red. Hand the failing test/command to `/bisect` as the reproducer; it isolates the offending commit.
