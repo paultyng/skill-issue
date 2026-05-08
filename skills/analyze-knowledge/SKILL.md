@@ -43,6 +43,27 @@ fi
 - If no `.mailmap`, group by author name (not email) to merge multiple addresses.
 - Filter bots: exclude authors matching `[bot]`, `dependabot`, `renovate`, `github-actions`, or emails containing `noreply@github.com` with non-human names.
 
+## 2.5. Fan out for broad scope
+
+When scope is large, delegate per-area data collection to subagents so main context never sees raw blame/log output for hundreds of files. Aligns with `parallelize-subagents` (delegate when output would flood main context) and `delegate-investigation` (read-only history work belongs in `Explore`).
+
+| Trigger | Strategy |
+|---|---|
+| Distribution mode, "whole repo" or >20 directories in scope | One `Explore` subagent per top-level directory; each runs its tiered collection and returns the per-area summary only. |
+| Reviewer mode, >20 changed files | Batch files in groups of ~10; one `Explore` subagent per batch returning per-file expert lists. |
+| Tier 3 line-level on >5 files | One `Explore` subagent per file — blame output is voluminous. |
+| Anything smaller | Run inline. Don't spin up a subagent for one `git shortlog`. |
+
+Each subagent prompt follows `subagent-prompt-contract`:
+
+- **Goal:** "Return top-N authors per file in <area>, with weighted contribution scores"
+- **Inline context:** paths, `$MAILMAP_FLAG` state, the recency weighting table from step 4, the `git` command(s) to run
+- **Output shape:** Markdown table only, ≤30 lines
+- **Constraints:** read-only (`Explore` enforces this); do not spawn further subagents
+- **Return:** prefix the summary with `Status: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT`
+
+Parent merges per-area returns into the final table in step 5.
+
 ## 3. Collect Data (Tiered)
 
 ### Tier 1 — Commit counts (always run, fast)
@@ -75,7 +96,7 @@ git blame --porcelain $MAILMAP_FLAG <file> | \
   awk '/^author /{print}' | sort | uniq -c | sort -rn
 ```
 
-Parallelize across files with `xargs -P4`.
+For >5 files, fan out per step 2.5 (one `Explore` subagent per file). For ≤5 files, parallelize inline with `xargs -P4`.
 
 ## 4. Analyze
 
