@@ -60,6 +60,17 @@ Projects with sessions but no memories: [list]
 
 Launch transcript subagents and memory subagent **in parallel**.
 
+Each subagent prompt follows `subagent-prompt-contract`: state the goal in one sentence, paste the file list and extraction schema inline (do **not** ask the subagent to re-read this SKILL.md), cap the output at the schema below, and prefix the return with the four-state Status line so Phase 3 can branch on it without parsing the body:
+
+```
+Status: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
+<the per-transcript or per-memory entries below>
+```
+
+- **DONE_WITH_CONCERNS** — the subagent extracted everything but flags ambiguity (e.g. corrections in a foreign language, transcripts with mixed Cursor/Claude formats).
+- **BLOCKED** — a transcript wouldn't parse, a file disappeared mid-batch, etc. Skip and move on.
+- **NEEDS_CONTEXT** — the parent didn't specify scope filtering and the batch is too large; lists which subset to retry with.
+
 ### Transcript Subagents
 
 Split transcripts into batches of ~25-30 for parallel processing.
