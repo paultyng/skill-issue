@@ -121,9 +121,12 @@ sep=" ${dim}|${reset} "
 out="${blue}${model_name}${reset}"
 
 # Git info: repo@branch + PR + Jira
+# GIT_CEILING_DIRECTORIES caps git's upward walk so we only match when cwd is
+# itself the toplevel — not a subdirectory of one.
 cwd=$(echo "$input" | jq -r '.cwd // empty')
-if [ -n "$cwd" ] && git -C "$cwd" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    repo=$(basename "$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)")
+toplevel=$([ -n "$cwd" ] && GIT_CEILING_DIRECTORIES="$(dirname "$cwd")" git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)
+if [ -n "$toplevel" ]; then
+    repo=$(basename "$toplevel")
     branch=$(git -C "$cwd" rev-parse --abbrev-ref HEAD 2>/dev/null)
 
     default_branch=$(detect_default_branch "$cwd")
