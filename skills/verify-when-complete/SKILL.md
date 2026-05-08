@@ -83,3 +83,7 @@ If a specific task/target doesn't exist, fall back to the raw Go equivalent. Run
 - Before claiming a rebase or conflict resolution succeeded
 - Before moving to the next task after making changes
 - Before any statement asserting correctness or completion
+
+## Cross-references
+
+- The narrowest verification command this skill produces (e.g. `task test -- -run '^TestX$' -count=1`) is the natural reproducer for the `bisect` skill. When a test that this skill once green-lit is now red, bisect with that exact command.
