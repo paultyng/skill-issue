@@ -17,7 +17,7 @@ Check if the project has a changelog convention:
 
 1. If `Taskfile.yaml` has a `changelog` task, run `task changelog` and follow its output.
 2. Otherwise, look for existing changelog entries:
-   - `.changes/` or `.changelog/` directories with YAML files (e.g. `chlg` tool convention)
+   - Per-PR fragment directories like `.changeset/` (JS/TS via `@changesets/cli`), `.changes/` (Python via `towncrier`), or similar project-defined conventions
    - `CHANGELOG.md` at the repo root
 3. If a convention is found, create a terse entry following the existing format and patterns.
 4. If no changelog convention exists, skip this step.
