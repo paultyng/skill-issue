@@ -102,7 +102,7 @@ pct_used=$(( size > 0 ? current * 100 / size : 0 ))
 
 # Effort level: prefer stdin JSON, then env var, then settings.json
 effort_level=""
-effort_val=$(echo "$input" | jq -r '.effort // empty' 2>/dev/null)
+effort_val=$(echo "$input" | jq -r '.effort.level // .effort // empty' 2>/dev/null)
 [ -n "$effort_val" ] && effort_level="$effort_val"
 if [ -z "$effort_level" ] && [ -n "$CLAUDE_CODE_EFFORT_LEVEL" ]; then
     effort_level="$CLAUDE_CODE_EFFORT_LEVEL"
