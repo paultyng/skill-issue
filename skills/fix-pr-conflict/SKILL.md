@@ -54,6 +54,7 @@ When the rebase stops on a conflict:
    - Read the file to see the conflict markers.
    - Check what the base branch changed: `git log --oneline origin/<baseRefName> -- <file>` and read the relevant commits.
    - Check what the PR branch changed: review the current commit being applied (`git log --oneline -1 REBASE_HEAD`).
+   - **For >5 conflicting files, fan out the per-file analysis** to `Explore` subagents (per `parallelize-subagents` and `delegate-investigation`). Each subagent reads one file's conflict markers + the relevant base/PR commits, returns a classification (mechanical / semantic / ambiguous) plus a resolution proposal in ≤80 words, prefixed with `Status: ...` per `subagent-prompt-contract`. Main agent applies resolutions sequentially via `Edit` (Explore is read-only — it analyzes, you apply).
 4. **Classify the conflict**:
    - **Mechanical**: both sides changed nearby lines but the intent is independent (e.g. adjacent import additions, unrelated function changes). Resolve by keeping both changes with correct formatting.
    - **Semantic**: both sides changed the same logic or API in incompatible ways. Attempt to resolve if the correct outcome is clear from context.
