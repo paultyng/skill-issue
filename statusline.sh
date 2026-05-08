@@ -67,6 +67,29 @@ detect_default_branch() {
     fi
 }
 
+# Detect the diff base: prefer the remote default branch (origin/main) so
+# stats reflect "what's new vs the actual base", not whatever stale state
+# the local default branch happens to be in. Falls back to the local
+# default if no remote is configured.
+detect_default_diff_base() {
+    local cwd="$1"
+    local ref
+    ref=$(git -C "$cwd" symbolic-ref refs/remotes/origin/HEAD 2>/dev/null)
+    if [ -n "$ref" ]; then
+        echo "${ref##refs/remotes/}"
+        return
+    fi
+    if git -C "$cwd" rev-parse --verify refs/remotes/origin/main >/dev/null 2>&1; then
+        echo "origin/main"
+    elif git -C "$cwd" rev-parse --verify refs/remotes/origin/master >/dev/null 2>&1; then
+        echo "origin/master"
+    elif git -C "$cwd" rev-parse --verify refs/heads/main >/dev/null 2>&1; then
+        echo "main"
+    elif git -C "$cwd" rev-parse --verify refs/heads/master >/dev/null 2>&1; then
+        echo "master"
+    fi
+}
+
 # Format epoch timestamp to local HH:MM
 format_epoch_time() {
     local epoch="$1"
@@ -146,9 +169,11 @@ if [ -n "$toplevel" ]; then
         # Worktree indicator
         [ -n "$git_worktree" ] && out+=" ${dim}wt${reset}"
 
-        # Git diff stat vs default branch
+        # Git diff stat vs the *remote* default branch (so stats reflect
+        # what would land in the PR, not the state of stale local main).
         if [ -n "$default_branch" ] && [ "$branch" != "$default_branch" ]; then
-            diff_stat=$(git -C "$cwd" diff --shortstat "${default_branch}...HEAD" 2>/dev/null)
+            diff_base=$(detect_default_diff_base "$cwd")
+            diff_stat=$(git -C "$cwd" diff --shortstat "${diff_base:-$default_branch}...HEAD" 2>/dev/null)
             if [ -n "$diff_stat" ]; then
                 insertions=$(echo "$diff_stat" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+')
                 deletions=$(echo "$diff_stat" | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+')
