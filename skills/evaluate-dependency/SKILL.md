@@ -1,6 +1,6 @@
 ---
 name: evaluate-dependency
-description: Use when adding or evaluating a project dependency in any language — phrases like "should I use X library", "evaluate <package>", "what library for Y", or when reviewing a PR that touches a manifest (go.mod, package.json, requirements.txt, pyproject.toml, Cargo.toml, Gemfile, mix.exs, composer.json). Also use when comparing alternatives, choosing between major versions of the same package, or when review-security / review-code encounters a new dep in scope. Produces a GO/CAUTION/NO-GO verdict with the canonical package coordinate to use. Language-specific quirks (Go's SIVB /v2 paths, npm scoping, etc.) live in references/.
+description: Use when adding or evaluating a project dependency in any language — phrases like "should I use X library", "evaluate <package>", "what library for Y", or when reviewing a PR that touches a manifest (go.mod, package.json, requirements.txt, pyproject.toml, Cargo.toml, Gemfile, mix.exs, composer.json). Also use when comparing alternatives, choosing between major versions of the same package, or when review-security / review-code encounters a new dep in scope. Produces a GO/CAUTION/NO-GO verdict with the canonical package coordinate to use. Language-specific quirks (Go's semantic import versioning /v2 paths, npm scoping, etc.) live in references/.
 ---
 
 # Evaluate Dependency
