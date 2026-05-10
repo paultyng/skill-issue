@@ -194,6 +194,7 @@ Notes:
 - The diff anchor format (`#diff-<sha256(path).first32>`) is GitHub's stable but undocumented convention. If GitHub ever changes it, only `pr-deeplink.sh` needs updating.
 - For file-level findings (no specific line), call the helper without `<line>` to emit a file-anchor link.
 - `Tracked` column entries that include `path:line` (e.g. `TODO in foo.go:42`) follow the same wrapping rule.
+- Findings themselves follow `terse-comments` — concrete fix, optional `bug:`/`risk:`/`nit:`/`unsure:` prefix, no praise or restating the diff.
 
 This applies to the consolidated tables below **and** to per-category finding tables emitted by each subagent (which are reproduced into the consolidated report).
 
