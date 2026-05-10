@@ -35,6 +35,9 @@ Use [Conventional Commits](https://www.conventionalcommits.org/) format derived 
 
 ## 4. Generate body
 
+Apply `terse-output` to the body: bullets over prose, no filler ("just", "really"), no hedge openers ("I noticed that…", "You might want to consider…"). Lead with what changed and why; skip implementation play-by-play.
+
+
 **With template**: read the template file and fill its sections from the diff (`git diff <base>...HEAD`) and commit history. Preserve the template's structure, headings, comments, and checklists exactly. Leave checklist items unchecked unless the work demonstrably satisfies them. For sections that do not apply, mark them `N/A` only if the template requires a value — otherwise leave the section body empty.
 
 Do not strip HTML comments from the template (they are often instructions to the PR author and may be intentionally rendered as hidden guidance).

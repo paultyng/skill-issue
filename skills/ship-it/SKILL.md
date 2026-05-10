@@ -34,6 +34,8 @@ Common types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`, `build`.
 
 Always create a new commit. Never amend.
 
+Apply `terse-output` commit-message tone: imperative subject ≤72 chars, body explains *why* (the diff shows what), no "this commit does X" / "I" / "we" / "now". Keep the `Co-Authored-By: Claude…` attribution.
+
 ## 4. Push and PR
 
 Push the current branch:
