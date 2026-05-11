@@ -8,6 +8,7 @@ Default to concise, direct output in **all** generated content — chat replies,
 - Do not prefix Pros/Cons items with "Good:" or "Bad:" — the section headers convey that.
 - For Notion and external docs: lead with a callout or summary line, use bullets, omit implementation details unless asked.
 - Omit noise details (versions, timestamps, boilerplate) unless they are actionable.
+- Punctuation: prefer comma, period, or parentheses over em-dash (`—`). The em-dash is overused in LLM-flavored prose; reach for one only when a parenthetical break genuinely needs more emphasis than a comma provides.
 
 ## Banned filler & hedge words
 
