@@ -50,7 +50,7 @@ If a PR exists for the current branch, update its title and description to refle
 gh pr edit --title "<title>" --body-file /tmp/pr-body.md
 ```
 
-For PRs with diffs over ~20 files or ~500 lines, **delegate body authoring to a subagent** per `parallelize-subagents` and `subagent-prompt-contract`: paste the commit list and `git diff --stat` inline, ask for a summary section + bullet list of notable changes capped at ~200 words, and have the subagent return with the four-state Status line. Main writes `/tmp/pr-body.md` from the summary. Small PRs stay inline.
+For PRs with diffs over ~20 files or ~500 lines, **delegate body authoring to a subagent** (`model: sonnet` per `subagent-model-routing` — PR-body authoring from a non-trivial diff requires real synthesis reasoning) per `parallelize-subagents` and `subagent-prompt-contract`: paste the commit list and `git diff --stat` inline, ask for a summary section + bullet list of notable changes capped at ~200 words, and have the subagent return with the four-state Status line. Main writes `/tmp/pr-body.md` from the summary. Small PRs stay inline.
 
 If no PR exists, run [create-pr](../create-pr/SKILL.md) to open one.
 

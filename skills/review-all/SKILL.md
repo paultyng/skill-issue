@@ -80,11 +80,11 @@ if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR="reviews/${REVIEW_DATE}-$(date +%H%M)";
 mkdir -p "$REVIEW_DIR"
 ```
 
-Then launch a `/discover-patterns` subagent (`subagent_type="generalPurpose"`) with the resolved scope and `REVIEW_DIR`, instructing it to write to `${REVIEW_DIR}/PATTERNS.md`. Pass `REVIEW_DIR` to review-code's prompt so its Conformance Check subagent reads `${REVIEW_DIR}/PATTERNS.md`. Other review subagents (security, reliability, database, documentation) can launch in parallel with this step since they don't depend on it; only review-code must wait for it to complete.
+Then launch a `/discover-patterns` subagent (`subagent_type="generalPurpose"`, `model: opus` per `subagent-model-routing` — architecture-level pattern discovery) with the resolved scope and `REVIEW_DIR`, instructing it to write to `${REVIEW_DIR}/PATTERNS.md`. Pass `REVIEW_DIR` to review-code's prompt so its Conformance Check subagent reads `${REVIEW_DIR}/PATTERNS.md`. Other review subagents (security, reliability, database, documentation) can launch in parallel with this step since they don't depend on it; only review-code must wait for it to complete.
 
 ### 3. Launch review subagents in parallel
 
-Launch applicable review skills concurrently using the Task tool (max 4 at a time; if more than 4, launch the first 4 and the remaining after one completes). Each subagent is `subagent_type="generalPurpose"`.
+Launch applicable review skills concurrently using the Task tool (max 4 at a time; if more than 4, launch the first 4 and the remaining after one completes). Each subagent is `subagent_type="generalPurpose"`, `model: sonnet` (per `subagent-model-routing` — structured analysis with code-level findings).
 
 For each subagent, include in its prompt:
 - The system overview and flow mapping from step 2
@@ -111,7 +111,7 @@ Each subagent should NOT write its own output file; it returns findings to this 
 
 ### 4. Launch summarization subagent
 
-After all review subagents complete, launch a single summarization subagent (`subagent_type="generalPurpose"`) with the full findings from each review subagent. Pass `pr_url` so it can preserve and apply the [Finding link wrapping](#finding-link-wrapping) convention when rewriting tables.
+After all review subagents complete, launch a single summarization subagent (`subagent_type="generalPurpose"`, `model: opus` per `subagent-model-routing` — cross-cutting dedup and prioritization across all review domains) with the full findings from each review subagent. Pass `pr_url` so it can preserve and apply the [Finding link wrapping](#finding-link-wrapping) convention when rewriting tables.
 
 Prompt it to:
 1. **Deduplicate** overlapping findings across all reviews (many findings appear in multiple analyses, e.g. security and reliability, security and Go best practices, or a coverage gap on a function flagged by reliability/security as risky).

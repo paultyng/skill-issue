@@ -21,7 +21,7 @@ Structured database review producing actionable, prioritized findings with code-
 
 ### 2. Launch investigation subagent
 
-Launch a single investigation subagent (`subagent_type="generalPurpose"`) with the list of in-scope files.
+Launch a single investigation subagent (`subagent_type="generalPurpose"`, `model: sonnet` per `subagent-model-routing`) with the list of in-scope files.
 
 Prompt it to:
 - Read all in-scope `.sql` files, schema definitions, and source files that interact with the database.

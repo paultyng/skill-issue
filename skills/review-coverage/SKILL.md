@@ -78,7 +78,9 @@ Severity is applied by the investigation subagent's judgment based on reading th
 
 ### 7. Launch investigation subagent
 
-Launch a single investigation subagent (`subagent_type="generalPurpose"`) with the system context, scope, and parsed coverage data.
+Launch a single investigation subagent (`subagent_type="generalPurpose"`, `model: sonnet` per `subagent-model-routing`) with the system context, scope, and parsed coverage data.
+
+> **Future fan-out note:** If this skill is ever split into per-package subagents for large codebases (e.g. listing uncovered functions per package), use `model: haiku` per `subagent-model-routing` — per-package uncovered-function listing is mechanical aggregation.
 
 Prompt it to:
 - Read the in-scope `.go` files and any directly relevant test files in the same package.

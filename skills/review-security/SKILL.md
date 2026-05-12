@@ -40,7 +40,7 @@ Launch applicable investigation subagents concurrently using the Task tool. Each
 
 Every investigation subagent must check each finding against existing documentation: TODO comments, README notes, FIXME/HACK/XXX comments, and issue tracker references. Report tracked findings but mark them accordingly.
 
-**Subagent A — STRIDE Threat Model** (`subagent_type="generalPurpose"`, requires code or infra files)
+**Subagent A — STRIDE Threat Model** (`subagent_type="generalPurpose"`, `model: opus` per `subagent-model-routing` — always on; threat modeling requires design-level reasoning, requires code or infra files)
 
 Prompt the subagent to:
 - Read all in-scope source files.
@@ -49,7 +49,7 @@ Prompt the subagent to:
 - Return findings using the **per-category findings** template with S/T/R/I/D/E prefixes.
 - Every finding must include specific file paths, line numbers or function names, a severity rating (CRITICAL / HIGH / MEDIUM / LOW), and tracking status.
 
-**Subagent B — OWASP Top 10 Analysis** (`subagent_type="generalPurpose"`, requires code or infra files)
+**Subagent B — OWASP Top 10 Analysis** (`subagent_type="generalPurpose"`, `model: opus` per `subagent-model-routing` — always on; threat modeling requires design-level reasoning, requires code or infra files)
 
 Prompt the subagent to:
 - Read all in-scope source files.
@@ -58,7 +58,7 @@ Prompt the subagent to:
 - Return findings using the **per-category findings** template with A01–A10 prefixes.
 - Every finding must include specific file paths, line numbers or function names, a severity rating, and tracking status.
 
-**Subagent C — Security Static Analysis** (`subagent_type="generalPurpose"`, requires `.go` files)
+**Subagent C — Security Static Analysis** (`subagent_type="generalPurpose"`, `model: sonnet` per `subagent-model-routing` — tool wrangling and output parsing, not threat modeling, requires `.go` files)
 
 Prompt the subagent to run automated security scanning tools via Shell and report findings with `SEC-` prefixed IDs. In each command below, replace `./...` with the resolved package paths when scope is narrowed (e.g. `./internal/auth/...`). Use `./...` only for full-codebase scope.
 - **gosec**: `go run github.com/securego/gosec/v2/cmd/gosec@latest -fmt json -quiet ./...`. Parse JSON output for security findings. Map each gosec rule to the relevant STRIDE/OWASP category.

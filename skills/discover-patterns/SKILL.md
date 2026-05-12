@@ -20,7 +20,9 @@ Analyze a codebase to discover and document its implicit architectural and imple
 
 ### 2. Launch discovery subagents in parallel
 
-Launch up to 4 concurrent subagents (`subagent_type="generalPurpose"`), each covering a group of pattern categories from the taxonomy. Each subagent reads all relevant files and identifies recurring patterns.
+Launch up to 4 concurrent subagents (`subagent_type="generalPurpose"`, `model: opus` per `subagent-model-routing` — architecture-level pattern discovery requires deep reasoning across the codebase), each covering a group of pattern categories from the taxonomy. Each subagent reads all relevant files and identifies recurring patterns.
+
+> **Future fan-out note:** If per-pattern occurrence counting is ever split into a dedicated fan-out step (e.g. counting occurrences of a discovered pattern across all packages), use `model: haiku` per `subagent-model-routing` — occurrence counting is mechanical lookup.
 
 | Subagent | Categories | Requires |
 |---|---|---|

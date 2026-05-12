@@ -49,7 +49,7 @@ Run through these. Cite specific data: no hand-waving, no `I think`.
 
 2. **Resolve canonical coordinate.** Read the per-language reference if one exists; apply its rules **first**. This is non-negotiable. Examples: Go's `/vN` path probe, npm's scope check, Python's distribution-name lookup.
 
-3. **Survey alternatives** (selection mode, optional). When multiple candidates are in the running, delegate per-candidate evaluation to `Explore` subagents (per `parallelize-subagents` and `delegate-investigation`). Each subagent returns one verdict table prefixed with `Status:` per `subagent-prompt-contract`. Parent merges.
+3. **Survey alternatives** (selection mode, optional). When multiple candidates are in the running, delegate per-candidate data lookups to `Explore` subagents (`model: haiku` per `subagent-model-routing` — mechanical lookup across 8 fixed criteria; per `parallelize-subagents` and `delegate-investigation`). Each subagent returns one verdict table prefixed with `Status:` per `subagent-prompt-contract`. Parent merges and applies the final verdict synthesis (`model: opus` per `subagent-model-routing` — hard reasoning combining multiple criteria across candidates).
 
 4. **Run the 8 criteria** against the resolved coordinate. Cite specific numbers, dates, license names.
 

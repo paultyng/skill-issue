@@ -35,11 +35,13 @@ On failure, fetch logs for the failed job(s):
 gh run view <run_id> --log-failed
 ```
 
-**Delegate log analysis to a subagent** when the failed-log output is more than ~200 lines. CI logs flood main context fast and the parent only needs the root cause, not the raw output. Per `parallelize-subagents` and `delegate-investigation`:
+**Delegate log analysis to a two-stage subagent pipeline** when the failed-log output is more than ~200 lines. CI logs flood main context fast and the parent only needs the root cause, not the raw output. Per `parallelize-subagents`, `delegate-investigation`, and `subagent-model-routing`:
 
-- Spawn an `Explore` subagent per failed job (parallel if multiple jobs failed).
-- Prompt per `subagent-prompt-contract`: paste the **command to fetch the log** (not the log itself) plus the failure categories below; ask for "first failing assertion + likely root cause + file:line if identifiable, ≤100 words, prefixed with `Status: ...`".
-- Parent receives the summary, decides the fix.
+**Stage 1 — Extract (Haiku):** Spawn an `Explore` subagent (`model: haiku`) per failed job (parallel if multiple jobs failed). Prompt: paste the **command to fetch the log** (not the log itself); ask for "first failing assertion + ~10 lines of surrounding context, ≤50 lines, prefixed with `Status: ...`". Haiku handles the mechanical extraction; no interpretation needed at this stage.
+
+**Stage 2 — Interpret (Sonnet):** After Stage 1 completes, spawn a `generalPurpose` subagent (`model: sonnet`) with the Stage 1 structured output pasted inline plus the failure categories below. Ask for "likely root cause + file:line if identifiable, ≤100 words, prefixed with `Status: ...`".
+
+- Parent receives the Stage 2 summary, decides the fix.
 
 For short logs (<200 lines), inspect inline.
 
