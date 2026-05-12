@@ -15,7 +15,7 @@ Structured reliability review producing actionable, prioritized findings with co
 - **Resolve scope to a file/package list.** Based on what the user requested:
   - **Changed files (PR or branch):** Run `git diff --name-only --diff-filter=d <base>...HEAD` to get changed files (default `<base>` is `main`). If the user references a PR number, use `gh pr diff <number> --name-only` instead. Filter to relevant file types (`.go`, config files, Kubernetes manifests). Derive affected Go packages from the file paths (unique parent directories containing `.go` files).
   - **Explicit paths/packages:** The user may specify directories (e.g. `internal/auth/`), Go package patterns (e.g. `./internal/auth/...`), or individual files. When given a directory or package pattern, include all files under it.
-  - **Full codebase:** No filtering — explore everything (default).
+  - **Full codebase:** No filtering; explore everything (default).
 - **Pass the resolved scope** (file list) to all exploration and investigation subagents so they only read and analyze scoped files.
 - Explore the scoped code using parallel subagents (`subagent_type="explore"`). Read all relevant source files, configs, Kubernetes manifests, and deployment definitions.
 
@@ -100,7 +100,7 @@ Header template (placed at the top of the output `.md`, before the H1 title):
 
 ## Finding link wrapping (PR mode)
 
-When the review is scoped to a GitHub PR — `pr_url` is provided by the caller, or, when run standalone, `gh pr view --json url -q .url 2>/dev/null` returns one — wrap every `path:line` reference inside the finding tables below as a Markdown link:
+When the review is scoped to a GitHub PR (`pr_url` is provided by the caller, or, when run standalone, `gh pr view --json url -q .url 2>/dev/null` returns one), wrap every `path:line` reference inside the finding tables below as a Markdown link:
 
 ```sh
 ~/.claude/scripts/pr-deeplink.sh "$pr_url" <path> <line>
@@ -108,7 +108,7 @@ When the review is scoped to a GitHub PR — `pr_url` is provided by the caller,
 # pr_url empty → path:line   (plain text, unchanged)
 ```
 
-The display text stays `path:line` so plain and linked tables look identical; only the URL goes in the link target. Pass `L` as the fourth argument for findings about removed code (default is `R`). Omit `<line>` for file-level findings to get a file-anchor link. Apply the same wrapping to `path:line` references inside the Tracked column (e.g. `TODO in foo.go:42`). Findings themselves follow `terse-comments` — concrete fix, optional `bug:`/`risk:`/`nit:`/`unsure:` prefix, no praise or restating the diff.
+The display text stays `path:line` so plain and linked tables look identical; only the URL goes in the link target. Pass `L` as the fourth argument for findings about removed code (default is `R`). Omit `<line>` for file-level findings to get a file-anchor link. Apply the same wrapping to `path:line` references inside the Tracked column (e.g. `TODO in foo.go:42`). Findings themselves follow `terse-comments`: concrete fix, optional `bug:`/`risk:`/`nit:`/`unsure:` prefix, no praise or restating the diff.
 
 ---
 

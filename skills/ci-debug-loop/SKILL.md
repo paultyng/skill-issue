@@ -80,4 +80,4 @@ Then watch it (back to step 2).
 
 Report what was tried, what failed, and what options remain.
 
-**Escalate to `bisect`** when log analysis can't pinpoint *which change* broke the job — typical signs: failure looks unrelated to the recent diff, error message points at code untouched in the branch, or a previously-green test on the same branch is now red. Hand the failing test/command to `/bisect` as the reproducer; it isolates the offending commit.
+**Escalate to `bisect`** when log analysis can't pinpoint *which change* broke the job. Typical signs: failure looks unrelated to the recent diff, error message points at code untouched in the branch, or a previously-green test on the same branch is now red. Hand the failing test/command to `/bisect` as the reproducer; it isolates the offending commit.

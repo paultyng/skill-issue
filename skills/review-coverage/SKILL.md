@@ -15,7 +15,7 @@ Structured Go test-coverage review producing actionable findings: which new or m
 - **Resolve scope to a file/package list.** Based on what the user requested:
   - **Changed files (PR or branch):** Run `git diff --name-only --diff-filter=d <base>...HEAD` to get changed files (default `<base>` is `main`). If the user references a PR number, use `gh pr diff <number> --name-only` instead. Filter to `.go` files. Derive affected Go packages from the file paths (unique parent directories containing `.go` files).
   - **Explicit paths/packages:** The user may specify directories (e.g. `internal/auth/`), Go package patterns (e.g. `./internal/auth/...`), or individual files. When given a directory or package pattern, include all `.go` files under it.
-  - **Full codebase:** No filtering — coverage analysis applies to every package (default).
+  - **Full codebase:** No filtering. Coverage analysis applies to every package (default).
 - **Filter the resolved file list:**
   - `.go` files only
   - Exclude `_test.go`
@@ -34,7 +34,7 @@ go test -short -count=1 -covermode=atomic -coverprofile=coverage.out -coverpkg=.
 
 `-coverpkg=./...` ensures cross-package coverage so e2e and integration tests count toward unit packages.
 
-If the test suite fails, surface the failure and stop — do not attempt partial analysis or report misleading 0% coverage.
+If the test suite fails, surface the failure and stop. Do not attempt partial analysis or report misleading 0% coverage.
 
 If a `Taskfile.yaml` defines a `test:cover` (or similar) target that runs equivalent coverage, prefer it over the raw command and capture its `coverage.out` output. If unsure, run the raw command above.
 
@@ -70,11 +70,11 @@ Either way, persist the current profile to `${REVIEW_DIR}/coverage.out` so the n
 
 Apply heuristics to each uncovered function:
 
-- **HIGH** — function name or body involves error returns, security-sensitive operations (auth, decode, validate, sign, verify, decrypt, sanitize, escape), or panics/`os.Exit` calls
-- **MEDIUM** — uncovered business logic in non-helper packages with non-trivial branching
-- **LOW** — getters, setters, formatters, `String()` / `Error()` methods, trivial constructors, stringer-generated functions
+- **HIGH**: function name or body involves error returns, security-sensitive operations (auth, decode, validate, sign, verify, decrypt, sanitize, escape), or panics/`os.Exit` calls
+- **MEDIUM**: uncovered business logic in non-helper packages with non-trivial branching
+- **LOW**: getters, setters, formatters, `String()` / `Error()` methods, trivial constructors, stringer-generated functions
 
-Severity is applied by the investigation subagent's judgment based on reading the function body — no automated complexity check in v1.
+Severity is applied by the investigation subagent's judgment based on reading the function body. No automated complexity check in v1.
 
 ### 7. Launch investigation subagent
 
@@ -141,7 +141,7 @@ Header template (placed at the top of the output `.md`, before the H1 title):
 
 ## Finding link wrapping (PR mode)
 
-When the review is scoped to a GitHub PR — `pr_url` is provided by the caller, or, when run standalone, `gh pr view --json url -q .url 2>/dev/null` returns one — wrap every `path:line` reference inside the finding tables below as a Markdown link:
+When the review is scoped to a GitHub PR (`pr_url` is provided by the caller, or, when run standalone, `gh pr view --json url -q .url 2>/dev/null` returns one), wrap every `path:line` reference inside the finding tables below as a Markdown link:
 
 ```sh
 ~/.claude/scripts/pr-deeplink.sh "$pr_url" <path> <line>
@@ -149,7 +149,7 @@ When the review is scoped to a GitHub PR — `pr_url` is provided by the caller,
 # pr_url empty → path:line   (plain text, unchanged)
 ```
 
-The display text stays `path:line` so plain and linked tables look identical; only the URL goes in the link target. Pass `L` as the fourth argument for findings about removed code (default is `R`). Omit `<line>` for file-level findings to get a file-anchor link. Apply the same wrapping to `path:line` references inside the Tracked column (e.g. `TODO in foo.go:42`). Findings themselves follow `terse-comments` — concrete fix, optional `bug:`/`risk:`/`nit:`/`unsure:` prefix, no praise or restating the diff.
+The display text stays `path:line` so plain and linked tables look identical; only the URL goes in the link target. Pass `L` as the fourth argument for findings about removed code (default is `R`). Omit `<line>` for file-level findings to get a file-anchor link. Apply the same wrapping to `path:line` references inside the Tracked column (e.g. `TODO in foo.go:42`). Findings themselves follow `terse-comments`: concrete fix, optional `bug:`/`risk:`/`nit:`/`unsure:` prefix, no praise or restating the diff.
 
 ---
 
@@ -193,15 +193,15 @@ When no baseline exists, omit the **Delta** column. When `has_changes` is false,
 
 ## Guidelines
 
-- **Single subagent.** This skill uses one investigation subagent — coverage parsing is mechanical and the only judgment call is severity grading.
+- **Single subagent.** This skill uses one investigation subagent; coverage parsing is mechanical and the only judgment call is severity grading.
 - **When called from review-all**, skip standalone `REVIEW_DIR` resolution (the orchestrator owns it) and skip scope confirmation. Use the provided file list, package paths, `has_changes` flag, base ref, and `REVIEW_DIR`.
 - **No follow-up re-evaluation table.** Coverage findings are derivable from current state on every run, unlike static-analysis findings which can persist after a fix.
 - **REVIEW.md integration**: If a `REVIEW.md` was provided by the review-all orchestrator (or exists at the repo root when running standalone), respect any **Skip** patterns by excluding matching files from scope, and treat any **Always check** rules touching coverage thresholds as HIGH-severity floors.
-- **Test failures stop the analysis.** Do not generate a coverage report from a failed test run — the profile would be misleading or incomplete.
+- **Test failures stop the analysis.** Do not generate a coverage report from a failed test run; the profile would be misleading or incomplete.
 
 ### Boundary with adjacent skills
 
-This skill's exclusive concern is **new or modified Go code in this diff that the test suite does not exercise**. Two adjacent skills cover related but distinct concerns — do not duplicate their checks here:
+This skill's exclusive concern is **new or modified Go code in this diff that the test suite does not exercise**. Two adjacent skills cover related but distinct concerns; do not duplicate their checks here:
 
 - **review-reliability** checks **goroutine leak coverage** via `goleak.VerifyNone` / `goleak.VerifyTestMain` in tests. Different axis: leak detection in tests, not line/function coverage of source.
 - **review-code** Subagent F (Regression History) flags **test removal or weakening** in the diff (regressions from gutting tests). Different axis: deleted-test detection on the diff side, not uncovered-new-code detection.

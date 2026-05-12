@@ -1,21 +1,21 @@
-# Reliability Review — Framework Reference
+# Reliability Review: Framework Reference
 
 Detailed checklists for reliability analysis. The SKILL.md workflow references this file.
 
 Reference sources:
-- [Release It!](https://pragprog.com/titles/mnee2/release-it-second-edition/) — Michael Nygard (stability patterns and anti-patterns)
-- [gRPC Health Checking Protocol](https://github.com/grpc/grpc/blob/master/doc/health-checking.md) — `grpc.health.v1`
-- [gRPC Service Config](https://grpc.io/docs/guides/service-config/) — retry policies, method deadlines, load balancing
+- [Release It!](https://pragprog.com/titles/mnee2/release-it-second-edition/), Michael Nygard (stability patterns and anti-patterns)
+- [gRPC Health Checking Protocol](https://github.com/grpc/grpc/blob/master/doc/health-checking.md): `grpc.health.v1`
+- [gRPC Service Config](https://grpc.io/docs/guides/service-config/): retry policies, method deadlines, load balancing
 - [Kubernetes Graceful Shutdown as a Contract](https://www.michal-drozd.com/en/blog/kubernetes-graceful-shutdown-rollouts/)
 
 ## Graceful Shutdown Contract
 
 Four invariants for zero-downtime rollouts on Kubernetes:
 
-1. **Stop routing new traffic first** — readiness probe returns not-ready before the process begins draining, so Kubernetes removes the pod from endpoints before shutdown logic runs
-2. **Stop accepting new work inside the process** — server stops accepting new RPCs/connections (e.g. `grpcServer.GracefulStop()`)
-3. **Finish in-flight work within a bounded time** — all in-progress requests complete or are cancelled before the deadline; use a context with timeout wrapping `GracefulStop`
-4. **Exit before SIGKILL** — the total drain time (preStop hook + drain + safety margin) must fit within `terminationGracePeriodSeconds`
+1. **Stop routing new traffic first**: readiness probe returns not-ready before the process begins draining, so Kubernetes removes the pod from endpoints before shutdown logic runs
+2. **Stop accepting new work inside the process**: server stops accepting new RPCs/connections (e.g. `grpcServer.GracefulStop()`)
+3. **Finish in-flight work within a bounded time**: all in-progress requests complete or are cancelled before the deadline; use a context with timeout wrapping `GracefulStop`
+4. **Exit before SIGKILL**: the total drain time (preStop hook + drain + safety margin) must fit within `terminationGracePeriodSeconds`
 
 What to check in code:
 - SIGTERM signal handler is registered and triggers the shutdown sequence
@@ -89,14 +89,14 @@ Patterns to check for presence in the codebase:
 - Packages that spawn goroutines (look for `go func` and `go ` keyword patterns in source) should have goroutine leak checks in their tests
 - `goleak.VerifyTestMain(m)` in `TestMain` provides package-wide leak detection
 - `goleak.VerifyNone(t)` in individual tests provides per-test leak detection
-- Flag packages that spawn goroutines but have no goleak usage in `*_test.go` files — this is a strong proxy for whether goroutine leaks are being tested for
+- Flag packages that spawn goroutines but have no goleak usage in `*_test.go` files. This is a strong proxy for whether goroutine leaks are being tested for
 
 ## Stability Anti-Patterns (Release It!)
 
 Anti-patterns to detect and flag:
 
 **Integration Points:**
-- Outbound calls without timeout, retry, or error handling — each is a cascading failure vector
+- Outbound calls without timeout, retry, or error handling; each is a cascading failure vector
 - Direct coupling to a dependency's internal behavior (e.g. parsing raw error strings instead of using status codes)
 
 **Cascading Failures:**

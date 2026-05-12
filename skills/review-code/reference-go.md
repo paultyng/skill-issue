@@ -1,4 +1,4 @@
-# Go Best Practices — Reference
+# Go Best Practices Reference
 
 Reference sources:
 - [Go Code Review Comments](https://go.dev/wiki/CodeReviewComments)
@@ -8,7 +8,7 @@ Reference sources:
 
 ## Error Handling
 
-- Errors are values — handle them, don't discard with `_`
+- Errors are values. Handle them, don't discard with `_`
 - Don't just check errors, handle them gracefully
 - Don't panic for normal error handling; use error and multiple return values
 - Indent error flow: keep the happy path at minimal indentation, return early on error
@@ -28,7 +28,7 @@ Reference sources:
 - Concurrency is not parallelism
 - Channels orchestrate; mutexes serialize
 - Goroutine lifetimes: make it clear when they exit; document if not obvious
-- Prefer synchronous functions over async — callers can add concurrency
+- Prefer synchronous functions over async; callers can add concurrency
 
 ## Functions and Design
 
@@ -76,16 +76,16 @@ Reference: [staticcheck](https://staticcheck.dev)
 Staticcheck provides ~150 checks built on Go's SSA representation, covering bugs, simplifications, dead code, and deprecated API usage. Run via `go run honnef.co/go/tools/cmd/staticcheck@latest ./...` (no install required).
 
 Key check categories:
-- **SA** (staticcheck): correctness bugs — nil dereferences, infinite loops, unreachable code, leaked goroutines, deprecated stdlib usage
-- **S** (simple): simplifications — redundant type conversions, unnecessary nil checks, replaceable loops
-- **ST** (stylecheck): style — naming conventions, doc comment format, error string capitalization
+- **SA** (staticcheck): correctness bugs (nil dereferences, infinite loops, unreachable code, leaked goroutines, deprecated stdlib usage)
+- **S** (simple): simplifications (redundant type conversions, unnecessary nil checks, replaceable loops)
+- **ST** (stylecheck): style (naming conventions, doc comment format, error string capitalization)
 - **QF** (quickfix): automated refactoring suggestions
 
 ## Unchecked Errors
 
 Reference: [errcheck](https://github.com/kisielk/errcheck)
 
-Errcheck detects unchecked error return values — the single most common Go bug pattern. Run via `go run github.com/kisielk/errcheck@latest ./...` (no install required).
+Errcheck detects unchecked error return values, the single most common Go bug pattern. Run via `go run github.com/kisielk/errcheck@latest ./...` (no install required).
 
 - Reports one line per unchecked error with file:line:col
 - Very low false-positive rate
@@ -117,15 +117,15 @@ Exhaustive checks that switch statements on enum types cover all values. Run via
 
 Reference: [revive](https://github.com/mgechev/revive)
 
-Revive is a fast, extensible Go linter that replaces `golint`. Run via `go run github.com/mgechev/revive@latest ./...` (no install required). Only run if the project's `.golangci.yml` enables it — use the project's revive config.
+Revive is a fast, extensible Go linter that replaces `golint`. Run via `go run github.com/mgechev/revive@latest ./...` (no install required). Only run if the project's `.golangci.yml` enables it; use the project's revive config.
 
 Notable rules to look for:
-- `argument-limit` — functions with too many parameters should use functional options or a config struct
-- `function-result-limit` — functions returning too many values should consolidate into a struct
-- `context-as-argument`, `context-keys-type` — context usage correctness
-- `error-return`, `error-naming` — error convention enforcement
-- `unexported-return`, `exported` — visibility and doc comment enforcement
-- `import-shadowing`, `waitgroup-by-value` — common bug patterns
+- `argument-limit`: functions with too many parameters should use functional options or a config struct
+- `function-result-limit`: functions returning too many values should consolidate into a struct
+- `context-as-argument`, `context-keys-type`: context usage correctness
+- `error-return`, `error-naming`: error convention enforcement
+- `unexported-return`, `exported`: visibility and doc comment enforcement
+- `import-shadowing`, `waitgroup-by-value`: common bug patterns
 
 ---
 

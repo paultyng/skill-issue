@@ -51,7 +51,7 @@ When scope is large, delegate per-area data collection to subagents so main cont
 |---|---|
 | Distribution mode, "whole repo" or >20 directories in scope | One `Explore` subagent per top-level directory; each runs its tiered collection and returns the per-area summary only. |
 | Reviewer mode, >20 changed files | Batch files in groups of ~10; one `Explore` subagent per batch returning per-file expert lists. |
-| Tier 3 line-level on >5 files | One `Explore` subagent per file — blame output is voluminous. |
+| Tier 3 line-level on >5 files | One `Explore` subagent per file (blame output is voluminous). |
 | Anything smaller | Run inline. Don't spin up a subagent for one `git shortlog`. |
 
 Each subagent prompt follows `subagent-prompt-contract`:
@@ -66,7 +66,7 @@ Parent merges per-area returns into the final table in step 5.
 
 ## 3. Collect Data (Tiered)
 
-### Tier 1 — Commit counts (always run, fast)
+### Tier 1: Commit counts (always run, fast)
 
 ```bash
 git shortlog -sne --no-merges $MAILMAP_FLAG -- <paths> | head -20
@@ -74,7 +74,7 @@ git shortlog -sne --no-merges $MAILMAP_FLAG -- <paths> | head -20
 
 Use this for a quick overview. Sufficient when the user just wants a rough sense.
 
-### Tier 2 — File-level changes (default)
+### Tier 2: File-level changes (default)
 
 ```bash
 git log --no-merges --since="2 years ago" $MAILMAP_FLAG \
@@ -85,7 +85,7 @@ Parse with jq pipelines from [reference.md](reference.md). This produces per-aut
 
 For large repos or broad scope, add `--since="1 year ago"` to keep it fast.
 
-### Tier 3 — Line-level blame (opt-in, small file sets only)
+### Tier 3: Line-level blame (opt-in, small file sets only)
 
 Only use when:
 - User explicitly asks for deep/line-level analysis
@@ -114,7 +114,7 @@ Weight contributions by age:
 ### Reviewer Mode
 
 1. For each file in scope, compute weighted contribution score per author
-2. Aggregate across all files — an author touching many of the changed files scores higher
+2. Aggregate across all files: an author touching many of the changed files scores higher
 3. Exclude the PR author (current `git config user.name`) from suggestions
 4. Rank by score, present top 3–5
 5. For each reviewer, list the directories/files where they have the most expertise
@@ -160,7 +160,7 @@ Output directly to terminal. No file output.
 
 ### Concentration Warnings
 
-- **internal/auth/oauth/**: single expert — Alice authored 94% of recent changes
+- **internal/auth/oauth/**: single expert; Alice authored 94% of recent changes
 - **internal/auth/jwt/**: two experts with significant overlap
 ```
 
@@ -173,6 +173,6 @@ Output directly to terminal. No file output.
 ## Guidelines
 
 - Use `jq` for all JSON/pipeline processing (see [reference.md](reference.md) for templates)
-- Present findings conversationally — tables for data, plain text for warnings and recommendations
+- Present findings conversationally: tables for data, plain text for warnings and recommendations
 - When suggesting reviewers, mention *why* each person is suggested (which files/areas they know)
 - For distribution analysis, lead with the highest-risk areas

@@ -3,11 +3,11 @@
 Checklist for reviewing horizontally sharded databases. The SKILL.md workflow references this file when sharding is detected.
 
 Reference sources:
-- [Vitess Sharding Guidelines](https://vitess.io/docs/22.0/user-guides/vschema-guide/sharding-guidelines) — sharding key selection, co-location, cross-shard transactions
-- [Vitess Query Plans Classification](https://vitess.io/docs/22.0/reference/query-serving/metrics) — query plan types and scatter detection
-- [PlanetScale: Avoiding Cross-Shard Queries](https://planetscale.com/docs/vitess/sharding/avoiding-cross-shard-queries) — practical Vitess sharding patterns
-- [Citus: Choosing Distribution Column](https://learn.microsoft.com/en-us/postgresql/citus/data-modeling?view=citus-14) — PostgreSQL sharding key selection and co-location
-- *Designing Data-Intensive Applications* (Kleppmann), Chapter 6 — partitioning strategies, hot spots, skewed workloads
+- [Vitess Sharding Guidelines](https://vitess.io/docs/22.0/user-guides/vschema-guide/sharding-guidelines). Sharding key selection, co-location, cross-shard transactions
+- [Vitess Query Plans Classification](https://vitess.io/docs/22.0/reference/query-serving/metrics). Query plan types and scatter detection
+- [PlanetScale: Avoiding Cross-Shard Queries](https://planetscale.com/docs/vitess/sharding/avoiding-cross-shard-queries). Practical Vitess sharding patterns
+- [Citus: Choosing Distribution Column](https://learn.microsoft.com/en-us/postgresql/citus/data-modeling?view=citus-14). PostgreSQL sharding key selection and co-location
+- *Designing Data-Intensive Applications* (Kleppmann), Chapter 6. Partitioning strategies, hot spots, skewed workloads
 
 Apply this checklist when the project uses a sharded database (Vitess, PlanetScale, Citus, Spanner, CockroachDB, or any custom sharding layer). Skip if the database is unsharded.
 
@@ -22,7 +22,7 @@ Apply this checklist when the project uses a sharded database (Vitess, PlanetSca
 ## Sharding Key in Hot-Path Queries
 
 - Every data-plane / high-QPS query (`SELECT`, `UPDATE`, `DELETE`) MUST include the sharding key in its `WHERE` clause so the router targets a single shard (or minimal shard subset)
-- Queries that omit the sharding key become scatter queries — broadcast to every shard, with cost scaling linearly with shard count
+- Queries that omit the sharding key become scatter queries, broadcast to every shard, with cost scaling linearly with shard count
 - Flag any hot-path query that does not filter on the sharding key
 
 ## Co-location for Joins and Transactions
@@ -34,10 +34,10 @@ Apply this checklist when the project uses a sharded database (Vitess, PlanetSca
 ## Scatter Query Anti-Patterns
 
 - `SELECT` / `UPDATE` / `DELETE` without sharding key in `WHERE` (full scatter)
-- Aggregations across all shards (`COUNT(*)`, `SUM()`, `ORDER BY`) without a shard-scoped filter — each shard computes partial results and the coordinator must merge
-- Pagination (`LIMIT` / `OFFSET`) without sharding key — every shard processes the full offset, then results are merged and re-sorted
+- Aggregations across all shards (`COUNT(*)`, `SUM()`, `ORDER BY`) without a shard-scoped filter: each shard computes partial results and the coordinator must merge
+- Pagination (`LIMIT` / `OFFSET`) without sharding key: every shard processes the full offset, then results are merged and re-sorted
 - N+1 loops where the inner query scatters (multiplied cost: N scatter queries)
-- Cross-shard JOINs on hot paths — the gateway must fetch from multiple shards and join in memory
+- Cross-shard JOINs on hot paths: the gateway must fetch from multiple shards and join in memory
 
 ## Sharding Key Selection (Schema Review)
 
@@ -52,7 +52,7 @@ Apply this checklist when the project uses a sharded database (Vitess, PlanetSca
 - Query plan preference: `Passthrough` > `Lookup` > `MultiShard` > `Scatter`; flag `Scatter` and `JoinOp` plans on hot paths
 - Vindex hints (`USE VINDEX`, `IGNORE VINDEX`) can steer the query planner when the default routing is suboptimal
 - Subsharding vindexes (multicol) for large-tenant or geo-sharding scenarios where a single tenant spans multiple shards
-- `AUTO_INCREMENT` must be removed from sharded tables — each shard is a separate MySQL instance and cannot coordinate uniqueness; use Vitess sequences instead
+- `AUTO_INCREMENT` must be removed from sharded tables. Each shard is a separate MySQL instance and cannot coordinate uniqueness; use Vitess sequences instead
 - Many-to-many relationships: pick the strongest relationship for co-location; consider materialized views (Vitess `Materialize`) for the secondary relationship
 
 ## Citus (PostgreSQL)
@@ -64,4 +64,4 @@ Apply this checklist when the project uses a sharded database (Vitess, PlanetSca
 ## Spanner
 
 - Use `INTERLEAVE IN PARENT` to physically co-locate parent-child rows on the same split
-- Avoid monotonically increasing primary keys (timestamps, sequential IDs) — they create write hot spots on the last split; use UUIDv4 or bit-reversed sequences
+- Avoid monotonically increasing primary keys (timestamps, sequential IDs). They create write hot spots on the last split; use UUIDv4 or bit-reversed sequences

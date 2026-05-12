@@ -1,11 +1,11 @@
-# Architecture and Design — Reference
+# Architecture and Design Reference
 
 Reference sources:
-- [Go Code Review Comments](https://go.dev/wiki/CodeReviewComments) — interface and package design
-- [Effective Go](https://go.dev/doc/effective_go) — embedding, composition, naming
-- [Go Proverbs](https://go-proverbs.github.io/) — design philosophy
+- [Go Code Review Comments](https://go.dev/wiki/CodeReviewComments): interface and package design
+- [Effective Go](https://go.dev/doc/effective_go): embedding, composition, naming
+- [Go Proverbs](https://go-proverbs.github.io/): design philosophy
 
-## S — Single Responsibility Principle
+## S. Single Responsibility Principle
 
 A package or type should have one reason to change. Each package should own a single cohesive concern.
 
@@ -17,16 +17,16 @@ What to flag:
 
 What good looks like:
 - Each package has a clear, statable purpose
-- Types in a package are cohesive — they change together for the same reason
+- Types in a package are cohesive; they change together for the same reason
 - Splitting a package is warranted when its types change for different reasons
 
-## O — Open/Closed Principle
+## O. Open/Closed Principle
 
 Software entities should be open for extension but closed for modification. In Go, this means extending behavior via interfaces and composition, not by modifying existing code.
 
 What to flag:
-- **Growing type switches**: `switch v := x.(type)` that must be edited every time a new variant is added — consider an interface method instead
-- **Hardcoded strategy selection**: `if config.Mode == "A" { ... } else if config.Mode == "B" { ... }` — consider a strategy interface
+- **Growing type switches**: `switch v := x.(type)` that must be edited every time a new variant is added. Consider an interface method instead
+- **Hardcoded strategy selection**: `if config.Mode == "A" { ... } else if config.Mode == "B" { ... }`. Consider a strategy interface
 - **Modification-heavy extension**: adding a new feature requires editing multiple existing files rather than adding new types that satisfy existing interfaces
 
 What good looks like:
@@ -34,7 +34,7 @@ What good looks like:
 - Plugin points are interfaces accepted as function/constructor parameters
 - Existing code is not modified when behavior is extended
 
-## L — Liskov Substitution Principle
+## L. Liskov Substitution Principle
 
 Any implementation of an interface must honor the full contract. Callers should be able to use any implementation interchangeably without surprises.
 
@@ -48,27 +48,27 @@ What good looks like:
 - No implementation panics on methods defined in the interface
 - Error behavior is consistent across implementations
 
-## I — Interface Segregation Principle
+## I. Interface Segregation Principle
 
 Clients should not be forced to depend on methods they do not use. In Go: the bigger the interface, the weaker the abstraction.
 
 What to flag:
 - **Fat interfaces**: interfaces with many methods when callers only use one or two (e.g. a `Repository` interface with 20 methods when most callers only call `Get`)
-- **Implementor-defined interfaces**: interfaces defined next to their implementation rather than at the call site — forces consumers to depend on the full interface
+- **Implementor-defined interfaces**: interfaces defined next to their implementation rather than at the call site, forcing consumers to depend on the full interface
 - **Interfaces mirroring structs**: an interface that is a 1:1 copy of a struct's method set, serving no abstraction purpose
 
 What good looks like:
-- Interfaces are small (1–3 methods)
+- Interfaces are small (1 to 3 methods)
 - Interfaces are defined where they are consumed, not where they are implemented
 - Each interface captures a specific capability (`io.Reader`, `io.Writer`, `fmt.Stringer`)
 
-## D — Dependency Inversion Principle
+## D. Dependency Inversion Principle
 
 High-level modules should not depend on low-level modules. Both should depend on abstractions (interfaces). In Go: accept interfaces, return structs.
 
 What to flag:
 - **Direct infrastructure dependencies**: a business logic package that imports a database driver, HTTP client, or cloud SDK directly
-- **Constructor returning interface**: `func New() MyInterface` — return the concrete type, let the consumer define the interface it needs
+- **Constructor returning interface**: `func New() MyInterface`. Return the concrete type, let the consumer define the interface it needs
 - **Import direction violations**: a domain/business package importing an infrastructure/adapter package
 
 What good looks like:
@@ -79,7 +79,7 @@ What good looks like:
 
 ## Design Patterns (Gang of Four)
 
-When code implements a recognized design pattern, it should use the canonical GoF name in types, variables, and comments for consistency and discoverability. A `Handler` that wraps another `Handler` adding behavior is a Decorator — name it accordingly.
+When code implements a recognized design pattern, it should use the canonical GoF name in types, variables, and comments for consistency and discoverability. A `Handler` that wraps another `Handler` adding behavior is a Decorator: name it accordingly.
 
 **Patterns commonly used in Go:**
 
@@ -98,16 +98,16 @@ When code implements a recognized design pattern, it should use the canonical Go
 
 **Design pattern anti-patterns to flag:**
 
-- **Singleton via package globals**: global `var instance *Service` with `sync.Once` — hides dependencies, prevents testing. Use DI instead.
-- **Pattern name without the pattern**: types named `XFactory`, `XStrategy`, `XObserver` that don't actually implement the pattern — misleading.
+- **Singleton via package globals**: global `var instance *Service` with `sync.Once`. Hides dependencies, prevents testing. Use DI instead.
+- **Pattern name without the pattern**: types named `XFactory`, `XStrategy`, `XObserver` that don't actually implement the pattern. Misleading.
 - **Forced patterns**: applying a GoF pattern where a plain function or simple struct would suffice (e.g. a `CommandFactory` that always creates the same command). Respect YAGNI.
 - **Abstract Factory / Class hierarchy patterns**: these rely on inheritance and don't translate well to Go. Prefer interfaces + composition.
-- **God Decorator chains**: deeply nested decorators that make the call stack hard to follow — consider flattening into explicit steps.
+- **God Decorator chains**: deeply nested decorators that make the call stack hard to follow. Consider flattening into explicit steps.
 
 **Pattern selection guidance:**
 
 - If the code has a clear pattern match, name it canonically. If it doesn't match a pattern cleanly, don't force one.
-- Prefer the simplest pattern that solves the problem — Strategy (interface parameter) over Abstract Factory, Decorator (middleware) over complex proxy chains.
+- Prefer the simplest pattern that solves the problem: Strategy (interface parameter) over Abstract Factory, Decorator (middleware) over complex proxy chains.
 - When reviewing, check that the chosen pattern fits the problem. A Strategy pattern for something that will only ever have one implementation is speculative (see Minimal-Changes Alignment).
 
 ## Package Design
@@ -120,7 +120,7 @@ When code implements a recognized design pattern, it should use the canonical Go
 
 **Coupling:**
 - Minimize cross-package dependencies; a package should have few imports relative to what it provides
-- Avoid circular dependencies — if package A imports B and B imports A, one of them has the wrong responsibility
+- Avoid circular dependencies. If package A imports B and B imports A, one of them has the wrong responsibility
 - Prefer narrow interfaces at package boundaries over passing concrete types across packages
 
 **Acyclic Dependency Principle:**
@@ -135,7 +135,7 @@ When code implements a recognized design pattern, it should use the canonical Go
 
 ## Minimal-Changes Alignment
 
-Architecture should serve current, demonstrated needs — not hypothetical futures.
+Architecture should serve current, demonstrated needs, not hypothetical futures.
 
 What to flag:
 - **Speculative abstractions**: interfaces or abstraction layers with a single implementation and no concrete plan for a second
@@ -146,7 +146,7 @@ What to flag:
 What good looks like:
 - Abstractions are introduced when the second (or third) use case arrives, not preemptively
 - The cost of an abstraction is justified by concrete, current benefit
-- If something should change but wasn't requested, it's mentioned after completing the requested work — not silently included
+- If something should change but wasn't requested, it's mentioned after completing the requested work, not silently included
 
 ## Testability Indicators
 
@@ -159,7 +159,7 @@ Architecture decisions directly affect how testable the code is. These checks ar
 
 **Interface placement for testing:**
 - Interfaces for external dependencies (gRPC clients, HTTP APIs, third-party SDKs) are defined in the consumer package
-- Interfaces are minimal — only the methods the consumer actually calls
+- Interfaces are minimal: only the methods the consumer calls
 - The real implementation and test stub both satisfy the same interface
 
 **Mock smell detection:**
@@ -168,7 +168,7 @@ Architecture decisions directly affect how testable the code is. These checks ar
 - If a mock is harder to write than a real test server (`httptest.Server`, in-memory DB), the mock is the wrong approach
 
 **What good looks like:**
-- Tests use real code, `httptest` servers, or dependency injection — mocks are a last resort
+- Tests use real code, `httptest` servers, or dependency injection; mocks are a last resort
 - Tests are self-contained; the only shared infrastructure is the database
 - External services (gRPC clients, HTTP APIs, third-party SDKs) are stubbed via interfaces, never called for real
 - Time-dependent tests use `testing/synctest` (Go 1.25+), not real sleeps
@@ -181,7 +181,7 @@ Deadcode (official `golang.org/x/tools`) finds unreachable functions using Rapid
 
 - Builds a call graph from `main` entry points and reports functions not reachable from any `main`
 - `-filter` restricts output to the module's own packages (use `go list -m` to get the module path)
-- `-test` flag includes test executables — functions reachable only from tests are reported separately
+- `-test` flag includes test executables; functions reachable only from tests are reported separately
 - Unreachable code is a strong signal of architectural decay, abandoned features, or incomplete refactoring
 - Functions that are "dead" but tested (reachable only from test code) may indicate unused internal APIs or over-testing of removed features
 

@@ -15,7 +15,7 @@ Structured security review producing actionable, prioritized findings with code-
 - **Resolve scope to a file/package list.** Based on what the user requested:
   - **Changed files (PR or branch):** Run `git diff --name-only --diff-filter=d <base>...HEAD` to get changed files (default `<base>` is `main`). If the user references a PR number, use `gh pr diff <number> --name-only` instead. Filter to relevant file types (`.go`, config files). Derive affected Go packages from the file paths (unique parent directories containing `.go` files).
   - **Explicit paths/packages:** The user may specify directories (e.g. `internal/auth/`), Go package patterns (e.g. `./internal/auth/...`), or individual files. When given a directory or package pattern, include all files under it. Derive Go package paths for static analysis tool invocations.
-  - **Full codebase:** No filtering — explore everything (default).
+  - **Full codebase:** No filtering. Explore everything (default).
 - **Pass the resolved scope** (file list and derived package paths) to all exploration and investigation subagents so they only read and analyze scoped files. Static analysis tools receive package paths; manual review subagents receive the file list.
 - Explore the scoped code using parallel subagents (`subagent_type="explore"`). Read all relevant source files, configs, and dependency manifests.
 
@@ -38,7 +38,7 @@ If only non-code files (e.g. `.md`, images) are in scope, skip all subagents and
 
 Launch applicable investigation subagents concurrently using the Task tool. Each receives the system overview and list of in-scope files as context.
 
-Every investigation subagent must check each finding against existing documentation — TODO comments, README notes, FIXME/HACK/XXX comments, and issue tracker references. Report tracked findings but mark them accordingly.
+Every investigation subagent must check each finding against existing documentation: TODO comments, README notes, FIXME/HACK/XXX comments, and issue tracker references. Report tracked findings but mark them accordingly.
 
 **Subagent A — STRIDE Threat Model** (`subagent_type="generalPurpose"`, requires code or infra files)
 
@@ -61,8 +61,8 @@ Prompt the subagent to:
 **Subagent C — Security Static Analysis** (`subagent_type="generalPurpose"`, requires `.go` files)
 
 Prompt the subagent to run automated security scanning tools via Shell and report findings with `SEC-` prefixed IDs. In each command below, replace `./...` with the resolved package paths when scope is narrowed (e.g. `./internal/auth/...`). Use `./...` only for full-codebase scope.
-- **gosec**: `go run github.com/securego/gosec/v2/cmd/gosec@latest -fmt json -quiet ./...` — parse JSON output for security findings. Map each gosec rule to the relevant STRIDE/OWASP category.
-- **govulncheck**: `go run golang.org/x/vuln/cmd/govulncheck@latest ./...` — report known CVEs in dependencies, filtered to actually-called functions.
+- **gosec**: `go run github.com/securego/gosec/v2/cmd/gosec@latest -fmt json -quiet ./...`. Parse JSON output for security findings. Map each gosec rule to the relevant STRIDE/OWASP category.
+- **govulncheck**: `go run golang.org/x/vuln/cmd/govulncheck@latest ./...`. Report known CVEs in dependencies, filtered to actually-called functions.
 - If a tool fails, skip it but note why in a **Tool Availability** section.
 - For each finding, search nearby code and project documentation for existing TODOs or notes.
 - Return findings using the **per-category findings** template with `SEC-` prefixed IDs.
@@ -74,10 +74,10 @@ After all subagents complete, launch a summarization subagent (`subagent_type="g
 Prompt it to:
 1. **Deduplicate** overlapping findings across STRIDE, OWASP, and static analysis.
 2. **Cross-reference** each deduplicated finding to its source IDs.
-3. **Preserve tracking status** — a finding is tracked if any source subagent marked it as tracked.
-4. **Prioritize** — produce a consolidated findings table ordered by severity.
-5. **Recommend fix order** — considering dependencies between findings and effort estimates.
-6. **Tool Availability summary** — consolidate from all subagents.
+3. **Preserve tracking status**. A finding is tracked if any source subagent marked it as tracked.
+4. **Prioritize**. Produce a consolidated findings table ordered by severity.
+5. **Recommend fix order**, considering dependencies between findings and effort estimates.
+6. **Tool Availability summary**. Consolidate from all subagents.
 
 ### 5. Present results
 
@@ -130,7 +130,7 @@ Header template (placed at the top of the output `.md`, before the H1 title):
 
 ## Finding link wrapping (PR mode)
 
-When the review is scoped to a GitHub PR — `pr_url` is provided by the caller, or, when run standalone, `gh pr view --json url -q .url 2>/dev/null` returns one — wrap every `path:line` reference inside the finding tables below as a Markdown link:
+When the review is scoped to a GitHub PR (`pr_url` is provided by the caller, or, when run standalone, `gh pr view --json url -q .url 2>/dev/null` returns one), wrap every `path:line` reference inside the finding tables below as a Markdown link:
 
 ```sh
 ~/.claude/scripts/pr-deeplink.sh "$pr_url" <path> <line>
@@ -138,7 +138,7 @@ When the review is scoped to a GitHub PR — `pr_url` is provided by the caller,
 # pr_url empty → path:line   (plain text, unchanged)
 ```
 
-The display text stays `path:line` so plain and linked tables look identical; only the URL goes in the link target. Pass `L` as the fourth argument for findings about removed code (default is `R`). Omit `<line>` for file-level findings to get a file-anchor link. Apply the same wrapping to `path:line` references inside the Tracked column (e.g. `TODO in foo.go:42`). Findings themselves follow `terse-comments` — concrete fix, optional `bug:`/`risk:`/`nit:`/`unsure:` prefix, no praise or restating the diff.
+The display text stays `path:line` so plain and linked tables look identical; only the URL goes in the link target. Pass `L` as the fourth argument for findings about removed code (default is `R`). Omit `<line>` for file-level findings to get a file-anchor link. Apply the same wrapping to `path:line` references inside the Tracked column (e.g. `TODO in foo.go:42`). Findings themselves follow `terse-comments`: concrete fix, optional `bug:`/`risk:`/`nit:`/`unsure:` prefix, no praise or restating the diff.
 
 ---
 

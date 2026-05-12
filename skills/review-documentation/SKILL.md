@@ -15,7 +15,7 @@ Structured documentation review producing actionable, prioritized findings with 
 - **Resolve scope to a file/package list.** Based on what the user requested:
   - **Changed files (PR or branch):** Run `git diff --name-only --diff-filter=d <base>...HEAD` to get changed files (default `<base>` is `main`). If the user references a PR number, use `gh pr diff <number> --name-only` instead. Filter to relevant file types (`.go`, `.proto`, `.md`, OpenAPI specs). Derive affected Go packages from the file paths (unique parent directories containing `.go` files).
   - **Explicit paths/packages:** The user may specify directories (e.g. `internal/auth/`), Go package patterns (e.g. `./internal/auth/...`), or individual files. When given a directory or package pattern, include all files under it. Derive Go package paths for `go doc` invocations.
-  - **Full codebase:** No filtering — explore everything (default).
+  - **Full codebase:** No filtering; explore everything (default).
 - **Pass the resolved scope** (file list and derived package paths) to all exploration and investigation subagents so they only read and analyze scoped files.
 - Detect which documentation surfaces exist within the resolved scope:
   - `.go` files → `go doc` analysis, `doc.go` files, `Example*` tests
@@ -27,9 +27,9 @@ Structured documentation review producing actionable, prioritized findings with 
 
 Launch up to 3 investigation subagents concurrently using the Task tool. Each receives the list of in-scope files as context. Only launch subagents whose preconditions are met.
 
-Every investigation subagent must check each finding against existing documentation — TODO comments, README notes, FIXME/HACK/XXX comments, and issue tracker references. Report tracked findings but mark them accordingly.
+Every investigation subagent must check each finding against existing documentation: TODO comments, README notes, FIXME/HACK/XXX comments, and issue tracker references. Report tracked findings but mark them accordingly.
 
-**Subagent A — Go documentation** (`subagent_type="generalPurpose"`, requires `.go` files)
+**Subagent A: Go documentation** (`subagent_type="generalPurpose"`, requires `.go` files)
 
 Prompt the subagent to:
 - Enumerate packages: run `go list ./...` for full-codebase scope, or `go list <package_paths>` for the resolved package paths when scope is narrowed.
@@ -43,7 +43,7 @@ Prompt the subagent to:
 - Include a **Tool Availability** section noting whether `go doc` ran successfully.
 - Return findings with `DOC-` prefixed IDs.
 
-**Subagent B — Proto and OpenAPI documentation** (`subagent_type="generalPurpose"`, requires `.proto` files)
+**Subagent B: Proto and OpenAPI documentation** (`subagent_type="generalPurpose"`, requires `.proto` files)
 
 Prompt the subagent to:
 - Read all in-scope `.proto` files and check for:
@@ -57,15 +57,15 @@ Prompt the subagent to:
   - Flag missing `description` on endpoints, request/response schemas, and parameters.
 - Return findings with `DOC-` prefixed IDs.
 
-**Subagent C — Markdown and general docs** (`subagent_type="generalPurpose"`)
+**Subagent C: Markdown and general docs** (`subagent_type="generalPurpose"`)
 
 Prompt the subagent to:
 - Glob for `*.md` files across the repo.
 - Check README.md exists at the repo root. Flag if missing.
 - Scan markdown files for:
   - Links to files that no longer exist (spot-check relative links against the file tree).
-  - References to CLI flags, env vars, or config keys — spot-check a sample against actual code.
-  - Code examples — spot-check function/type names against actual exports.
+  - References to CLI flags, env vars, or config keys; spot-check a sample against actual code.
+  - Code examples; spot-check function/type names against actual exports.
 - Flag large documentation gaps: no README, no CONTRIBUTING guide (for OSS projects), no architectural overview for multi-service repos.
 - Return findings with `DOC-` prefixed IDs.
 
@@ -123,7 +123,7 @@ Header template (placed at the top of the output `.md`, before the H1 title):
 
 ## Finding link wrapping (PR mode)
 
-When the review is scoped to a GitHub PR — `pr_url` is provided by the caller, or, when run standalone, `gh pr view --json url -q .url 2>/dev/null` returns one — wrap every `path:line` reference inside the finding tables below as a Markdown link:
+When the review is scoped to a GitHub PR (`pr_url` is provided by the caller, or, when run standalone, `gh pr view --json url -q .url 2>/dev/null` returns one), wrap every `path:line` reference inside the finding tables below as a Markdown link:
 
 ```sh
 ~/.claude/scripts/pr-deeplink.sh "$pr_url" <path> <line>
@@ -131,7 +131,7 @@ When the review is scoped to a GitHub PR — `pr_url` is provided by the caller,
 # pr_url empty → path:line   (plain text, unchanged)
 ```
 
-The display text stays `path:line` so plain and linked tables look identical; only the URL goes in the link target. Pass `L` as the fourth argument for findings about removed code (default is `R`). Omit `<line>` for file-level findings to get a file-anchor link. Apply the same wrapping to `path:line` references inside the Tracked column (e.g. `TODO in foo.go:42`). Findings themselves follow `terse-comments` — concrete fix, optional `bug:`/`risk:`/`nit:`/`unsure:` prefix, no praise or restating the diff.
+The display text stays `path:line` so plain and linked tables look identical; only the URL goes in the link target. Pass `L` as the fourth argument for findings about removed code (default is `R`). Omit `<line>` for file-level findings to get a file-anchor link. Apply the same wrapping to `path:line` references inside the Tracked column (e.g. `TODO in foo.go:42`). Findings themselves follow `terse-comments`: concrete fix, optional `bug:`/`risk:`/`nit:`/`unsure:` prefix, no praise or restating the diff.
 
 ---
 

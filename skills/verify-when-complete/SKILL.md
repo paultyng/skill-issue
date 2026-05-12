@@ -23,7 +23,7 @@ Before claiming any status or expressing satisfaction:
    - If YES: state claim with evidence
 5. **Only then**: make the claim
 
-## Red Flags — Stop and Verify
+## Red Flags: Stop and Verify
 
 - Using "should", "probably", "seems to"
 - Expressing satisfaction before verification ("Great!", "Done!")

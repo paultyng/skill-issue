@@ -1,11 +1,11 @@
-# Documentation Review — Framework Reference
+# Documentation Review: Framework Reference
 
 Detailed checklists for documentation quality dimensions. The SKILL.md workflow references this file.
 
 Reference sources:
 - [Go Doc Comments](https://go.dev/doc/comment)
-- [Effective Go — Commentary](https://go.dev/doc/effective_go#commentary)
-- [Go Code Review Comments — Doc Comments](https://go.dev/wiki/CodeReviewComments#doc-comments)
+- [Effective Go: Commentary](https://go.dev/doc/effective_go#commentary)
+- [Go Code Review Comments: Doc Comments](https://go.dev/wiki/CodeReviewComments#doc-comments)
 - [AEP Documentation Guidance](https://aep.dev/192)
 - [Protobuf Style Guide](https://protobuf.dev/programming-guides/style/)
 - [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
@@ -21,7 +21,7 @@ Reference sources:
 - Every exported type, func, const, var, and method has a doc comment.
 - Comment starts with the symbol name: `// Foo does ...` not `// This function does ...`.
 - Comment ends with a period.
-- Comment describes behavior, parameters, return values, and error conditions — not just restating the name.
+- Comment describes behavior, parameters, return values, and error conditions, not restating the name.
 - Deprecated symbols use `// Deprecated: use Bar instead.` format.
 - Grouped `const`/`var` blocks: doc comment on the block and/or each individual entry.
 

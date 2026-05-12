@@ -21,8 +21,8 @@ If the instruction only makes sense for certain file types (e.g. Go, test files)
 
 | Scope | Path |
 |---|---|
-| Personal — all projects on this machine | `~/.claude/rules/<topic>.md` |
-| Project — shared with team via git | `.claude/rules/<topic>.md` |
+| Personal, all projects on this machine | `~/.claude/rules/<topic>.md` |
+| Project, shared with team via git | `.claude/rules/<topic>.md` |
 
 Rules in subdirectories are discovered recursively (e.g. `.claude/rules/frontend/react.md` works).
 
@@ -30,7 +30,7 @@ Rules in subdirectories are discovered recursively (e.g. `.claude/rules/frontend
 
 ```markdown
 ---
-paths:            # optional — omit for always-load
+paths:            # optional; omit for always-load
   - "**/*.go"
   - "**/*_test.go"
 ---
@@ -60,24 +60,24 @@ See [references/rule-patterns.md](references/rule-patterns.md) for glob pattern 
 
 - **Specific and verifiable**: "Use 2-space indentation" not "format code nicely"
 - **One topic per file** with a descriptive filename (`testing.md`, `api-design.md`)
-- **Under 200 lines** — longer files reduce adherence; split if growing large
+- **Under 200 lines**. Longer files reduce adherence; split if growing large
 - **Markdown structure**: use headers and bullets, not dense paragraphs
-- **No contradictions** across rule files — audit when adding new ones
+- **No contradictions** across rule files; audit when adding new ones
 - **IMPORTANT** / **YOU MUST** emphasis for rules that are frequently violated
 
 ## Workflow
 
-1. **New or update?** — check existing rules in the target directory for overlap
-2. **Scope** — personal (`~/.claude/rules/`) or project (`.claude/rules/`)?
-3. **Path scope** — universal (no frontmatter) or file-type specific?
-4. **Check for conflicts** — scan existing rules for contradictions or duplication
-5. **Write the file** — concrete, verifiable instructions; one topic
-6. **Verify** — confirm file is under 200 lines and uses specific language
+1. **New or update?** Check existing rules in the target directory for overlap
+2. **Scope**: personal (`~/.claude/rules/`) or project (`.claude/rules/`)?
+3. **Path scope**: universal (no frontmatter) or file-type specific?
+4. **Check for conflicts**: scan existing rules for contradictions or duplication
+5. **Write the file**: concrete, verifiable instructions; one topic
+6. **Verify**: confirm file is under 200 lines and uses specific language
 
 ## Authoring Checklist
 
 - [ ] Description starts with "Use when..." if this is actually a skill (wrong tool if so)
-- [ ] Topic is focused — one concern per file
+- [ ] Topic is focused: one concern per file
 - [ ] Path scope matches actual applicability (don't always-load a Go-only rule)
 - [ ] Instructions are concrete and verifiable, not vague
 - [ ] No contradictions with existing rules in the same directory
@@ -85,7 +85,7 @@ See [references/rule-patterns.md](references/rule-patterns.md) for glob pattern 
 
 ## Anti-Patterns
 
-- **Vague rules**: "write clean code", "be consistent" — not actionable
+- **Vague rules**: "write clean code", "be consistent". Not actionable
 - **Duplicating defaults**: don't document what Claude already does correctly
 - **Over-specifying**: bloated rule files cause Claude to ignore them
 - **Wrong scope**: file-type-specific rules (Go, SQL) in always-load waste context

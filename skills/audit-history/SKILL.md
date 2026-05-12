@@ -67,9 +67,9 @@ Status: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
 <the per-transcript or per-memory entries below>
 ```
 
-- **DONE_WITH_CONCERNS** — the subagent extracted everything but flags ambiguity (e.g. corrections in a foreign language, transcripts with mixed Cursor/Claude formats).
-- **BLOCKED** — a transcript wouldn't parse, a file disappeared mid-batch, etc. Skip and move on.
-- **NEEDS_CONTEXT** — the parent didn't specify scope filtering and the batch is too large; lists which subset to retry with.
+- **DONE_WITH_CONCERNS**: the subagent extracted everything but flags ambiguity (e.g. corrections in a foreign language, transcripts with mixed Cursor/Claude formats).
+- **BLOCKED**: a transcript wouldn't parse, a file disappeared mid-batch, etc. Skip and move on.
+- **NEEDS_CONTEXT**: the parent didn't specify scope filtering and the batch is too large; lists which subset to retry with.
 
 ### Transcript Subagents
 

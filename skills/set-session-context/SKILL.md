@@ -52,6 +52,6 @@ Automatically set session name and color based on the current git branch and PR.
 
 ## Behavior
 
-- Execute silently — do not announce, explain, or narrate what you are doing.
+- Execute silently: do not announce, explain, or narrate what you are doing.
 - Do not ask for confirmation.
 - If `gh` is unavailable or fails, fall back to the humanized branch name.
