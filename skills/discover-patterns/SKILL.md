@@ -18,11 +18,9 @@ Analyze a codebase to discover and document its implicit architectural and imple
 - Explore the scoped code using parallel explore subagents. Read source files, test files, config files, and build files.
 - Classify files by type: `has_go`, `has_proto`, `has_ts`, `has_infra`, etc.
 
-### 2. Launch discovery subagents in parallel
+### 2. Identify candidate patterns (Opus)
 
-Launch up to 4 concurrent subagents (`subagent_type="generalPurpose"`, `model: opus` per `subagent-model-routing` — architecture-level pattern discovery requires deep reasoning across the codebase), each covering a group of pattern categories from the taxonomy. Each subagent reads all relevant files and identifies recurring patterns.
-
-> **Future fan-out note:** If per-pattern occurrence counting is ever split into a dedicated fan-out step (e.g. counting occurrences of a discovered pattern across all packages), use `model: haiku` per `subagent-model-routing` — occurrence counting is mechanical lookup.
+Launch up to 4 concurrent subagents (`subagent_type="generalPurpose"`, `model: opus` per `subagent-model-routing` — architecture-level pattern recognition requires deep reasoning across the codebase), each covering a group of pattern categories from the taxonomy. Each subagent reads all relevant files and **identifies candidate patterns** with a signature the counting stage can apply mechanically.
 
 | Subagent | Categories | Requires |
 |---|---|---|
@@ -36,16 +34,35 @@ Each subagent receives:
 - The scoped file list for its relevant file types
 - Reference: [reference-pattern-taxonomy.md](reference-pattern-taxonomy.md) for what to look for
 
-For each pattern discovered, record:
+For each candidate pattern, record:
 - **Name**: short descriptive name
 - **Description**: what the pattern is and how it works
-- **Confidence**: ESTABLISHED (>80% of relevant files follow it), EMERGING (50-80%), INCONSISTENT (<50%)
-- **Exemplars**: 2-3 file:line references showing the pattern
-- **Counter-examples**: file:line references that deviate (for EMERGING/INCONSISTENT patterns)
+- **Search signature**: a concrete way to find further occurrences. A grep regex, file glob, AST predicate (e.g. "calls to `context.Background()` outside `main.go`"), or symbol pattern. Must be specific enough that the counting stage applies it mechanically.
+- **Seed exemplars**: 1-2 file:line references the discovery subagent already saw
+
+This stage does NOT compute confidence or gather exhaustive exemplars. Step 2.5 handles that.
+
+### 2.5. Count occurrences per pattern (Haiku fan-out)
+
+For each candidate pattern from step 2, spawn an `Explore` subagent (`model: haiku` per `subagent-model-routing` — applying a known signature is mechanical). Run up to 4 concurrently; if more than 4 patterns, launch the first 4 and the rest after one completes.
+
+Each subagent receives (per `subagent-prompt-contract`):
+- **Goal**: apply the search signature to the scoped file list. Return match count, total relevant files, additional exemplars, counter-examples.
+- **Inline context**: pattern name + description + search signature + the scoped file list (paste; do not re-derive scope).
+- **Output shape**: structured per-pattern record (counts + 2-3 exemplars + up to 3 counter-examples), ≤80 words.
+- **Constraints**: read-only; no further subagents.
+- **Return**: prefixed with `Status: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT`.
+
+Parent computes confidence from the returned counts:
+- **ESTABLISHED**: matches in >80% of relevant files
+- **EMERGING**: 50-80%
+- **INCONSISTENT**: <50% but ≥3 matches
+
+Drop patterns with fewer than 3 total matches (anecdotal, not a pattern).
 
 ### 3. Consolidate
 
-Merge subagent outputs. Deduplicate overlapping patterns (e.g., a DI pattern that also appears as a testing pattern). Resolve confidence levels across the full dataset.
+Merge per-pattern records from step 2.5 (confidence, exemplars, counter-examples) with the descriptions from step 2. Deduplicate overlapping patterns (e.g. a DI pattern that also appears as a testing pattern). Resolve confidence levels across the merged dataset.
 
 ### 4. Write output
 
