@@ -1,6 +1,6 @@
 # Go dependency specifics
 
-Read this **before** running the general evaluation in `SKILL.md` when the dep is a Go module. The path is the dep — picking it wrong invalidates every other criterion.
+Read this **before** running the general evaluation in `SKILL.md` when the dep is a Go module. The path is the dep; picking it wrong invalidates every other criterion.
 
 ## Semantic Import Versioning (SIV)
 
@@ -15,7 +15,7 @@ Failure modes to catch:
 
 1. **Importing the root path when a higher major exists.** Users name `github.com/foo/bar` because that's what the README at the repo root said in 2019; meanwhile maintainers shipped `/v2` two years ago and abandoned the v1 line. The agent must always probe higher majors before accepting the root path.
 
-2. **`+incompatible` v2+ from the root path.** When a Go module reaches v2+ but stays at the root import path without a `/v2` suffix, the Go toolchain marks the version `+incompatible`. It works, but it signals the module isn't following SIV — sometimes deliberate, often legacy. Surface as a smell.
+2. **`+incompatible` v2+ from the root path.** When a Go module reaches v2+ but stays at the root import path without a `/v2` suffix, the Go toolchain marks the version `+incompatible`. It works, but it signals the module isn't following SIV: sometimes deliberate, often legacy. Surface as a smell.
 
 3. **Tag exists at one path, not the other.** A `v2.3.1` tag at the root path is not the same as `v2.3.1` at `/v2`. Always confirm the resolved coordinate.
 
@@ -49,9 +49,9 @@ The canonical coordinate to recommend is the **highest stable major** that has t
 
 ## Metadata sources
 
-- **[pkg.go.dev/<module>](https://pkg.go.dev/)** — license detection, "Imported by" count, latest version per path, README rendering, godoc.
-- **[vuln.go.dev](https://vuln.go.dev/)** — Go vulnerability database, queryable per module.
-- **GitHub repo** — last commit, release cadence, open-issue health, maintainer signals.
+- **[pkg.go.dev/<module>](https://pkg.go.dev/)**: license detection, "Imported by" count, latest version per path, README rendering, godoc.
+- **[vuln.go.dev](https://vuln.go.dev/)**: Go vulnerability database, queryable per module.
+- **GitHub repo**: last commit, release cadence, open-issue health, maintainer signals.
 
 ## Go-specific footguns
 
@@ -59,7 +59,7 @@ The canonical coordinate to recommend is the **highest stable major** that has t
 - **Embedded mutable globals.** A package exposing a `var Default *Client` at package level is hostile to test isolation. Prefer ones that require construction.
 - **Replace directives.** A candidate's `go.mod` with `replace` directives pointing at forks or local paths inherits whatever those resolve to in the consumer's build. Treat as a smell.
 - **`internal/` leakage.** A library importing another library's `internal/` packages won't compile for outside consumers. Rare in well-maintained libs, common in extracted-from-monorepo code.
-- **CGO. Prefer pure Go.** A CGO dep brings a C-toolchain requirement, breaks cross-compilation, complicates Docker builds (musl vs glibc, static linking), and adds a different memory/error model at the boundary. Accept only when a pure-Go alternative with comparable coverage doesn't exist — and even then, name the pure-Go option you considered and rejected, with the reason. (Example: `mattn/go-sqlite3` is CGO; `modernc.org/sqlite` is pure-Go — usually prefer the latter unless a specific feature forces the former.)
+- **CGO. Prefer pure Go.** A CGO dep brings a C-toolchain requirement, breaks cross-compilation, complicates Docker builds (musl vs glibc, static linking), and adds a different memory/error model at the boundary. Accept only when a pure-Go alternative with comparable coverage doesn't exist, and even then, name the pure-Go option you considered and rejected, with the reason. (Example: `mattn/go-sqlite3` is CGO; `modernc.org/sqlite` is pure-Go. Usually prefer the latter unless a specific feature forces the former.)
 - **Platform-specific build constraints.** A dep with `//go:build linux` or similar constrains the consuming project. Note in the verdict; usually a CAUTION rather than NO-GO unless the constraint conflicts with the consumer's target platforms.
 - **Generated code dependencies.** Libraries like `protoc-gen-go`, `sqlc`, etc. need a corresponding generator version. Document the generator pinning.
 

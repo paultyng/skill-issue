@@ -20,9 +20,9 @@ Check for a template in this order and use the first match:
 2. `.github/PULL_REQUEST_TEMPLATE.md`
 3. `docs/pull_request_template.md`
 4. `pull_request_template.md` (repo root)
-5. `.github/PULL_REQUEST_TEMPLATE/*.md` — if multiple, prefer one matching the dominant commit type (`feature.md` or `feat-*` for `feat:` commits, `bugfix.md` for `fix:`, etc.). If still ambiguous, ask the user which to use.
+5. `.github/PULL_REQUEST_TEMPLATE/*.md`. If multiple, prefer one matching the dominant commit type (`feature.md` or `feat-*` for `feat:` commits, `bugfix.md` for `fix:`, etc.). If still ambiguous, ask the user which to use.
 
-Filename matching is case-insensitive on macOS but case-sensitive on Linux — check both common cases.
+Filename matching is case-insensitive on macOS but case-sensitive on Linux; check both common cases.
 
 If none found, use the standard body in step 4.
 
@@ -38,7 +38,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/) format derived 
 Apply `terse-output` to the body: bullets over prose, no filler ("just", "really"), no hedge openers ("I noticed that…", "You might want to consider…"). Lead with what changed and why; skip implementation play-by-play.
 
 
-**With template**: read the template file and fill its sections from the diff (`git diff <base>...HEAD`) and commit history. Preserve the template's structure, headings, comments, and checklists exactly. Leave checklist items unchecked unless the work demonstrably satisfies them. For sections that do not apply, mark them `N/A` only if the template requires a value — otherwise leave the section body empty.
+**With template**: read the template file and fill its sections from the diff (`git diff <base>...HEAD`) and commit history. Preserve the template's structure, headings, comments, and checklists exactly. Leave checklist items unchecked unless the work demonstrably satisfies them. For sections that do not apply, mark them `N/A` only if the template requires a value; otherwise leave the section body empty.
 
 Do not strip HTML comments from the template (they are often instructions to the PR author and may be intentionally rendered as hidden guidance).
 

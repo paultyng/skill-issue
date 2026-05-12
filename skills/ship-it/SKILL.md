@@ -71,5 +71,5 @@ Logic:
 - If someone already reviewed, suggest re-requesting the same reviewer.
 - If a review is already requested, note who.
 - If no reviewer yet, present GitHub's `suggestedReviewers` list.
-- For deeper git-history-based suggestions, use `/analyze-knowledge` — it now fans out per-area analysis to subagents for PRs with >20 files, so keep the parent context clean.
+- For deeper git-history-based suggestions, use `/analyze-knowledge`. It fans out per-area analysis to subagents for PRs with >20 files, so keep the parent context clean.
 - Do **not** auto-assign. Present suggestions and let the user decide.

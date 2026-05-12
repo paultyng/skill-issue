@@ -2,7 +2,7 @@
 
 Heuristics for discovering implicit codebase patterns. Each category describes what to look for, how to assess confidence, and what counter-examples look like.
 
-## STRUCT — Structure & Layering
+## STRUCT: Structure & Layering
 
 **What to look for:**
 - Package naming convention: singular (`user`) vs plural (`users`), flat vs nested
@@ -22,7 +22,7 @@ Heuristics for discovering implicit codebase patterns. Each category describes w
 - A service that imports HTTP-specific types (leaking transport)
 - A package that imports from cmd/ (wrong dependency direction)
 
-## ERR — Error Handling
+## ERR: Error Handling
 
 **What to look for:**
 - Wrapping style: `fmt.Errorf("...: %w", err)` vs custom error types vs bare `return err`
@@ -41,7 +41,7 @@ Heuristics for discovering implicit codebase patterns. Each category describes w
 - Mixed wrapping: some functions wrap, some return bare, in the same package
 - Error strings starting with capital letters or ending with punctuation in some places but not others
 
-## OBS — Observability
+## OBS: Observability
 
 **What to look for:**
 - Logger type: `slog`, `zap`, `zerolog`, `logrus`, stdlib `log`
@@ -59,7 +59,7 @@ Heuristics for discovering implicit codebase patterns. Each category describes w
 - A package using `fmt.Println` for logging when everything else uses `slog`
 - Inconsistent span naming (`getUserByID` vs `get_user_by_id` vs `GetUser`)
 
-## CFG — Configuration
+## CFG: Configuration
 
 **What to look for:**
 - Config struct pattern: single config struct? Per-package config? Nested?
@@ -77,10 +77,10 @@ Heuristics for discovering implicit codebase patterns. Each category describes w
 - A service reading `os.Getenv` directly when everything else uses a config struct
 - A package defining its own config loading when a centralized loader exists
 
-## DI — Dependency Injection
+## DI: Dependency Injection
 
 **What to look for:**
-- Constructor pattern: `func NewService(deps...) *Service` — what gets injected?
+- Constructor pattern: `func NewService(deps...) *Service`. What gets injected?
 - Interface placement: defined in consumer package or implementor package?
 - Wire/fx usage: are providers consistent? All in one file or scattered?
 - Test doubles: mocks (mockgen), fakes (hand-written), or stubs?
@@ -96,7 +96,7 @@ Heuristics for discovering implicit codebase patterns. Each category describes w
 - Interfaces defined in the implementor package (Go anti-pattern)
 - A test using a real HTTP client when everything else uses httptest
 
-## TEST — Testing
+## TEST: Testing
 
 **What to look for:**
 - Test file location: same package (`foo_test.go`) vs external (`foo_test` package)
@@ -116,7 +116,7 @@ Heuristics for discovering implicit codebase patterns. Each category describes w
 - Inline test data when everything else uses `testdata/` fixtures
 - A test that doesn't use the project's test helper for DB setup
 
-## XPORT — Transport
+## XPORT: Transport
 
 **What to look for:**
 - Handler function signatures: `(w, r)` style vs framework-specific (echo, gin, fiber)

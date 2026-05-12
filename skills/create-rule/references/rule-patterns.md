@@ -15,7 +15,7 @@
 | `e2e/**/*.go` | Go files under `e2e/` |
 | `*.md` | Markdown files in project root only |
 
-Multiple patterns are OR-ed together — a file matching any pattern triggers the rule.
+Multiple patterns are OR-ed together; a file matching any pattern triggers the rule.
 
 ## Good vs Bad Rules
 
@@ -49,7 +49,7 @@ Always handle errors. Don't ignore exceptions. Log errors when they occur.
 ```markdown
 # error-handling
 
-- Wrap errors with `fmt.Errorf("context: %w", err)` — never discard the original
+- Wrap errors with `fmt.Errorf("context: %w", err)`; never discard the original
 - Check errors with `errors.Is` / `errors.As`, not string matching
 - Return errors to callers; only log at the top-level handler (never both log and return)
 - Use `slog.Error` with structured fields, not `log.Printf`
@@ -57,7 +57,7 @@ Always handle errors. Don't ignore exceptions. Log errors when they occur.
 
 ---
 
-### Wrong scope — Go-only rule always-loaded (bad)
+### Wrong scope, Go-only rule always-loaded (bad)
 ```markdown
 # go-context
 
@@ -75,7 +75,7 @@ paths:
 # go-context
 
 Always pass `context.Context` as the first parameter on functions that do I/O.
-Propagate the context — never create a new `context.Background()` inside a function
+Propagate the context. Never create a new `context.Background()` inside a function
 that already received a context.
 ```
 
@@ -87,7 +87,7 @@ that already received a context.
 
 Amend the previous commit when adding small fixups.
 ```
-*(Contradicts a `git-no-amend` rule — Claude picks one arbitrarily)*
+*(Contradicts a `git-no-amend` rule; Claude picks one arbitrarily)*
 
 ### Consistent with existing rules (good)
 ```markdown
@@ -99,7 +99,7 @@ explicitly asks. Use Conventional Commits format: `<type>[scope]: <description>`
 
 ## Always-Load Rule Examples
 
-These apply universally — no `paths` needed:
+These apply universally, no `paths` needed:
 
 ```markdown
 # escalation

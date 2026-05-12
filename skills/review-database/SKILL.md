@@ -15,7 +15,7 @@ Structured database review producing actionable, prioritized findings with code-
 - **Resolve scope to a file/package list.** Based on what the user requested:
   - **Changed files (PR or branch):** Run `git diff --name-only --diff-filter=d <base>...HEAD` to get changed files (default `<base>` is `main`). If the user references a PR number, use `gh pr diff <number> --name-only` instead. Filter to relevant file types (`.go`, `.sql`). Derive affected Go packages from the file paths (unique parent directories containing `.go` files).
   - **Explicit paths/packages:** The user may specify directories (e.g. `internal/store/`), Go package patterns (e.g. `./internal/store/...`), individual files, or specific migration files. When given a directory or package pattern, include all files under it.
-  - **Full codebase:** No filtering — explore everything (default).
+  - **Full codebase:** No filtering. Explore everything (default).
 - **Pass the resolved scope** (file list) to all exploration and investigation subagents so they only read and analyze scoped files.
 - Explore the scoped code using parallel subagents (`subagent_type="explore"`). Read all in-scope `.sql` files, schema definitions, and source files that interact with the database (queries, connection setup, transaction handling).
 
@@ -27,7 +27,7 @@ Prompt it to:
 - Read all in-scope `.sql` files, schema definitions, and source files that interact with the database.
 - Detect which database engine is in use by checking imports (`pgx`, `pq`, `lib/pq` for PostgreSQL; `go-sql-driver/mysql` for MySQL), migration tool configs, and connection strings. Apply the appropriate engine-specific checklist from [reference.md](reference.md).
 - Analyze against all database categories: migration safety, query performance, connection & transaction management, and schema design (see [reference.md](reference.md)).
-- Detect if horizontal sharding is in use (VSchema files, Citus distribution config, Spanner interleaved tables, shard-routing middleware, or multi-column partition keys). If detected, analyze hot-path queries against the checklist in [reference-sharding.md](reference-sharding.md) — flag scatter queries, missing sharding keys in WHERE clauses, cross-shard JOINs, and cross-shard transactions.
+- Detect if horizontal sharding is in use (VSchema files, Citus distribution config, Spanner interleaved tables, shard-routing middleware, or multi-column partition keys). If detected, analyze hot-path queries against the checklist in [reference-sharding.md](reference-sharding.md): flag scatter queries, missing sharding keys in WHERE clauses, cross-shard JOINs, and cross-shard transactions.
 - For PostgreSQL projects: check if `npx` is on PATH (`which npx`). If available, run `npx squawk-cli <migration_files>` against in-scope `.sql` migration files only (when scope is narrowed, limit to `.sql` files in the resolved file list). If `npx` is not available, check for `squawk` directly on PATH. If neither is available, note in Tool Availability and continue with manual review only.
 - Include a **Tool Availability** section listing each tool's status (ran / skipped + reason).
 - For each finding, search nearby code and project documentation for existing TODOs or notes.
@@ -84,7 +84,7 @@ Header template (placed at the top of the output `.md`, before the H1 title):
 
 ## Finding link wrapping (PR mode)
 
-When the review is scoped to a GitHub PR — `pr_url` is provided by the caller, or, when run standalone, `gh pr view --json url -q .url 2>/dev/null` returns one — wrap every `path:line` reference inside the finding tables below as a Markdown link:
+When the review is scoped to a GitHub PR (`pr_url` is provided by the caller, or, when run standalone, `gh pr view --json url -q .url 2>/dev/null` returns one), wrap every `path:line` reference inside the finding tables below as a Markdown link:
 
 ```sh
 ~/.claude/scripts/pr-deeplink.sh "$pr_url" <path> <line>
@@ -92,7 +92,7 @@ When the review is scoped to a GitHub PR — `pr_url` is provided by the caller,
 # pr_url empty → path:line   (plain text, unchanged)
 ```
 
-The display text stays `path:line` so plain and linked tables look identical; only the URL goes in the link target. Pass `L` as the fourth argument for findings about removed code (default is `R`). Omit `<line>` for file-level findings to get a file-anchor link. Apply the same wrapping to `path:line` references inside the Tracked column (e.g. `TODO in foo.go:42`). Findings themselves follow `terse-comments` — concrete fix, optional `bug:`/`risk:`/`nit:`/`unsure:` prefix, no praise or restating the diff.
+The display text stays `path:line` so plain and linked tables look identical; only the URL goes in the link target. Pass `L` as the fourth argument for findings about removed code (default is `R`). Omit `<line>` for file-level findings to get a file-anchor link. Apply the same wrapping to `path:line` references inside the Tracked column (e.g. `TODO in foo.go:42`). Findings themselves follow `terse-comments`: concrete fix, optional `bug:`/`risk:`/`nit:`/`unsure:` prefix, no praise or restating the diff.
 
 ---
 

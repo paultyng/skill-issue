@@ -1,4 +1,4 @@
-# Protobuf and API Design — Reference
+# Protobuf and API Design Reference
 
 Reference sources:
 - [Protobuf Best Practices](https://protobuf.dev/best-practices/dos-donts/)
@@ -16,7 +16,7 @@ The following tools are run opportunistically if available on PATH:
 
 - One top-level message or service per file (proto style)
 - Separate RPC request/response messages from storage/domain messages
-- Reserve deleted field tags and names — never reuse a tag number
+- Reserve deleted field tags and names; never reuse a tag number
 - Use well-known types (`google.protobuf.Timestamp`, `google.protobuf.Duration`, `google.protobuf.FieldMask`, etc.) instead of reinventing
 - Don't change the type of an existing field
 - Don't add required fields to existing messages (proto3 doesn't have `required`, but don't simulate it)
@@ -53,7 +53,7 @@ The following tools are run opportunistically if available on PATH:
 
 ## Compatibility
 
-- Never remove or reuse a field tag number — reserve them
+- Never remove or reuse a field tag number; reserve them
 - Adding fields to existing messages is safe
 - Removing fields: reserve the tag number and field name
 - Enum values: reserve removed values

@@ -103,7 +103,7 @@ Write to `${REVIEW_DIR}/PATTERNS.md`. Present the report to the user.
 
 ## Guidelines
 
-- Focus on patterns that are actionable — skip trivially obvious things (e.g., "files end with `.go`").
+- Focus on patterns that are actionable; skip trivially obvious things (e.g., "files end with `.go`").
 - A pattern requires at least 3 exemplars to be reported. Fewer is anecdotal, not a pattern.
 - When confidence is INCONSISTENT, note which approach is more common and which is the outlier.
 - Keep the output concise: 2-3 exemplars per pattern, not exhaustive file lists.

@@ -15,7 +15,7 @@ Structured code review covering architecture, Go best practices, and protobuf/AP
 - **Resolve scope to a file/package list.** Based on what the user requested:
   - **Changed files (PR or branch):** Run `git diff --name-only --diff-filter=d <base>...HEAD` to get changed files (default `<base>` is `main`). If the user references a PR number, use `gh pr diff <number> --name-only` instead. Filter to relevant file types (`.go`, `.proto`). Derive affected Go packages from the file paths (unique parent directories containing `.go` files).
   - **Explicit paths/packages:** The user may specify directories (e.g. `internal/auth/`), Go package patterns (e.g. `./internal/auth/...`), or individual files. When given a directory or package pattern, include all files under it. Derive Go package paths for static analysis tool invocations.
-  - **Full codebase:** No filtering — explore everything (default).
+  - **Full codebase:** No filtering. Explore everything (default).
 - **Pass the resolved scope** (file list and derived package paths) to all exploration and investigation subagents so they only read and analyze scoped files. Static analysis tools receive package paths; manual review subagents receive the file list.
 - Explore the scoped code using parallel subagents (`subagent_type="explore"`). Read all relevant source files, paying attention to package structure, type definitions, interfaces, import graphs, `.go` files, `.proto` files, and test files.
 - **Classify the scope** for change-aware subagents:
@@ -33,9 +33,9 @@ Structured code review covering architecture, Go best practices, and protobuf/AP
 
 Launch applicable subagents concurrently using the Task tool (max 4 at a time; if more than 4 are applicable, launch 4 first and the remaining after one completes). Each subagent is `subagent_type="generalPurpose"`.
 
-Every investigation subagent must check each finding against existing documentation — TODO comments, README notes, FIXME/HACK/XXX comments, and issue tracker references. Report tracked findings but mark them accordingly.
+Every investigation subagent must check each finding against existing documentation: TODO comments, README notes, FIXME/HACK/XXX comments, and issue tracker references. Report tracked findings but mark them accordingly.
 
-**Subagent A — Architecture and Design Principles** (`subagent_type="generalPurpose"`, requires code files)
+**Subagent A. Architecture and Design Principles** (`subagent_type="generalPurpose"`, requires code files)
 
 Prompt the subagent to:
 - Read all in-scope source files.
@@ -49,7 +49,7 @@ Prompt the subagent to:
 - Return findings using the **per-category findings** template with `ARCH-` prefixed IDs for design/SOLID findings and `DEP-` prefixed IDs for dependency/testability findings.
 - Every finding must include specific file paths, line numbers or function names, a severity rating (CRITICAL / HIGH / MEDIUM / LOW), and tracking status.
 
-**Subagent B — Go Best Practices** (`subagent_type="generalPurpose"`, requires `.go` files)
+**Subagent B. Go Best Practices** (`subagent_type="generalPurpose"`, requires `.go` files)
 
 Prompt the subagent to:
 - Read all in-scope `.go` source files.
@@ -58,7 +58,7 @@ Prompt the subagent to:
 - Return findings using the **per-category findings** template with `GO-` prefixed IDs.
 - Every finding must include specific file paths, line numbers or function names, a severity rating (CRITICAL / HIGH / MEDIUM / LOW), and tracking status.
 
-**Subagent C — Protobuf and API Design** (`subagent_type="generalPurpose"`, requires `.proto` files)
+**Subagent C. Protobuf and API Design** (`subagent_type="generalPurpose"`, requires `.proto` files)
 
 Prompt the subagent to:
 - Read all in-scope `.proto` files and any generated code or API-related source.
@@ -67,21 +67,21 @@ Prompt the subagent to:
 - Return findings using the **per-category findings** template with `PB-` prefixed IDs.
 - Every finding must include specific file paths, line numbers or function names, a severity rating (CRITICAL / HIGH / MEDIUM / LOW), and tracking status.
 
-**Subagent D — Go Static Analysis** (`subagent_type="generalPurpose"`, requires `.go` files)
+**Subagent D. Go Static Analysis** (`subagent_type="generalPurpose"`, requires `.go` files)
 
 Prompt the subagent to run all 6 automated Go analysis tools via **parallel Shell calls** (launch all concurrently, then collect results) and report findings with `SA-` prefixed IDs. In each command below, replace `./...` with the resolved package paths when scope is narrowed (e.g. `./internal/auth/...`). Use `./...` only for full-codebase scope.
-- **gocyclo**: `go run github.com/fzipp/gocyclo/cmd/gocyclo@latest -over 12 -ignore "_test|vendor" ./...` — cyclomatic complexity scan. Include each flagged function with its complexity score and refactoring guidance.
-- **staticcheck**: `go run honnef.co/go/tools/cmd/staticcheck@latest ./...` — bugs (SA*), simplifications (S*), dead code, deprecated API usage.
-- **errcheck**: `go run github.com/kisielk/errcheck@latest ./...` — unchecked error return values.
-- **nilaway**: `go run go.uber.org/nilaway/cmd/nilaway@latest ./...` — nil pointer dereference detection via type-flow inference.
-- **exhaustive**: `go run github.com/nishanths/exhaustive/cmd/exhaustive@latest ./...` — non-exhaustive enum switch statements and map literal keys.
-- **deadcode**: `go run golang.org/x/tools/cmd/deadcode@latest -filter=$(go list -m) ./...` — unreachable functions via call graph analysis.
+- **gocyclo**: `go run github.com/fzipp/gocyclo/cmd/gocyclo@latest -over 12 -ignore "_test|vendor" ./...`. Cyclomatic complexity scan. Include each flagged function with its complexity score and refactoring guidance.
+- **staticcheck**: `go run honnef.co/go/tools/cmd/staticcheck@latest ./...`. Bugs (SA*), simplifications (S*), dead code, deprecated API usage.
+- **errcheck**: `go run github.com/kisielk/errcheck@latest ./...`. Unchecked error return values.
+- **nilaway**: `go run go.uber.org/nilaway/cmd/nilaway@latest ./...`. Nil pointer dereference detection via type-flow inference.
+- **exhaustive**: `go run github.com/nishanths/exhaustive/cmd/exhaustive@latest ./...`. Non-exhaustive enum switch statements and map literal keys.
+- **deadcode**: `go run golang.org/x/tools/cmd/deadcode@latest -filter=$(go list -m) ./...`. Unreachable functions via call graph analysis.
 - **revive**: if a `.golangci.yml` enables revive, run `go run github.com/mgechev/revive@latest ./...` with the project's revive config. If no revive config is found, skip and note in Tool Availability.
 - If a tool fails, skip it but note why in a **Tool Availability** section.
 - For each finding, search nearby code and project documentation for existing TODOs or notes.
 - Return findings using the **per-category findings** template with `SA-` prefixed IDs.
 
-**Subagent E — Protobuf Linting** (`subagent_type="generalPurpose"`, requires `.proto` files)
+**Subagent E. Protobuf Linting** (`subagent_type="generalPurpose"`, requires `.proto` files)
 
 Prompt the subagent to run automated protobuf analysis tools via Shell and report findings with `PBL-` prefixed IDs:
 - Check if `buf` is on PATH (`which buf`). If available, run `buf lint` and `buf breaking --against .git#branch=main` via **parallel Shell calls**. When scope is narrowed, pass `--path <dir>` for each directory containing in-scope `.proto` files. Include diagnostics as findings. If `buf` is not available or the repo has no git history for the breaking check, note in Tool Availability and continue.
@@ -89,20 +89,20 @@ Prompt the subagent to run automated protobuf analysis tools via Shell and repor
 - For each finding, search nearby code and project documentation for existing TODOs or notes.
 - Return findings using the **per-category findings** template with `PBL-` prefixed IDs.
 
-**Subagent F — Regression History Analysis** (`subagent_type="generalPurpose"`, requires code files and `has_changes`)
+**Subagent F. Regression History Analysis** (`subagent_type="generalPurpose"`, requires code files and `has_changes`)
 
 Prompt the subagent to:
 - Receive the list of changed files and the base ref.
 - For each changed file, run `git log -n 200 --oneline --all -- <file>` to get recent commit history. Filter commits whose messages match regression/bug-fix signals: keywords like `fix`, `bug`, `revert`, `regression`, `hotfix`, `patch`, `CVE`, `workaround`; conventional-commit prefixes like `fix:`, `fix(...):`; revert commits (`Revert "..."`).
 - For each matching historical commit, run `git show <commit> -- <file>` to retrieve the diff of that fix.
 - Retrieve the current diff for the file (`git diff <base>...HEAD -- <file>`).
-- Analyze whether the current changes overlap with or undo the historical fix — specifically whether modified/deleted lines or logic reversals touch the same code regions as a prior fix.
+- Analyze whether the current changes overlap with or undo the historical fix, specifically whether modified/deleted lines or logic reversals touch the same code regions as a prior fix.
 - **Test removal and modification detection**: examine the current diff for deleted, gutted, or weakened test functions, test cases, or test files. Flag removal of test coverage and changes that relax assertions (e.g. removing checks, loosening expected values, commenting out assertions, reducing test case coverage). Pay extra attention to tests that were added as part of a historical bug fix (cross-reference with the historical commit diffs). Legitimate test refactors (e.g. moving tests to a new file, renaming, updating assertions to match intentional behavior changes) should not be flagged; look for the test logic reappearing elsewhere before reporting.
 - For each potential regression reintroduction or test coverage reduction, search nearby code for TODO/FIXME/HACK/XXX comments or issue references.
 - Return findings using the **per-category findings** template with `REG-` prefixed IDs.
 - Every finding must include the historical fix commit hash and message (for regression reintroductions), the file and line region affected, why the current change appears to unwind the fix or reduce test coverage, a severity rating (CRITICAL / HIGH / MEDIUM / LOW), and tracking status.
 
-**Subagent G — Conformance Check** (`subagent_type="generalPurpose"`, requires code files)
+**Subagent G. Conformance Check** (`subagent_type="generalPurpose"`, requires code files)
 
 Prompt the subagent to:
 - Load explicit conformance rules from: REVIEW.md (if provided by review-all or present at repo root), CLAUDE.md (if present at repo root), AGENTS.md (if present at repo root), and all files in `.claude/rules/` (if directory exists). These are the **explicit rules**.
@@ -173,7 +173,7 @@ Header template (placed at the top of the output `.md`, before the H1 title):
 
 ## Finding link wrapping (PR mode)
 
-When the review is scoped to a GitHub PR — `pr_url` is provided by the caller, or, when run standalone, `gh pr view --json url -q .url 2>/dev/null` returns one — wrap every `path:line` reference inside the finding tables below as a Markdown link:
+When the review is scoped to a GitHub PR (`pr_url` is provided by the caller, or, when run standalone, `gh pr view --json url -q .url 2>/dev/null` returns one), wrap every `path:line` reference inside the finding tables below as a Markdown link:
 
 ```sh
 ~/.claude/scripts/pr-deeplink.sh "$pr_url" <path> <line>
@@ -181,7 +181,7 @@ When the review is scoped to a GitHub PR — `pr_url` is provided by the caller,
 # pr_url empty → path:line   (plain text, unchanged)
 ```
 
-The display text stays `path:line` so plain and linked tables look identical; only the URL goes in the link target. Pass `L` as the fourth argument for findings about removed code (default is `R`). Omit `<line>` for file-level findings to get a file-anchor link. Apply the same wrapping to `path:line` references inside the Tracked column (e.g. `TODO in foo.go:42`). Findings themselves follow `terse-comments` — concrete fix, optional `bug:`/`risk:`/`nit:`/`unsure:` prefix, no praise or restating the diff.
+The display text stays `path:line` so plain and linked tables look identical; only the URL goes in the link target. Pass `L` as the fourth argument for findings about removed code (default is `R`). Omit `<line>` for file-level findings to get a file-anchor link. Apply the same wrapping to `path:line` references inside the Tracked column (e.g. `TODO in foo.go:42`). Findings themselves follow `terse-comments`: concrete fix, optional `bug:`/`risk:`/`nit:`/`unsure:` prefix, no praise or restating the diff.
 
 ---
 
