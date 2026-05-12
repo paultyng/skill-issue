@@ -40,7 +40,7 @@ Annotate each step: local vs. I/O, serial vs. parallel, cached vs. uncached.
 
 ### 3. Launch investigation subagent
 
-Launch a single investigation subagent (`subagent_type="generalPurpose"`) with the system overview, flow mapping, and in-scope file list.
+Launch a single investigation subagent (`subagent_type="generalPurpose"`, `model: sonnet` per `subagent-model-routing`) with the system overview, flow mapping, and in-scope file list.
 
 Prompt it to:
 - Read all in-scope source files.

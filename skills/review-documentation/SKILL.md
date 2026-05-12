@@ -25,7 +25,9 @@ Structured documentation review producing actionable, prioritized findings with 
 
 ### 2. Launch investigation subagents in parallel
 
-Launch up to 3 investigation subagents concurrently using the Task tool. Each receives the list of in-scope files as context. Only launch subagents whose preconditions are met.
+Launch up to 3 investigation subagents concurrently using the Task tool (`model: sonnet` per `subagent-model-routing` — documentation analysis requires cross-referencing signatures and prose). Each receives the list of in-scope files as context. Only launch subagents whose preconditions are met.
+
+> **Future fan-out note:** If per-symbol doc-comment presence checking is ever split into a dedicated fan-out subagent (e.g. one per package), use `model: haiku` per `subagent-model-routing` — presence checks are mechanical.
 
 Every investigation subagent must check each finding against existing documentation: TODO comments, README notes, FIXME/HACK/XXX comments, and issue tracker references. Report tracked findings but mark them accordingly.
 

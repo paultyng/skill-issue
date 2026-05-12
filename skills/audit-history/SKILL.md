@@ -77,7 +77,8 @@ Split transcripts into batches of ~25-30 for parallel processing.
 
 1. Launch up to 4 parallel subagents, one per batch
 2. Each subagent receives a file list and the extraction schema below
-3. Use `jq` for JSONL extraction instead of reading raw content or using Python:
+3. Use `model: haiku` per `subagent-model-routing` — schema-driven extraction with bounded output; no synthesis required
+4. Use `jq` for JSONL extraction instead of reading raw content or using Python:
    - User messages: `jq -c 'select(.role == "human" or .role == "user") | .content' < file.jsonl`
    - Tool use: `jq -c 'select(.type == "tool_use") | {tool: .name}' < file.jsonl`
    - Message counts: `jq -c '.role' < file.jsonl | sort | uniq -c`
@@ -107,24 +108,30 @@ Return per transcript:
   Tools: [list]
 ```
 
-### Memory Subagent
+### Memory Subagent (two-stage)
 
-Launch **1 subagent** to analyze all memory files across all projects.
+The memory analysis uses a two-stage pipeline per `subagent-model-routing`:
 
-#### Structural Checks
+**Stage 1 — Structural checks (Haiku):** Launch **1 subagent** (`model: haiku`) to perform mechanical checks across all memory files. Haiku's output becomes inline context for Stage 2.
+
+Structural checks:
 
 - MEMORY.md entries pointing to missing files on disk
 - Files on disk not listed in MEMORY.md
 - Empty memory directories or empty MEMORY.md files
 
-#### Content Staleness Checks
+Content staleness checks:
 
 - For memories with `originSessionId`, verify the session `.jsonl` file still exists
 - For memories referencing specific file paths in content, check paths exist (`test -f`)
 - Compare memory content against global rules in `~/.claude/rules/` -- flag if a memory substantially duplicates a global rule
 - Check project activity: if no session files modified in last 30 days, flag as inactive
 
-#### Cross-Project Checks
+Stage 1 returns the full Memory Extraction Schema output (see below), prefixed with `Status: ...`.
+
+**Stage 2 — Cross-project synthesis (Sonnet):** Launch **1 subagent** (`model: sonnet`) with the Stage 1 structured output pasted inline. This stage handles reasoning that requires comparing across projects.
+
+Cross-project checks:
 
 - Overlapping memories across projects (candidates for global rule promotion)
 - Contradicting memories across projects (may be intentional project-specific overrides -- flag for review, don't auto-classify as errors)

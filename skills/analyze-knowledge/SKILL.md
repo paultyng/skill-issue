@@ -60,6 +60,7 @@ Each subagent prompt follows `subagent-prompt-contract`:
 - **Inline context:** paths, `$MAILMAP_FLAG` state, the recency weighting table from step 4, the `git` command(s) to run
 - **Output shape:** Markdown table only, ≤30 lines
 - **Constraints:** read-only (`Explore` enforces this); do not spawn further subagents
+- **Model:** `haiku` (per `subagent-model-routing`) — mechanical aggregation; output is bounded and requires no architectural reasoning
 - **Return:** prefix the summary with `Status: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT`
 
 Parent merges per-area returns into the final table in step 5.

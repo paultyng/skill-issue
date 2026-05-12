@@ -31,11 +31,11 @@ Structured code review covering architecture, Go best practices, and protobuf/AP
 
 ### 2. Launch investigation subagents in parallel
 
-Launch applicable subagents concurrently using the Task tool (max 4 at a time; if more than 4 are applicable, launch 4 first and the remaining after one completes). Each subagent is `subagent_type="generalPurpose"`.
+Launch applicable subagents concurrently using the Task tool (max 4 at a time; if more than 4 are applicable, launch 4 first and the remaining after one completes). Each subagent is `subagent_type="generalPurpose"`, `model: sonnet` by default (per `subagent-model-routing`), except Subagent A which uses `model: opus` (see below).
 
 Every investigation subagent must check each finding against existing documentation: TODO comments, README notes, FIXME/HACK/XXX comments, and issue tracker references. Report tracked findings but mark them accordingly.
 
-**Subagent A. Architecture and Design Principles** (`subagent_type="generalPurpose"`, requires code files)
+**Subagent A. Architecture and Design Principles** (`subagent_type="generalPurpose"`, `model: opus` per `subagent-model-routing` — always on; SOLID/DIP analysis requires architecture-level reasoning, requires code files)
 
 Prompt the subagent to:
 - Read all in-scope source files.
