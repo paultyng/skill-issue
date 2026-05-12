@@ -9,4 +9,4 @@ Stop and ask a human before proceeding if:
 - An MCP tool or other integration is not available for fetching potentially relevant data.
 - A best practice has divergent guidance for greenfield vs brownfield. Confirm which applies before proceeding.
 
-Do not guess or pick a "reasonable default" — ask first. The cost of a wrong autonomous decision is much higher than the cost of a question.
+Do not guess or pick a "reasonable default". Ask first. The cost of a wrong autonomous decision is much higher than the cost of a question.
