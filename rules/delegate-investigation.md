@@ -1,6 +1,6 @@
 # delegate-investigation
 
-For any task that is **read-only investigation** — finding, locating, scanning, "where is X", "who uses Y", "how is Z implemented" — default to the **`Explore`** built-in subagent, not `general-purpose`.
+For any task that is **read-only investigation** (finding, locating, scanning, "where is X", "who uses Y", "how is Z implemented"), default to the **`Explore`** built-in subagent, not `general-purpose`.
 
 `Explore` is denied `Write`/`Edit`, runs in its own context, and is purpose-built for exactly this use case. From the Claude Code docs:
 
@@ -19,12 +19,12 @@ For any task that is **read-only investigation** — finding, locating, scanning
 
 Use `general-purpose` instead when the task requires both exploration AND modification, complex reasoning to interpret results, or multiple dependent steps. `Explore` is read-only by design.
 
-Use a direct tool call (Read/Bash) when the target is already known — a single known file path, a specific known symbol. Don't spin up an agent to do one `Read`.
+Use a direct tool call (Read/Bash) when the target is already known: a single known file path, a specific known symbol. Don't spin up an agent to do one `Read`.
 
 ## Anti-patterns
 
-- Spawning `general-purpose` for a "find / locate / where is X" task — that's what `Explore` exists for.
-- Skipping the thoroughness level — passing nothing makes the agent guess.
-- Doing a multi-file investigation in main context because "it's just a few greps" — main-context grep output sticks around for the rest of the session.
+- Spawning `general-purpose` for a "find / locate / where is X" task. That's what `Explore` exists for.
+- Skipping the thoroughness level. Passing nothing makes the agent guess.
+- Doing a multi-file investigation in main context because "it's just a few greps". Main-context grep output sticks around for the rest of the session.
 
 See `parallelize-subagents` for the broader "when to delegate at all" guidance, and `subagent-prompt-contract` for prompt structure.
