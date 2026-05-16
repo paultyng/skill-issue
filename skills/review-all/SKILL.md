@@ -1,6 +1,6 @@
 ---
 name: review-all
-description: Perform a comprehensive security, reliability, code, coverage, and documentation review by orchestrating individual review skills (review-security, review-reliability, review-code, review-database, review-coverage, review-documentation) as parallel subagents. Use when the user asks for a deep review, full review, comprehensive review, production readiness assessment, full audit, or to review everything.
+description: Perform a comprehensive security, reliability, code, coverage, documentation, infrastructure, CI, observability, and API-compatibility review by orchestrating individual review skills (review-security, review-reliability, review-code, review-database, review-coverage, review-documentation, review-infrastructure, review-ci, review-observability, review-api-compat) as parallel subagents. Performance review (review-performance) is opt-in only — included when the user explicitly asks. Use when the user asks for a deep review, full review, comprehensive review, production readiness assessment, full audit, or to review everything.
 ---
 
 # Full Review
@@ -23,9 +23,14 @@ Orchestrate all domain-specific review skills as parallel subagents, then consol
   - `has_go`: any `.go` files
   - `has_proto`: any `.proto` files
   - `has_sql`: any `.sql` files
-  - `has_infra`: any Dockerfiles, k8s manifests, Terraform (`.tf`), or CI config files
+  - `has_iac`: any Dockerfiles/Containerfiles, k8s manifests, Terraform (`.tf`/`.tofu`), Helm charts (`Chart.yaml`), service mesh / gateway CRDs (Linkerd/Istio/Gateway API/Ingress/Envoy bootstrap)
+  - `has_ci`: any GitHub Actions workflows (`.github/workflows/*.yml`), composite actions (`action.yml`), Dependabot/Renovate configs, or CI configs (`.circleci/config.yml`, `.buildkite/pipeline.yml`, `.gitlab-ci.yml`, `Jenkinsfile`, `azure-pipelines.yml`, `cloudbuild.yaml`, `bitbucket-pipelines.yml`)
+  - `has_infra`: shorthand for `has_iac || has_ci` (kept for backwards compatibility with existing review-* subagents)
+  - `has_api_specs`: any `.proto`, OpenAPI/Swagger specs (`openapi.{yml,yaml,json}`, `swagger.{yml,yaml,json}`), or GraphQL schemas (`*.graphql`, `*.gql`)
   - `has_docs`: any `.md` files or OpenAPI/Swagger specs
   - `has_changes`: true when scope is "changed files (PR or branch)", or when scope is "explicit paths" and those paths have a diff against the base ref (run `git diff --name-only --diff-filter=d <base>...HEAD -- <paths>` to check; default base is `main`). False for full-codebase reviews with no diff baseline.
+- **Detect opt-in flags** from the user's request phrasing:
+  - `include_performance`: true when the user explicitly asks for performance, perf, benchmark, profiling, pprof, hot-path, or latency review alongside the comprehensive request. Default false. Never auto-enable from file types.
 ### 1a. Detect conformance mode
 
 If the user's request includes phrases like "full conformance", "pattern discovery", "check patterns", or "discover patterns", set `conformance_mode` to `full`. Otherwise default to `lightweight`. This flag is passed to review-code in step 3.
@@ -41,11 +46,16 @@ If no `REVIEW.md` exists, proceed without it. All review skills have their own r
 
 - Determine which review types are applicable using these flags:
   - **review-security**: applicable if `has_code` or `has_infra`
-  - **review-reliability**: applicable if `has_code` or `has_infra`
+  - **review-reliability**: applicable if `has_code` or `has_iac`
   - **review-code**: applicable if `has_code` or `has_proto`
   - **review-database**: applicable if `has_sql`, or database-interacting code exists (check imports for DB drivers like `pgx`, `pq`, `database/sql`, `sqlx`, `diesel`, `sqlalchemy`, etc.)
   - **review-coverage**: applicable if `has_go` and `has_changes`
   - **review-documentation**: always applicable
+  - **review-infrastructure**: applicable if `has_iac`
+  - **review-ci**: applicable if `has_ci`
+  - **review-observability**: applicable if `has_code` (observability gaps are code-level; configs alone aren't enough)
+  - **review-api-compat**: applicable if `has_api_specs` AND `has_changes` (it's a diff-aware review; no diff baseline = nothing to compare)
+  - **review-performance**: applicable ONLY if `include_performance` is true. Never auto-launched.
 
 ### 2. System overview
 
@@ -101,23 +111,36 @@ For each subagent, include in its prompt:
 | Subagent | Skill | Condition |
 |----------|-------|-----------|
 | Security | review-security | `has_code` or `has_infra` |
-| Reliability | review-reliability | `has_code` or `has_infra` |
+| Reliability | review-reliability | `has_code` or `has_iac` |
 | Code | review-code | `has_code` or `has_proto` |
 | Database | review-database | `has_sql` or DB code in scope |
 | Coverage | review-coverage | `has_go` and `has_changes` |
 | Documentation | review-documentation | Always |
+| Infrastructure | review-infrastructure | `has_iac` |
+| CI | review-ci | `has_ci` |
+| Observability | review-observability | `has_code` |
+| API compatibility | review-api-compat | `has_api_specs` and `has_changes` |
+| Performance | review-performance | `include_performance` is true (opt-in only) |
 
 Each subagent should NOT write its own output file; it returns findings to this orchestrator.
+
+**Concurrency cap.** Launch up to 4 subagents at a time. With all skills enabled the dispatch can exceed 4; queue the rest and launch them as earlier ones complete.
 
 ### 4. Launch summarization subagent
 
 After all review subagents complete, launch a single summarization subagent (`subagent_type="generalPurpose"`, `model: opus` per `subagent-model-routing` — cross-cutting dedup and prioritization across all review domains) with the full findings from each review subagent. Pass `pr_url` so it can preserve and apply the [Finding link wrapping](#finding-link-wrapping) convention when rewriting tables.
 
 Prompt it to:
-1. **Deduplicate** overlapping findings across all reviews (many findings appear in multiple analyses, e.g. security and reliability, security and Go best practices, or a coverage gap on a function flagged by reliability/security as risky).
+1. **Deduplicate** overlapping findings across all reviews. Common overlaps to watch for:
+   - security ↔ reliability (e.g. unbounded result sets)
+   - security ↔ infrastructure (e.g. inline secrets in TF / k8s)
+   - security ↔ ci (e.g. PR-target script injection)
+   - reliability ↔ observability (e.g. missing error spans on hot paths)
+   - reliability ↔ infrastructure (e.g. k8s probes vs. shutdown contract — `review-infrastructure` covers probe presence, `review-reliability` covers shutdown semantics)
+   - code ↔ api-compat (e.g. a proto change flagged for design AND for wire compat)
 2. **Cross-reference** each deduplicated finding to its source review and IDs.
 3. **Preserve tracking status**. A finding is tracked if any source review marked it as tracked.
-4. **Prioritize**. Produce consolidated findings tables ordered by severity/priority, grouped by category (security, reliability, code, documentation).
+4. **Prioritize**. Produce consolidated findings tables ordered by severity/priority, grouped by category (security, reliability, code, infrastructure, ci, observability, api-compatibility, performance, database, coverage, documentation).
 5. **Recommend fix order**, considering dependencies between findings and effort estimates. Already-tracked findings may be deprioritized if the existing TODO indicates a plan.
 6. **Tool Availability summary**. Consolidate from all reviews into a summary listing which automated tools ran successfully, which were skipped, and why.
 
@@ -238,6 +261,49 @@ This applies to the consolidated tables below **and** to per-category finding ta
 |----------|----|---------|--------|---------|
 | HIGH | 1 | Description with code references | DOC1, DOC4 | — |
 | MEDIUM | 2 | Description with code references | DOC2 | TODO in file:line |
+```
+
+### Consolidated infrastructure findings
+
+```markdown
+| Priority | Surface | Finding | Impact | Effort | Tracked |
+|----------|---------|---------|--------|--------|---------|
+| P0 | k8s | Description with code references | Impact | trivial / small / moderate / large | — |
+| P1 | terraform | Description with code references | Impact | Effort | FIXME in file:line |
+```
+
+### Consolidated CI findings
+
+```markdown
+| Priority | Workflow | Finding | Impact | Effort | Tracked |
+|----------|----------|---------|--------|--------|---------|
+| P0 | release.yml | Description with code references | Supply chain / security | trivial / small / moderate / large | — |
+```
+
+### Consolidated observability findings
+
+```markdown
+| Priority | Signal | Finding | Impact | Effort | Tracked |
+|----------|--------|---------|--------|--------|---------|
+| P0 | tracing | Description with code references | MTTR / debuggability | trivial / small / moderate / large | — |
+```
+
+### Consolidated API compatibility findings
+
+```markdown
+| Priority | Surface | Change | Class | Recommendation | Tracked |
+|----------|---------|--------|-------|----------------|---------|
+| P0 | proto | `pkg.Service.Method` removed at file:line | wire-breaking | Deprecate first; remove in next major version | — |
+```
+
+### Consolidated performance findings
+
+Only emitted when `include_performance` is true.
+
+```markdown
+| Priority | Category | Finding | Impact | Effort | Evidence | Tracked |
+|----------|----------|---------|--------|--------|----------|---------|
+| P1 | allocation | Description with code references | Allocations on hot path | small | profile needed | — |
 ```
 
 ### Consolidated coverage findings
