@@ -37,7 +37,7 @@ The plan must satisfy these structural rules. Any violation contributes to `NEED
 |---|---|
 | Tasks are `- [ ]` checkboxes | BLOCKED — no machine-readable progress |
 | Each task names the files it touches | NEEDS_REVISION — implementer guesses scope |
-| Each task includes a verification step (test, command + expected output, or named smoke check) | NEEDS_REVISION — completion is unverifiable |
+| Each task includes a **probable** verification step (greppable string, command with expected output, or file-content assertion — NOT "section X present" / "file exists") | NEEDS_REVISION — completion is unverifiable |
 | Tasks are sized 2-5 min (small) to ~30 min (max) | NEEDS_REVISION — too coarse to track or recover from failure |
 | Plan has a stated end-state (one paragraph or "Definition of Done") | NEEDS_REVISION — no exit criterion |
 | Plan has a "Constraints" or "Out of scope" section (or equivalent) | LOW — preferred but not required |
@@ -201,3 +201,4 @@ Once decided, edit the plan to record the choice and request `review-plan` again
 - When `implement-plan` invokes this skill, return the verdict first so the caller can branch without parsing the whole report.
 - For detailed checklist categories, see [reference.md](reference.md).
 - This skill is **not** included in `review-all`. Plan review is plan-time; code review is code-time. Different lifecycle, different invocation.
+- Verification steps in tasks must be probable (run/grep/output), not presence-checks ("section X present" passes for anything). Per `~/.claude/rules/probe-not-assume.md`.
