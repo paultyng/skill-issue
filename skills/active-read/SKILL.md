@@ -26,3 +26,25 @@ Source detection rules:
 - Else → pasted prose fallback; treat the user's text in-conversation as the source.
 
 If the user invokes with no source, ask once and stop until they provide one. Do not infer.
+
+### 2. Ingest & map
+
+Read the source and produce a section map before any questions.
+
+**Section detection:**
+
+- First-pass: split on `## ` headings (level-2 markdown). Each heading + its body is one section.
+- Fallback when no `## ` headings exist: split into ~2k-char chunks at paragraph boundaries.
+
+**Chunking for large sources:**
+
+- For sources >15k chars, fan out parallel Haiku subagents on ~6k-char chunks. Each subagent produces a per-section "what + why this matters" one-line summary. Merge results into a single section map.
+- Smaller sources: read inline and produce the map directly.
+
+**Thesis extraction (one-shot, here):**
+
+Extract the source's central thesis — the one sentence the author would write on a sticky note if asked "what's the point?" — and **store it in conversation state for use in synthesis (Task 6 / Section 4). Do NOT re-extract at synthesis time.** Anchoring risk: re-extracting after the user has written their own summary risks the agent anchoring on the user's phrasing rather than the source's actual claim. Extract once, freeze.
+
+**User confirmation:**
+
+Present the section map (titles + one-line "what + why") to the user. They confirm, reorder, drop, or merge sections. No question loop runs until the map is confirmed.
