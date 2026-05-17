@@ -168,6 +168,7 @@ You are reviewing the diff produced by ONE plan task. Apply the <reviewer-skill-
 - Use severity per your skill's convention (P0/P1/P2/P3, or HIGH/MEDIUM/LOW, or bug/risk/nit).
 - Follow the terse-comments convention: concrete fix, no praise, no restating the diff.
 - Be honest. Do not rubber-stamp. If something is wrong, say so.
+- Findings must cite probed evidence (`path:line` + grep output + command result), not pattern-matched suspicion. Per `~/.claude/rules/probe-not-assume.md`.
 
 # Return format
 First line: DONE | DONE_WITH_CONCERNS | BLOCKED
@@ -191,6 +192,7 @@ Specific workarounds to refuse, even under pressure. If you catch yourself doing
 - **"While I'm here" changes.** Rationalization: "the related code is also wrong". Reality: per `minimal-changes`, file an issue and link it from the nits file; don't expand the diff.
 - **Asking "should I continue?" between tasks.** Rationalization: "checking in is polite". Reality: per Superpowers, this wastes the human's time. Execute through; halt only on the named escalation triggers.
 - **Inventing an architectural decision.** Rationalization: "this is a reasonable default". Reality: per `escalation`, ask first. Wrong autonomous choices cost more than questions.
+- **Marking task DONE based on visual inspection of the edit rather than running the verification command (probe-not-assume violation).**
 
 ## Rationalization table
 
@@ -205,6 +207,7 @@ When pressured to break a rule, this is what the agent will tell itself, and the
 | "I'll batch all the commits at the end for a cleaner history" | Bisect needs per-phase commits; clean history is a side-effect, not the goal |
 | "Tasks 3 and 4 are independent, I'll parallelize" | "Independent" is a guess until merge; sequential makes it certain |
 | "The user said 'do it' — they want fast" | "Do it" doesn't mean "skip the gates"; it means "start" |
+| "Verification command would slow me down" | Slow is the price of true. DONE without probe is a probe-not-assume violation. |
 
 ## Status protocol
 
