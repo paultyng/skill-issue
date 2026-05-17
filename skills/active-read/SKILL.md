@@ -68,3 +68,15 @@ For each confirmed section, in order:
 - `harder` / `push me` — request a stricter question or a harder-Bloom-level type from the typology.
 
 If the user answers, evaluate per the rubric in `reference.md` (Task 10 fills the rubric); per evaluation, the agent then waits for the next verb. Do not advance unprompted.
+
+### 4. Synthesis
+
+When the user signals end-of-sections (`synthesize` / `summarize` / `wrap up` / `I'm done`):
+
+**Step 1 — User summary.** Ask the user to produce a **3-sentence summary in their own words.** If they paraphrase the source's wording back, push back: "that's reading, not synthesizing — re-state it as you'd explain it to a teammate."
+
+**Step 2 — Diff against the stored thesis.** Compare the user's summary against the **thesis stored in Task 4** (step 2 of the workflow). Do NOT re-extract the thesis here. See the anchoring note in `### 2. Ingest & map`: re-extraction at synthesis time risks the agent anchoring on the user's phrasing rather than the source's actual claim. The whole point of storing the thesis up front is that this diff is independent.
+
+**Step 3 — Identify gaps.** For each gap (a claim in the stored thesis that the user's summary missed, distorted, or contradicts), cite the specific source passage. Use the evaluation rubric structure from `reference.md`: what was right (quote the user) / what was missing (quote the source) / which passage to re-read. Honest, not flattering.
+
+**Step 4 — Action.** Ask "what would you do with this?" — `apply` (use it in current work) / `decide` (it feeds a pending decision) / `discard` (not actionable) / `share` (forward to someone). Do not assume on the user's behalf.
