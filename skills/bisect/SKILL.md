@@ -150,3 +150,4 @@ Do **not** auto-revert, auto-fix, or push anything. The skill ends at the report
 - Skipping the auto-stash and trap. Leaves the user mid-bisect on Ctrl-C.
 - Treating compile-error commits as "bad" without checking. That's a setup failure, not the bug.
 - Auto-fixing the offending commit. Out of scope for this skill.
+- Per `~/.claude/rules/probe-not-assume.md`: confirm via tool/command before recommending; do not infer.
