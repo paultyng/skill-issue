@@ -5,4 +5,24 @@ description: Use when the user wants interactive active-recall study on a docume
 
 # Active Read
 
-(Workflow body to be added in Tasks 3-8. reference.md content via Tasks 9-10.)
+Drive an interactive study session over a document or topic via active recall: ingest → section-by-section summary → typology-driven understanding questions → user-led pace → synthesis. Honest evaluation, not flattery.
+
+## Workflow
+
+### 1. Intake
+
+Capture four dimensions before ingesting the source:
+
+- **source** — file path, URL, Notion page, or pasted prose.
+- **goal** — decide / understand / evaluate / brief someone else.
+- **time budget** — 15 min / 1 hour / multi-session.
+- **familiarity** — cold / warm / refresher (warm = some prior exposure; refresher = solid prior exposure, want a recap).
+
+Source detection rules:
+
+- Path-looking arg with a file ext (e.g. `.pdf`, `.md`, `.txt`) → local file; read via the `Read` tool.
+- URL schema (`http://`, `https://`) → web source; fetch via `WebFetch`.
+- `notion.so/` host or Notion URL pattern → Notion page; fetch via `mcp__notion__notion-fetch`.
+- Else → pasted prose fallback; treat the user's text in-conversation as the source.
+
+If the user invokes with no source, ask once and stop until they provide one. Do not infer.
