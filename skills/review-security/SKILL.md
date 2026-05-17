@@ -189,3 +189,4 @@ When the user requests a follow-up review after fixes:
 - When the user asks for a follow-up review, find the most recent review directory (`ls -d reviews/*/ 2>/dev/null | sort | tail -1`) containing `SECURITY-REVIEW.md`, re-evaluate all prior findings, and update with the re-evaluation table appended.
 - For detailed framework categories, see [reference.md](reference.md).
 - **REVIEW.md integration**: If a `REVIEW.md` context section was provided by the review-all orchestrator (or exists at the repository root when running standalone), treat its rules as additional review criteria. "Always check" items are HIGH severity; domain-specific items (Security section) are MEDIUM severity. "Skip" patterns exclude matching files from review scope.
+- Findings must cite probed evidence (`path:line`, grep output, command result), not pattern-matched suspicion. Per `~/.claude/rules/probe-not-assume.md`.

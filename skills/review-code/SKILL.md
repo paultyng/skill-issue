@@ -234,3 +234,4 @@ The display text stays `path:line` so plain and linked tables look identical; on
 - For detailed checklists, see [reference-architecture.md](reference-architecture.md), [reference-go.md](reference-go.md), and [reference-protobuf.md](reference-protobuf.md).
 - For documentation quality (doc comments, examples, README), see **review-documentation**.
 - **REVIEW.md integration**: If a `REVIEW.md` context section was provided by the review-all orchestrator (or exists at the repository root when running standalone), treat its rules as additional review criteria. "Always check" items are HIGH severity; domain-specific items (Go conventions, Protobuf & API) are MEDIUM severity. "Skip" patterns exclude matching files from review scope.
+- Findings must cite probed evidence (`path:line`, grep output, command result), not pattern-matched suspicion. Per `~/.claude/rules/probe-not-assume.md`.
