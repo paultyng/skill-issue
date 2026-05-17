@@ -177,3 +177,4 @@ Output directly to terminal. No file output.
 - Present findings conversationally: tables for data, plain text for warnings and recommendations
 - When suggesting reviewers, mention *why* each person is suggested (which files/areas they know)
 - For distribution analysis, lead with the highest-risk areas
+- Per `~/.claude/rules/probe-not-assume.md`: confirm via tool/command before recommending; do not infer.
