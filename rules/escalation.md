@@ -10,3 +10,5 @@ Stop and ask a human before proceeding if:
 - A best practice has divergent guidance for greenfield vs brownfield. Confirm which applies before proceeding.
 
 Do not guess or pick a "reasonable default". Ask first. The cost of a wrong autonomous decision is much higher than the cost of a question.
+
+See also `~/.claude/rules/probe-not-assume.md`: when escalation feels heavy and you are tempted to invent a "reasonable default" because asking feels expensive, that is also a probe-not-assume violation. The rule is more authoritative than your discomfort.
