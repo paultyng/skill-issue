@@ -48,3 +48,23 @@ Extract the source's central thesis — the one sentence the author would write 
 **User confirmation:**
 
 Present the section map (titles + one-line "what + why") to the user. They confirm, reorder, drop, or merge sections. No question loop runs until the map is confirmed.
+
+### 3. Section loop
+
+For each confirmed section, in order:
+
+**Summary first.** Emit a ≤6-bullet summary. Jargon is defined inline the first time it appears in a section, never re-defined within the same section.
+
+**Questions next.** Draw **2 questions by default** from the typology in `reference.md`. Use **3 when the section is dense / high-stakes / introduces ≥3 new concepts** (judgment call; bias slightly toward 2 to keep pace).
+
+**Rotation rule:** Track which question types have been asked in this section (internal array). Do not double up — every new question in the same section must be a different type from those already asked. If the typology is exhausted for this section, say so explicitly rather than repeating a type.
+
+**Wait, don't drive.** After emitting questions, stop. The user controls the pace via verbs:
+
+- `next` — advance to the next section.
+- `redo` / `retry` / `let me try again` — re-pose the current question; optionally rephrase it from a different angle.
+- `more` — request more questions on this section. **`more` lifts the default count** of 2/3 — the agent keeps emitting new-type questions until the user says `next` / `got it`, or the typology is exhausted.
+- `got it` — advance to the next section.
+- `harder` / `push me` — request a stricter question or a harder-Bloom-level type from the typology.
+
+If the user answers, evaluate per the rubric in `reference.md` (Task 10 fills the rubric); per evaluation, the agent then waits for the next verb. Do not advance unprompted.
