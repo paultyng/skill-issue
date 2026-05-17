@@ -116,3 +116,22 @@ If you cannot fill all three parts honestly, the user's answer is too thin to ev
 | "There's no specific source passage to cite." | Then your evaluation is opinion, not evidence. Find the passage or downgrade your claim. |
 
 Per `~/.claude/rules/probe-not-assume.md` (forthcoming): evaluation cites probed source passages, not paraphrase from memory. If you cannot quote the source, you have not read it carefully enough to grade.
+
+## Out of scope for v1
+
+These are future hooks, intentionally excluded from v1 to keep the skill focused. Each is a future skill or a v2 of active-read, not a backlog item for v1:
+
+- **persistence to disk** — no `./notes/` files written; all state stays in the conversation.
+- **multi-session resume** — no way to pick up a study session a day later.
+- **progress scoring** — no quiz score / accuracy metric across sessions or topics.
+- **spaced-repetition scheduling** — no Anki-style review-at-intervals.
+- **multi-source synthesis** — no "read these 3 vendor docs and compare"; single source per session.
+- **evaluator-as-subagent** — evaluator runs in the same agent as the question-poser. Known self-agreement risk; v2 splits it to a separate Opus subagent (mirroring `implement-plan`'s reviewer pattern).
+
+## Sources
+
+- Bloom, B. S. (Ed.) (1956). *Taxonomy of Educational Objectives: The Classification of Educational Goals*. Bloom's taxonomy levels (knowledge / comprehension / application / analysis / synthesis / evaluation) underpin the question typology in `reference.md`.
+- Chi, M. T. H., Bassok, M., Lewis, M. W., Reimann, P., & Glaser, R. (1989). "Self-explanations: How students study and use examples in learning to solve problems." *Cognitive Science 13*, 145-182. Active-recall and self-explanation as drivers of retention.
+- The Feynman technique — explain a concept in simple terms, identify gaps, simplify. Popularized via Gleick, J. (1992) *Genius: The Life and Science of Richard Feynman*.
+- Karpathy, A. (2026). "Sequoia Ascent 2026." <https://karpathy.bearblog.dev/sequoia-ascent-2026/>. "Specs as scaffold" framing for LLM-assisted comprehension and the "context is the program" lineage.
+- Osmani, A. "How to write a good spec for AI agents." <https://addyo.substack.com/p/how-to-write-a-good-spec-for-ai-agents>. Spec clarity reduces error multiplication; informs the intake + section-map design.
