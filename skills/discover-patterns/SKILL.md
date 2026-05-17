@@ -127,3 +127,4 @@ Write to `${REVIEW_DIR}/PATTERNS.md`. Present the report to the user.
 - When confidence is INCONSISTENT, note which approach is more common and which is the outlier.
 - Keep the output concise: 2-3 exemplars per pattern, not exhaustive file lists.
 - For detailed discovery heuristics per category, see [reference-pattern-taxonomy.md](reference-pattern-taxonomy.md).
+- Per `~/.claude/rules/probe-not-assume.md`: confirm via tool/command before recommending; do not infer.

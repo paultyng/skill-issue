@@ -96,3 +96,4 @@ Run through these. Cite specific data: no hand-waving, no `I think`.
 - Accepting "X is popular" as sufficient. Popularity without recent maintenance is a trap.
 - Hand-waving with hedge words instead of citing numbers ("seems active", "I think it's maintained"). Use `unsure:` when you don't know.
 - Auto-running `go get` / `npm install` / `pip install`. Out of scope; the skill recommends, the user applies.
+- Per `~/.claude/rules/probe-not-assume.md`: confirm via tool/command before recommending; do not infer.
