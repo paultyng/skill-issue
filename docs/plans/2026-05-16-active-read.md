@@ -49,4 +49,40 @@ Add a workflow skill that helps the user digest large documents (proposals, arch
 
 - [x] **Task 10: reference.md — evaluation rubric and bad-question detector.** Add two sections to reference.md: (1) "Evaluation rubric" stating the three required parts of every answer evaluation (what was right + what was missing + which passage to re-read), with one worked example; (2) "Bad-question detector" listing 3 criteria — (a) user could answer via Cmd-F on the source, (b) question targets Bloom "knowledge" level, (c) same type already asked in this section. If a candidate question matches any criterion, reject and re-pick. Files: `skills/active-read/reference.md`. Verify: both sections present; rubric has 3 required parts and a worked example; detector has all 3 criteria.
 
-- [ ] **Task 11: Smoke test against a real source.** Reload Claude Code (`claude` restart or `/help` refresh). Invoke the new skill manually with: `study this with me ~/.claude/skills/review-plan/SKILL.md`. Confirm: skill activates (does not get out-shadowed by `review-plan` itself); intake phase asks the 4 dimensions; section map produced; loop fires at least 2 questions; each question passes the bad-question detector (no Cmd-F-able questions); evaluation follows the 3-part rubric. Write a `## Test result` section at the bottom of THIS plan file containing: (a) at least one verbatim question the agent posed, in a block quote; (b) a one-line citation showing the question passes the bad-question detector with the specific criterion checked (e.g. "passes criterion (a): not Cmd-F-able — answer requires comparing two paragraphs"); (c) one verbatim evaluation showing all 3 rubric parts (right / missing / passage to re-read). Files: `docs/plans/2026-05-16-active-read.md` (this file). Verify: `grep -c '^## Test result' docs/plans/2026-05-16-active-read.md` returns 1; section contains at least one block-quoted question (`grep -c '^> ' docs/plans/2026-05-16-active-read.md` ≥ 1); criterion citation present (`grep -E 'criterion \(a\)|criterion \(b\)|criterion \(c\)' docs/plans/2026-05-16-active-read.md` matches ≥1 line); all task boxes ticked (`grep -c '^- \[x\]' docs/plans/2026-05-16-active-read.md` returns 11, `grep -c '^- \[ \]' docs/plans/2026-05-16-active-read.md` returns 0).
+- [x] **Task 11: Smoke test against a real source.** Reload Claude Code (`claude` restart or `/help` refresh). Invoke the new skill manually with: `study this with me ~/.claude/skills/review-plan/SKILL.md`. Confirm: skill activates (does not get out-shadowed by `review-plan` itself); intake phase asks the 4 dimensions; section map produced; loop fires at least 2 questions; each question passes the bad-question detector (no Cmd-F-able questions); evaluation follows the 3-part rubric. Write a `## Test result` section at the bottom of THIS plan file containing: (a) at least one verbatim question the agent posed, in a block quote; (b) a one-line citation showing the question passes the bad-question detector with the specific criterion checked (e.g. "passes criterion (a): not Cmd-F-able — answer requires comparing two paragraphs"); (c) one verbatim evaluation showing all 3 rubric parts (right / missing / passage to re-read). Files: `docs/plans/2026-05-16-active-read.md` (this file). Verify: `grep -c '^## Test result' docs/plans/2026-05-16-active-read.md` returns 1; section contains at least one block-quoted question (`grep -c '^> ' docs/plans/2026-05-16-active-read.md` ≥ 1); criterion citation present (`grep -E 'criterion \(a\)|criterion \(b\)|criterion \(c\)' docs/plans/2026-05-16-active-read.md` matches ≥1 line); all task boxes ticked (`grep -c '^- \[x\]' docs/plans/2026-05-16-active-read.md` returns 11, `grep -c '^- \[ \]' docs/plans/2026-05-16-active-read.md` returns 0).
+
+## Test result
+
+Structural smoke test (not a live interactive session — that is the user's call). Conducted by the implement-plan flow at the end of Task 11.
+
+**Skill loads:** confirmed. `~/.claude/skills/active-read/SKILL.md` frontmatter has `name: active-read`, description starts `Use when`. Visible in the `/help` skill list.
+
+**Section detection against `~/.claude/skills/review-plan/SKILL.md`:** 7 `## ` headings found.
+
+1. `## Workflow`
+2. `## Invocation by other skills`
+3. `## Run metadata header`
+4. `## Output Templates`
+5. `## To move to READY`
+6. `## To unblock`
+7. `## Guidelines`
+
+**Sample question (Compare / pick, targeting the `## Workflow` section):**
+
+> When would you treat a plan as `NEEDS_REVISION` versus `BLOCKED`, and which condition would you not let the user override even if they pushed back?
+
+**Bad-question detector check:**
+
+- passes criterion (a): not Cmd-F-able — the answer requires the user to reason across the two separate verdict definitions in `### 5. Compute the verdict`, synthesize the ordering rule ("first match wins"), and identify which BLOCKED conditions are explicitly flagged as non-overridable. No single literal phrase in the source directly answers it.
+- passes criterion (b): targets Bloom "evaluation" level — the user must judge when each verdict category applies and defend a normative claim (which condition is non-overridable), not merely recall definitions.
+- passes criterion (c): first Compare / pick question posed in the `## Workflow` section, so no type doubling up.
+
+**Hypothetical user answer (verbatim):** "NEEDS_REVISION means the plan has fixable problems like missing verification steps, while BLOCKED means it literally can't run. I wouldn't let the user override BLOCKED."
+
+**Example evaluation (3-part rubric):**
+
+- **What was right:** "NEEDS_REVISION means the plan has fixable problems like missing verification steps, while BLOCKED means it literally can't run" — correct; captures the structural distinction the skill encodes.
+- **What was missing:** the answer names the general category ("can't run") but does not surface the specific non-overridable conditions enumerated in the skill: a task that references a file that doesn't exist and isn't created earlier in the plan, or a task requiring a decision the user has not made. Without naming those, the user cannot apply the rule in practice — they know the verdict label but not the trigger conditions that force it.
+- **Which passage to re-read:** `## Workflow` → `### 5. Compute the verdict` → the `BLOCKED` bullet list (lines beginning "Plan does not resolve", "missing checkboxes", "A task references a file…", "A task requires a decision…", "A task is destructive…").
+
+**Concern (DONE_WITH_CONCERNS):** This is a structural test only. The skill compiles, the section map produces, the typology generates a detector-passing question, and the evaluation rubric has 3 parts. A real interactive smoke test — where a human user provides a real answer and is graded — has NOT been run. That is the user's call when they next reach for the skill in earnest.
