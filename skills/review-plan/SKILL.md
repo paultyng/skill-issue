@@ -1,6 +1,6 @@
 ---
 name: review-plan
-description: Use when the user asks to review the plan, sanity-check the plan, vet the plan, evaluate the plan, "is this plan ready", feasibility check on a plan, "review-plan PATH", or when another skill (like implement-plan) requests pre-flight plan evaluation before execution.
+description: Use when the user asks to review the plan, sanity-check the plan, vet the plan, evaluate the plan, "is this plan ready", feasibility check on a plan, "review-plan PATH", or when another skill (like implement-plan) requests pre-flight plan evaluation before execution. Do NOT use when no plan file is in scope (the user is likely asking for a summary — use Read instead), nor when the user is asking about source code (use review-code), nor when the user wants documentation review (use review-documentation).
 ---
 
 # Plan Review
