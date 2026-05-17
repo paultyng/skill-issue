@@ -46,4 +46,37 @@ Reduce agentic failure modes documented in the literature: paraphrasing-instead-
 
 - [x] **Task 8: Update verify-when-complete cross-ref.** Add a one-line note near the top of verify-when-complete's workflow body: "This skill is the operational arm of `~/.claude/rules/probe-not-assume.md`: claims of completion require fresh, probed evidence, not implementer self-report." Files: `skills/verify-when-complete/SKILL.md`. Verify: `grep -c 'probe-not-assume' skills/verify-when-complete/SKILL.md` returns ≥ 1; `grep -q 'operational arm' skills/verify-when-complete/SKILL.md`.
 
-- [ ] **Task 9: Smoke test — cross-references land everywhere.** Run `COUNT=$(grep -rl 'probe-not-assume' ~/.claude/skills ~/.claude/rules | wc -l)` and confirm `$COUNT` ≥ 21. Append a `## Test result` section to THIS plan file containing (a) the literal line `Cross-reference count: N` where N is the observed count; (b) the literal line `Files referencing the rule:` followed by the bullet-list output of `grep -rl 'probe-not-assume' ~/.claude/skills ~/.claude/rules | sort`. Files: `docs/plans/2026-05-17-probe-not-assume.md`. Verify: `grep -c '^## Test result' docs/plans/2026-05-17-probe-not-assume.md` returns 1; `grep -E '^Cross-reference count: [0-9]+' docs/plans/2026-05-17-probe-not-assume.md` matches a line with N ≥ 21; `grep -c '^- /' docs/plans/2026-05-17-probe-not-assume.md` returns ≥ 21 (one bullet per referencing file); `grep -c '^- \[ \]' docs/plans/2026-05-17-probe-not-assume.md` returns 0 (all task boxes ticked).
+- [x] **Task 9: Smoke test — cross-references land everywhere.** Run `COUNT=$(grep -rl 'probe-not-assume' ~/.claude/skills ~/.claude/rules | wc -l)` and confirm `$COUNT` ≥ 21. Append a `## Test result` section to THIS plan file containing (a) the literal line `Cross-reference count: N` where N is the observed count; (b) the literal line `Files referencing the rule:` followed by the bullet-list output of `grep -rl 'probe-not-assume' ~/.claude/skills ~/.claude/rules | sort`. Files: `docs/plans/2026-05-17-probe-not-assume.md`. Verify: `grep -c '^## Test result' docs/plans/2026-05-17-probe-not-assume.md` returns 1; `grep -E '^Cross-reference count: [0-9]+' docs/plans/2026-05-17-probe-not-assume.md` matches a line with N ≥ 21; `grep -c '^- /' docs/plans/2026-05-17-probe-not-assume.md` returns ≥ 21 (one bullet per referencing file); `grep -c '^- \[ \]' docs/plans/2026-05-17-probe-not-assume.md` returns 0 (all task boxes ticked).
+
+## Test result
+
+Cross-reference count: 24
+
+Files referencing the rule:
+
+- /Users/paul.tyng/.claude/rules/escalation.md
+- /Users/paul.tyng/.claude/rules/probe-not-assume.md
+- /Users/paul.tyng/.claude/skills/active-read/SKILL.md
+- /Users/paul.tyng/.claude/skills/analyze-knowledge/SKILL.md
+- /Users/paul.tyng/.claude/skills/bisect/SKILL.md
+- /Users/paul.tyng/.claude/skills/ci-debug-loop/SKILL.md
+- /Users/paul.tyng/.claude/skills/discover-patterns/SKILL.md
+- /Users/paul.tyng/.claude/skills/evaluate-dependency/SKILL.md
+- /Users/paul.tyng/.claude/skills/implement-plan/reference.md
+- /Users/paul.tyng/.claude/skills/implement-plan/SKILL.md
+- /Users/paul.tyng/.claude/skills/review-all/SKILL.md
+- /Users/paul.tyng/.claude/skills/review-api-compat/SKILL.md
+- /Users/paul.tyng/.claude/skills/review-ci/SKILL.md
+- /Users/paul.tyng/.claude/skills/review-code/SKILL.md
+- /Users/paul.tyng/.claude/skills/review-coverage/SKILL.md
+- /Users/paul.tyng/.claude/skills/review-database/SKILL.md
+- /Users/paul.tyng/.claude/skills/review-documentation/SKILL.md
+- /Users/paul.tyng/.claude/skills/review-infrastructure/SKILL.md
+- /Users/paul.tyng/.claude/skills/review-observability/SKILL.md
+- /Users/paul.tyng/.claude/skills/review-performance/SKILL.md
+- /Users/paul.tyng/.claude/skills/review-plan/SKILL.md
+- /Users/paul.tyng/.claude/skills/review-reliability/SKILL.md
+- /Users/paul.tyng/.claude/skills/review-security/SKILL.md
+- /Users/paul.tyng/.claude/skills/verify-when-complete/SKILL.md
+
+Above target of ≥21. Includes 2 rules (escalation + probe-not-assume itself), 13 review-* skills (12 cascaded in Task 6 + review-plan from Task 5), 2 implement-plan files (SKILL.md + reference.md), 5 analysis skills, verify-when-complete, and active-read (forward-reference added during its own implementation; principle landed in the wild before its rule did).
