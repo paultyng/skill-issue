@@ -161,3 +161,4 @@ The display text stays `path:line`. Pass `L` for findings about removed code. Fi
 - For detailed framework categories, see [reference.md](reference.md).
 - **Opt-in opt-out**: this skill should never run as part of `review-all` unless the user explicitly requests it. The orchestrator must check `include_performance` before fanning out to this skill.
 - **REVIEW.md integration**: If a `REVIEW.md` context section was provided by the review-all orchestrator (or exists at the repository root when running standalone), treat its rules as additional review criteria. "Always check" items are HIGH severity; domain-specific items (Performance section) are MEDIUM severity. "Skip" patterns exclude matching files from review scope.
+- Findings must cite probed evidence (`path:line`, grep output, command result), not pattern-matched suspicion. Per `~/.claude/rules/probe-not-assume.md`.
