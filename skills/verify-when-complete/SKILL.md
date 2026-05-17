@@ -7,6 +7,8 @@ description: Run format, lint, build, and test verification before claiming work
 
 No completion claims without fresh verification evidence.
 
+This skill is the operational arm of `~/.claude/rules/probe-not-assume.md`: claims of completion require fresh, probed evidence, not implementer self-report.
+
 ## Core Principle
 
 Evidence before claims, always. If you haven't run the verification command in this message, you cannot claim it passes.
