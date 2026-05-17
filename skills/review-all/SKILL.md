@@ -1,6 +1,6 @@
 ---
 name: review-all
-description: Perform a comprehensive security, reliability, code, coverage, documentation, infrastructure, CI, observability, and API-compatibility review by orchestrating individual review skills (review-security, review-reliability, review-code, review-database, review-coverage, review-documentation, review-infrastructure, review-ci, review-observability, review-api-compat) as parallel subagents. Performance review (review-performance) is opt-in only — included when the user explicitly asks. Use when the user asks for a deep review, full review, comprehensive review, production readiness assessment, full audit, or to review everything.
+description: Use when the user asks for a deep review, full review, comprehensive review, production readiness assessment, full audit, multi-domain audit, "security and reliability and code review", or "review everything". Also use when the user explicitly requests performance review alongside the comprehensive request (e.g. "include perf", "review including performance", "deep review with perf"); without that explicit phrasing, performance is excluded. Do NOT use for narrow single-domain reviews (use the matching review-* skill directly).
 ---
 
 # Full Review
