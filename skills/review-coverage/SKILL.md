@@ -200,6 +200,7 @@ When no baseline exists, omit the **Delta** column. When `has_changes` is false,
 - **No follow-up re-evaluation table.** Coverage findings are derivable from current state on every run, unlike static-analysis findings which can persist after a fix.
 - **REVIEW.md integration**: If a `REVIEW.md` was provided by the review-all orchestrator (or exists at the repo root when running standalone), respect any **Skip** patterns by excluding matching files from scope, and treat any **Always check** rules touching coverage thresholds as HIGH-severity floors.
 - **Test failures stop the analysis.** Do not generate a coverage report from a failed test run; the profile would be misleading or incomplete.
+- Findings must cite probed evidence (`path:line`, grep output, command result), not pattern-matched suspicion. Per `~/.claude/rules/probe-not-assume.md`.
 
 ### Boundary with adjacent skills
 

@@ -344,3 +344,4 @@ Uncovered functions (grouped by package, sorted by severity):
 - Cross-reference findings between reviews to avoid duplicate entries in the consolidated tables.
 - Include effort estimates to help prioritize implementation.
 - When the user asks for a follow-up review, find the most recent review directory (`ls -d reviews/*/ 2>/dev/null | sort | tail -1`) containing `SUMMARY.md`, re-evaluate all prior findings against the current code state, and update with the re-evaluation table appended.
+- Findings must cite probed evidence (`path:line`, grep output, command result), not pattern-matched suspicion. Per `~/.claude/rules/probe-not-assume.md`.
