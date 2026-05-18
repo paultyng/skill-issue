@@ -7,6 +7,7 @@ CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
 DRY_RUN=0
 MIGRATE=0
 PRUNE=0
+FORCE=0
 
 SYNC_DIRS=(skills rules scripts)
 TOP_LEVEL_FILES=(CLAUDE.md)
@@ -22,6 +23,7 @@ Options:
   --dry-run   Show what would be done without making any changes
   --migrate   Remove ~/.claude/.git and .gitignore before syncing (one-time migration)
   --prune     Remove files previously installed by this script that canonical no longer ships
+  --force     With --migrate, skip dirty-tree check and proceed anyway
   --help      Show this help message and exit
 
 Environment:
@@ -48,6 +50,10 @@ while [[ $# -gt 0 ]]; do
       PRUNE=1
       shift
       ;;
+    --force)
+      FORCE=1
+      shift
+      ;;
     --help)
       usage
       exit 0
@@ -66,6 +72,7 @@ echo "CLAUDE_DIR: $CLAUDE_DIR"
 echo "DRY_RUN:    $DRY_RUN"
 echo "MIGRATE:    $MIGRATE"
 echo "PRUNE:      $PRUNE"
+echo "FORCE:      $FORCE"
 
 write_manifest() {
   if [[ $DRY_RUN -eq 1 ]]; then
@@ -170,13 +177,98 @@ JQEOF
   fi
 }
 
-if [[ $MIGRATE -eq 1 ]]; then
-  echo "[migrate] Would remove $CLAUDE_DIR/.git and $CLAUDE_DIR/.gitignore"
-fi
+do_migrate() {
+  local has_git=0
+  local has_gitignore=0
+  [[ -e "$CLAUDE_DIR/.git" ]] && has_git=1
+  [[ -e "$CLAUDE_DIR/.gitignore" ]] && has_gitignore=1
 
-if [[ $PRUNE -eq 1 ]]; then
-  echo "[prune] Would remove stale files tracked in $CLAUDE_DIR/.skill-issue-manifest.json"
-fi
+  if [[ $has_git -eq 0 && $has_gitignore -eq 0 ]]; then
+    echo "[migrate] no .git or .gitignore present, nothing to do"
+    return
+  fi
+
+  if [[ $has_git -eq 1 && $FORCE -eq 0 ]]; then
+    local status
+    status=$(git -C "$CLAUDE_DIR" status --porcelain 2>/dev/null || true)
+    if [[ -n "$status" ]]; then
+      echo "error: refusing to migrate dirty tree at $CLAUDE_DIR; commit/stash or pass --force" >&2
+      exit 1
+    fi
+  fi
+
+  local backup
+  backup="${CLAUDE_DIR}.backup-$(date +%s).tar.gz"
+  local tar_cmd
+  tar_cmd="tar -czf \"$backup\" -C \"$(dirname "$CLAUDE_DIR")\" \"$(basename "$CLAUDE_DIR")\""
+  local rm_git_cmd=""
+  local rm_gitignore_cmd=""
+
+  if [[ $has_git -eq 1 ]]; then
+    rm_git_cmd="rm -rf \"$CLAUDE_DIR/.git\""
+  fi
+  if [[ $has_gitignore -eq 1 ]]; then
+    rm_gitignore_cmd="rm -f \"$CLAUDE_DIR/.gitignore\""
+  fi
+
+  if [[ $DRY_RUN -eq 1 ]]; then
+    echo "[dry-run] $tar_cmd"
+    [[ -n "$rm_git_cmd" ]] && echo "[dry-run] $rm_git_cmd"
+    [[ -n "$rm_gitignore_cmd" ]] && echo "[dry-run] $rm_gitignore_cmd"
+    return
+  fi
+
+  echo "[migrate] backing up to $backup"
+  tar -czf "$backup" -C "$(dirname "$CLAUDE_DIR")" "$(basename "$CLAUDE_DIR")"
+
+  if [[ $has_git -eq 1 ]]; then
+    echo "[migrate] removing $CLAUDE_DIR/.git"
+    rm -rf "$CLAUDE_DIR/.git"
+  fi
+  if [[ $has_gitignore -eq 1 ]]; then
+    echo "[migrate] removing $CLAUDE_DIR/.gitignore"
+    rm -f "$CLAUDE_DIR/.gitignore"
+  fi
+}
+
+do_prune() {
+  local manifest="$CLAUDE_DIR/.skill-issue-manifest.json"
+
+  if [[ ! -f "$manifest" ]]; then
+    echo "[prune] no manifest found, skipping"
+    return
+  fi
+
+  local stale_files=()
+  while IFS= read -r path; do
+    if [[ ! -e "$REPO_DIR/$path" ]]; then
+      stale_files+=("$path")
+    fi
+  done < <(jq -r '.files[]' "$manifest")
+
+  if [[ ${#stale_files[@]} -eq 0 ]]; then
+    echo "[prune] no stale files found"
+    return
+  fi
+
+  for path in "${stale_files[@]}"; do
+    if [[ $DRY_RUN -eq 1 ]]; then
+      echo "[prune] would remove: $CLAUDE_DIR/$path"
+    else
+      echo "[prune] removing: $CLAUDE_DIR/$path"
+      rm -f "$CLAUDE_DIR/$path"
+      rmdir -p "$(dirname "$CLAUDE_DIR/$path")" 2>/dev/null || true
+    fi
+  done
+
+  if [[ $DRY_RUN -eq 0 ]]; then
+    write_manifest
+  fi
+}
+
+[[ $MIGRATE -eq 1 ]] && do_migrate
 
 do_sync
 merge_settings
+
+[[ $PRUNE -eq 1 ]] && do_prune
