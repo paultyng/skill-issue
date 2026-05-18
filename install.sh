@@ -10,6 +10,7 @@ PRUNE=0
 
 SYNC_DIRS=(skills rules scripts)
 TOP_LEVEL_FILES=(CLAUDE.md)
+SHARED_KEYS_REPLACE=(model effortLevel statusLine enabledPlugins extraKnownMarketplaces)
 
 usage() {
   cat <<EOF
@@ -110,6 +111,65 @@ do_sync() {
   write_manifest
 }
 
+merge_settings() {
+  local canonical="$REPO_DIR/settings.merge.json"
+  local user="$CLAUDE_DIR/settings.json"
+
+  if [[ ! -f "$canonical" ]]; then
+    return
+  fi
+
+  if [[ $DRY_RUN -eq 0 && ! -f "$user" ]]; then
+    echo "{}" > "$user"
+  fi
+
+  # Build jq replace expressions for scalar/object keys
+  local jq_replace=""
+  for key in "${SHARED_KEYS_REPLACE[@]}"; do
+    jq_replace+="| if (\$c | has(\"${key}\")) then .${key} = \$c.${key} else . end "
+  done
+
+  local jq_program
+  jq_program=$(cat <<'JQEOF'
+  . as $u
+  | $c[0] as $c
+  REPLACE_PLACEHOLDER
+  | .permissions //= {}
+  | .permissions.allow = ((.permissions.allow // []) + ($c.permissions.allow // []) | unique | sort)
+  | .hooks = (
+      (.hooks // {}) as $hu
+      | reduce ($c.hooks // {} | keys[]) as $ev (
+          $hu;
+          . + {
+            ($ev): (
+              (($hu[$ev] // []) | map(select(.matcher as $m | ($c.hooks[$ev] | map(.matcher) | index($m)) == null)))
+              + ($c.hooks[$ev])
+            )
+          }
+        )
+    )
+JQEOF
+)
+  # Substitute the replace expressions
+  jq_program="${jq_program/REPLACE_PLACEHOLDER/$jq_replace}"
+
+  local result
+  if [[ -f "$user" ]]; then
+    result=$(jq --slurpfile c "$canonical" "$jq_program" "$user")
+  else
+    result=$(echo "{}" | jq --slurpfile c "$canonical" "$jq_program")
+  fi
+
+  if [[ $DRY_RUN -eq 1 ]]; then
+    echo "=== settings.json (dry-run merge result) ==="
+    echo "$result"
+  else
+    echo "$result" > "${user}.tmp"
+    mv "${user}.tmp" "$user"
+    echo "Merged settings.json"
+  fi
+}
+
 if [[ $MIGRATE -eq 1 ]]; then
   echo "[migrate] Would remove $CLAUDE_DIR/.git and $CLAUDE_DIR/.gitignore"
 fi
@@ -119,3 +179,4 @@ if [[ $PRUNE -eq 1 ]]; then
 fi
 
 do_sync
+merge_settings
