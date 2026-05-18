@@ -71,7 +71,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "~/.claude/statusline.sh"
+    "command": "~/.claude/scripts/statusline.sh"
   },
   "enabledPlugins": {
     "gopls-lsp@claude-plugins-official": true
