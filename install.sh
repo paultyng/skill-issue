@@ -8,6 +8,9 @@ DRY_RUN=0
 MIGRATE=0
 PRUNE=0
 
+SYNC_DIRS=(skills rules scripts)
+TOP_LEVEL_FILES=(CLAUDE.md)
+
 usage() {
   cat <<EOF
 Usage: $(basename "$0") [OPTIONS]
@@ -63,10 +66,49 @@ echo "DRY_RUN:    $DRY_RUN"
 echo "MIGRATE:    $MIGRATE"
 echo "PRUNE:      $PRUNE"
 
-# Placeholder dispatch (sync logic added in Task 6+)
-if [[ $DRY_RUN -eq 1 ]]; then
-  echo "[dry-run] Would sync files from $REPO_DIR to $CLAUDE_DIR"
-fi
+write_manifest() {
+  if [[ $DRY_RUN -eq 1 ]]; then
+    return
+  fi
+  local manifest="$CLAUDE_DIR/.skill-issue-manifest.json"
+  {
+    for dir in "${SYNC_DIRS[@]}"; do
+      if [[ -d "$CLAUDE_DIR/$dir" ]]; then
+        find "$CLAUDE_DIR/$dir" -type f
+      fi
+    done
+    for f in "${TOP_LEVEL_FILES[@]}"; do
+      if [[ -f "$CLAUDE_DIR/$f" ]]; then
+        echo "$CLAUDE_DIR/$f"
+      fi
+    done
+  } | sed "s|^$CLAUDE_DIR/||" | sort -u | jq -Rn '{files: [inputs] | sort | unique}' > "$manifest"
+}
+
+do_sync() {
+  mkdir -p "$CLAUDE_DIR"
+
+  local rsync_flags=(-a)
+  if [[ $DRY_RUN -eq 1 ]]; then
+    rsync_flags+=(--dry-run)
+  fi
+
+  for dir in "${SYNC_DIRS[@]}"; do
+    if [[ -d "$REPO_DIR/$dir" ]]; then
+      echo "Syncing $dir/ -> $CLAUDE_DIR/$dir/"
+      rsync "${rsync_flags[@]}" "$REPO_DIR/$dir/" "$CLAUDE_DIR/$dir/"
+    fi
+  done
+
+  for f in "${TOP_LEVEL_FILES[@]}"; do
+    if [[ -f "$REPO_DIR/$f" ]]; then
+      echo "Syncing $f -> $CLAUDE_DIR/$f"
+      rsync "${rsync_flags[@]}" "$REPO_DIR/$f" "$CLAUDE_DIR/$f"
+    fi
+  done
+
+  write_manifest
+}
 
 if [[ $MIGRATE -eq 1 ]]; then
   echo "[migrate] Would remove $CLAUDE_DIR/.git and $CLAUDE_DIR/.gitignore"
@@ -75,3 +117,5 @@ fi
 if [[ $PRUNE -eq 1 ]]; then
   echo "[prune] Would remove stale files tracked in $CLAUDE_DIR/.skill-issue-manifest.json"
 fi
+
+do_sync
