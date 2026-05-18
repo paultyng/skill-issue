@@ -12,7 +12,7 @@ Personal user-level Claude Code skills, rules, and settings. The canonical clone
 - `rules/` — Behavioral rules that auto-load every session. See `.claude/rules/rule-authoring.md` for conventions.
 - `scripts/` — Shell scripts including statusline.
 - `settings.merge.json` — Curated keys merged into `~/.claude/settings.json` (model, permissions, hooks, plugins).
-- `install.sh` / `Taskfile.yaml` — Install/sync tooling.
+- `install.sh` — Install/sync script.
 
 ## Creating Skills and Rules
 
@@ -20,7 +20,7 @@ Use `/create-skill` and `/create-rule` respectively. Do not author SKILL.md or r
 
 ## Sync workflow
 
-- `~/.claude/` is populated by `./install.sh` (or `task install`) running from this canonical clone.
+- `~/.claude/` is populated by `./install.sh` running from this canonical clone.
 - Edits to `skills/`, `rules/`, `scripts/`, and top-level files in this repo flow into `~/.claude/` on each install.
 - Personal/local skills/rules/scripts in `~/.claude/` are preserved (never deleted).
 - `settings.json` is jq-merged: specific keys (`model`, `effortLevel`, `statusLine`, `enabledPlugins`, `extraKnownMarketplaces`, `permissions.allow`, `hooks`) flow from `settings.merge.json`; everything else stays user-local.

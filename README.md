@@ -12,22 +12,27 @@ Personal user-level agent skills, rules, and settings. Available across all proj
 - `rsync` (the macOS 2.x system rsync is fine)
 - `jq`
 
-### One-time setup
+### Setup
 
 ```sh
 git clone git@github.com:paultyng/skill-issue ~/src/github.com/paultyng/skill-issue
 cd ~/src/github.com/paultyng/skill-issue
-./install.sh --migrate   # only if ~/.claude/ is currently a git clone
+./install.sh
 ```
 
-`--migrate` tars `~/.claude/` to `~/.claude.backup-<epoch>.tar.gz`, then removes `~/.claude/.git` and `~/.claude/.gitignore`. It refuses to run against a dirty tree unless `--force` is passed.
+If `~/.claude/` previously existed as a git clone, remove its `.git` and `.gitignore` first:
+
+```sh
+tar -czf ~/.claude.backup-$(date +%s).tar.gz -C ~ .claude
+rm -rf ~/.claude/.git ~/.claude/.gitignore
+```
 
 ### Normal use
 
 After pulling new changes in the canonical clone:
 
 ```sh
-task install        # or: ./install.sh
+./install.sh
 ```
 
 The script is **additive** — no `--delete`, no `rsync --delete`. Your personal skills, rules, and scripts dropped anywhere under `~/.claude/skills/`, `~/.claude/rules/`, or `~/.claude/scripts/` are never touched.
@@ -37,19 +42,28 @@ A manifest of every file the script writes lands at `~/.claude/.skill-issue-mani
 ### Pruning files canonical no longer ships
 
 ```sh
-task install:prune   # or: ./install.sh --prune
+./install.sh --prune
 ```
 
 `--prune` reads the manifest and removes only files that this script previously installed and that the canonical clone no longer contains. Personal files (anything not in a prior manifest) are preserved.
+
+### Backups before destructive ops
+
+```sh
+./install.sh --backup
+./install.sh --backup --prune
+```
+
+`--backup` tars `~/.claude/` to `~/.claude.backup-<epoch>.tar.gz` before any changes. Useful before `--prune` or any install that overwrites shared `settings.json` keys.
 
 ### Dry runs
 
 Every mode supports `--dry-run`:
 
 ```sh
-task install:dry
-./install.sh --migrate --dry-run
+./install.sh --dry-run
 ./install.sh --prune --dry-run
+./install.sh --backup --dry-run
 ```
 
 ### Settings merge
