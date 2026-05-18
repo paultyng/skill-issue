@@ -43,7 +43,7 @@ Make the canonical clone the single source of truth for `skills/`, `rules/`, `sc
 
 - [x] **Task 2: Remove `scripts/terseness-check.sh` from canonical.** Run `git rm scripts/terseness-check.sh`. Files: `scripts/terseness-check.sh`. Verify: `[ ! -f scripts/terseness-check.sh ] && echo OK` prints `OK`; `git ls-files scripts/ | grep -c terseness-check` returns 0.
 
-- [ ] **Task 3: Rename `settings.json` → `settings.merge.json` and update statusLine path.** `git mv settings.json settings.merge.json`, then edit so `statusLine.command` is `"~/.claude/scripts/statusline.sh"`. Files: `settings.json`, `settings.merge.json`. Verify: `[ ! -f settings.json ] && [ -f settings.merge.json ] && echo OK` prints `OK`; `jq -r .statusLine.command settings.merge.json` returns the literal string `~/.claude/scripts/statusline.sh`.
+- [x] **Task 3: Rename `settings.json` → `settings.merge.json` and update statusLine path.** `git mv settings.json settings.merge.json`, then edit so `statusLine.command` is `"~/.claude/scripts/statusline.sh"`. Files: `settings.json`, `settings.merge.json`. Verify: `[ ! -f settings.json ] && [ -f settings.merge.json ] && echo OK` prints `OK`; `jq -r .statusLine.command settings.merge.json` returns the literal string `~/.claude/scripts/statusline.sh`.
 
 - [ ] **Task 4: Update internal references to old statusline path.** Grep the entire repo for `statusline.sh` outside `scripts/`; any reference must be updated to the new path or removed. Files: any `.md` / `.yml` / `.sh` that referenced the old top-level path. Verify: `grep -rn 'statusline\.sh' . --include='*.md' --include='*.yml' --include='*.sh' | grep -v 'scripts/statusline' | grep -v '\.git/' | wc -l` returns 0.
 
