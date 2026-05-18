@@ -8,7 +8,7 @@ Personal user-level agent skills, rules, and settings. Available across all proj
 
 ### Prerequisites
 
-- `bash` 4+
+- `bash`
 - `rsync` (the macOS 2.x system rsync is fine)
 - `jq`
 

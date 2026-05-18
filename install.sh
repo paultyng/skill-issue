@@ -126,6 +126,13 @@ merge_settings() {
     return
   fi
 
+  if [[ -f "$user" ]]; then
+    if ! jq empty "$user" >/dev/null 2>&1; then
+      echo "error: $user is not valid JSON; aborting merge" >&2
+      return 1
+    fi
+  fi
+
   if [[ $DRY_RUN -eq 0 && ! -f "$user" ]]; then
     echo "{}" > "$user"
   fi
@@ -241,6 +248,12 @@ do_prune() {
 
   local stale_files=()
   while IFS= read -r path; do
+    case "$path" in
+      /*|*..*)
+        echo "[prune] skipping unsafe manifest entry: $path" >&2
+        continue
+        ;;
+    esac
     if [[ ! -e "$REPO_DIR/$path" ]]; then
       stale_files+=("$path")
     fi
@@ -261,14 +274,10 @@ do_prune() {
     fi
   done
 
-  if [[ $DRY_RUN -eq 0 ]]; then
-    write_manifest
-  fi
 }
 
 [[ $MIGRATE -eq 1 ]] && do_migrate
+[[ $PRUNE -eq 1 ]] && do_prune
 
 do_sync
 merge_settings
-
-[[ $PRUNE -eq 1 ]] && do_prune
