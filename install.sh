@@ -5,9 +5,8 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
 
 DRY_RUN=0
-MIGRATE=0
 PRUNE=0
-FORCE=0
+BACKUP=0
 
 SYNC_DIRS=(skills rules scripts)
 TOP_LEVEL_FILES=(CLAUDE.md)
@@ -21,9 +20,8 @@ Install skills, rules, scripts, and settings from this canonical clone into CLAU
 
 Options:
   --dry-run   Show what would be done without making any changes
-  --migrate   Remove ~/.claude/.git and .gitignore before syncing (one-time migration)
   --prune     Remove files previously installed by this script that canonical no longer ships
-  --force     With --migrate, skip dirty-tree check and proceed anyway
+  --backup    Tar CLAUDE_DIR to CLAUDE_DIR.backup-<epoch>.tar.gz before any changes
   --help      Show this help message and exit
 
 Environment:
@@ -42,16 +40,12 @@ while [[ $# -gt 0 ]]; do
       DRY_RUN=1
       shift
       ;;
-    --migrate)
-      MIGRATE=1
-      shift
-      ;;
     --prune)
       PRUNE=1
       shift
       ;;
-    --force)
-      FORCE=1
+    --backup)
+      BACKUP=1
       shift
       ;;
     --help)
@@ -70,9 +64,8 @@ done
 echo "REPO_DIR:   $REPO_DIR"
 echo "CLAUDE_DIR: $CLAUDE_DIR"
 echo "DRY_RUN:    $DRY_RUN"
-echo "MIGRATE:    $MIGRATE"
 echo "PRUNE:      $PRUNE"
-echo "FORCE:      $FORCE"
+echo "BACKUP:     $BACKUP"
 
 write_manifest() {
   if [[ $DRY_RUN -eq 1 ]]; then
@@ -91,6 +84,21 @@ write_manifest() {
       fi
     done
   } | sed "s|^$CLAUDE_DIR/||" | sort -u | jq -Rn '{files: [inputs] | sort | unique}' > "$manifest"
+}
+
+do_backup() {
+  if [[ ! -d "$CLAUDE_DIR" ]]; then
+    echo "[backup] $CLAUDE_DIR does not exist, nothing to back up"
+    return
+  fi
+  local backup
+  backup="${CLAUDE_DIR}.backup-$(date +%s).tar.gz"
+  if [[ $DRY_RUN -eq 1 ]]; then
+    echo "[dry-run] tar -czf $backup -C $(dirname "$CLAUDE_DIR") $(basename "$CLAUDE_DIR")"
+    return
+  fi
+  echo "[backup] tarring $CLAUDE_DIR -> $backup"
+  tar -czf "$backup" -C "$(dirname "$CLAUDE_DIR")" "$(basename "$CLAUDE_DIR")"
 }
 
 do_sync() {
@@ -184,60 +192,6 @@ JQEOF
   fi
 }
 
-do_migrate() {
-  local has_git=0
-  local has_gitignore=0
-  [[ -e "$CLAUDE_DIR/.git" ]] && has_git=1
-  [[ -e "$CLAUDE_DIR/.gitignore" ]] && has_gitignore=1
-
-  if [[ $has_git -eq 0 && $has_gitignore -eq 0 ]]; then
-    echo "[migrate] no .git or .gitignore present, nothing to do"
-    return
-  fi
-
-  if [[ $has_git -eq 1 && $FORCE -eq 0 ]]; then
-    local status
-    status=$(git -C "$CLAUDE_DIR" status --porcelain 2>/dev/null || true)
-    if [[ -n "$status" ]]; then
-      echo "error: refusing to migrate dirty tree at $CLAUDE_DIR; commit/stash or pass --force" >&2
-      exit 1
-    fi
-  fi
-
-  local backup
-  backup="${CLAUDE_DIR}.backup-$(date +%s).tar.gz"
-  local tar_cmd
-  tar_cmd="tar -czf \"$backup\" -C \"$(dirname "$CLAUDE_DIR")\" \"$(basename "$CLAUDE_DIR")\""
-  local rm_git_cmd=""
-  local rm_gitignore_cmd=""
-
-  if [[ $has_git -eq 1 ]]; then
-    rm_git_cmd="rm -rf \"$CLAUDE_DIR/.git\""
-  fi
-  if [[ $has_gitignore -eq 1 ]]; then
-    rm_gitignore_cmd="rm -f \"$CLAUDE_DIR/.gitignore\""
-  fi
-
-  if [[ $DRY_RUN -eq 1 ]]; then
-    echo "[dry-run] $tar_cmd"
-    [[ -n "$rm_git_cmd" ]] && echo "[dry-run] $rm_git_cmd"
-    [[ -n "$rm_gitignore_cmd" ]] && echo "[dry-run] $rm_gitignore_cmd"
-    return
-  fi
-
-  echo "[migrate] backing up to $backup"
-  tar -czf "$backup" -C "$(dirname "$CLAUDE_DIR")" "$(basename "$CLAUDE_DIR")"
-
-  if [[ $has_git -eq 1 ]]; then
-    echo "[migrate] removing $CLAUDE_DIR/.git"
-    rm -rf "$CLAUDE_DIR/.git"
-  fi
-  if [[ $has_gitignore -eq 1 ]]; then
-    echo "[migrate] removing $CLAUDE_DIR/.gitignore"
-    rm -f "$CLAUDE_DIR/.gitignore"
-  fi
-}
-
 do_prune() {
   local manifest="$CLAUDE_DIR/.skill-issue-manifest.json"
 
@@ -276,7 +230,7 @@ do_prune() {
 
 }
 
-[[ $MIGRATE -eq 1 ]] && do_migrate
+[[ $BACKUP -eq 1 ]] && do_backup
 [[ $PRUNE -eq 1 ]] && do_prune
 
 do_sync
