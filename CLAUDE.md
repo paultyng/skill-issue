@@ -4,25 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Repo Is
 
-Personal user-level Claude Code skills, rules, and settings. Cloned/symlinked to `~/.claude/` and available across all projects.
+Personal user-level Claude Code skills, rules, and settings. The canonical clone (this repo) is the source of truth; `~/.claude/` is populated by `./install.sh`.
 
 ## Repository Structure
 
 - `skills/` — Multi-step agent workflows (SKILL.md per directory). See `.claude/rules/skill-authoring.md` for conventions.
 - `rules/` — Behavioral rules that auto-load every session. See `.claude/rules/rule-authoring.md` for conventions.
-- `settings.json` — Shared config (model, permissions, hooks, plugins).
+- `scripts/` — Shell scripts including statusline.
+- `settings.merge.json` — Curated keys merged into `~/.claude/settings.json` (model, permissions, hooks, plugins).
+- `install.sh` / `Taskfile.yaml` — Install/sync tooling.
 
 ## Creating Skills and Rules
 
 Use `/create-skill` and `/create-rule` respectively. Do not author SKILL.md or rule files from scratch.
 
-## Settings
+## Sync workflow
 
-`settings.json` is the only config file Claude Code reads from the user directory — there is no `settings.local.json` override mechanism here (unlike project-level `.claude/`). This means:
-
-- **Local-only changes** (e.g., HTTP hooks for a local dev server) will show as dirty in git. This is expected — do not commit them.
-- Before committing `settings.json`, review the diff carefully to ensure only intentional shared changes are staged. Use `git add -p settings.json` if needed.
-- Permissions and hooks in this file apply to every project. Keep them minimal and general-purpose.
+- `~/.claude/` is populated by `./install.sh` (or `task install`) running from this canonical clone.
+- Edits to `skills/`, `rules/`, `scripts/`, and top-level files in this repo flow into `~/.claude/` on each install.
+- Personal/local skills/rules/scripts in `~/.claude/` are preserved (never deleted).
+- `settings.json` is jq-merged: specific keys (`model`, `effortLevel`, `statusLine`, `enabledPlugins`, `extraKnownMarketplaces`, `permissions.allow`, `hooks`) flow from `settings.merge.json`; everything else stays user-local.
 
 ## Portability
 
