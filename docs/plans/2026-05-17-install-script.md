@@ -61,4 +61,30 @@ Make the canonical clone the single source of truth for `skills/`, `rules/`, `sc
 
 - [x] **Task 11: Update global `CLAUDE.md` (top-level in canonical).** Remove the existing "Settings" section's "Local-only changes will show as dirty in git" guidance. Add a new "Sync workflow" section: "~/.claude/ is populated by `./install.sh` (or `task install`) running from this canonical clone. Edits to `skills/`, `rules/`, `scripts/`, and top-level files in this repo flow into `~/.claude/` on each install. Personal/local skills/rules/scripts in `~/.claude/` are preserved (never deleted). settings.json is jq-merged: specific keys (`model`, `effortLevel`, `statusLine`, `enabledPlugins`, `extraKnownMarketplaces`, `permissions.allow`, `hooks`) flow from `settings.merge.json`; everything else stays user-local." Files: `CLAUDE.md` (top-level of canonical). Verify: `grep -c 'will show as dirty in git' CLAUDE.md` returns 0; `grep -c 'Sync workflow' CLAUDE.md` returns 1; the Sync workflow section mentions `install.sh`, `settings.merge.json`, and "preserved" (`grep -A 20 'Sync workflow' CLAUDE.md | grep -cE '(install\.sh|settings\.merge\.json|preserved)'` returns ≥ 3).
 
-- [ ] **Task 12: End-to-end smoke test.** From a clean state: `rm -rf /tmp/test-claude-install && mkdir /tmp/test-claude-install && CLAUDE_DIR=/tmp/test-claude-install ./install.sh`. Confirm (a) `diff -q skills/active-read/SKILL.md /tmp/test-claude-install/skills/active-read/SKILL.md` shows identical (no output, exit 0); (b) `diff -q rules/probe-not-assume.md /tmp/test-claude-install/rules/probe-not-assume.md` identical; (c) `[ -s /tmp/test-claude-install/scripts/pr-deeplink.sh ] && [ -x /tmp/test-claude-install/scripts/pr-deeplink.sh ] && diff -q scripts/pr-deeplink.sh /tmp/test-claude-install/scripts/pr-deeplink.sh`; (d) same triple-check for `scripts/statusline.sh`; (e) `diff -q CLAUDE.md /tmp/test-claude-install/CLAUDE.md` identical; (f) `.skill-issue-manifest.json` exists and `jq '.files | length' /tmp/test-claude-install/.skill-issue-manifest.json` equals `find /tmp/test-claude-install/{skills,rules,scripts} /tmp/test-claude-install/CLAUDE.md -type f ! -name '.skill-issue-manifest.json' | wc -l`; (g) `settings.json` exists and `jq -r .statusLine.command /tmp/test-claude-install/settings.json` equals `~/.claude/scripts/statusline.sh`. Then add a user-local file: `mkdir -p /tmp/test-claude-install/skills/my-personal && touch /tmp/test-claude-install/skills/my-personal/SKILL.md`. Re-run install.sh. Verify the personal skill survives (`[ -f /tmp/test-claude-install/skills/my-personal/SKILL.md ] && echo OK`). Append a "Test result" section to THIS plan file with the full grep output of all 7 confirmations plus the personal-skill preservation check. Files: `docs/plans/2026-05-17-install-script.md` (this file). Verify: `grep -c '^## Test result' docs/plans/2026-05-17-install-script.md` returns 1; the Test result section contains literal lines `manifest count:`, `statusLine command:`, and `personal skill preserved:` (`grep -E '^(manifest count|statusLine command|personal skill preserved):' docs/plans/2026-05-17-install-script.md | wc -l` returns 3); all task boxes ticked (`grep -c '^- \[x\]' docs/plans/2026-05-17-install-script.md` returns 12, `grep -c '^- \[ \]' docs/plans/2026-05-17-install-script.md` returns 0).
+- [x] **Task 12: End-to-end smoke test.** From a clean state: `rm -rf /tmp/test-claude-install && mkdir /tmp/test-claude-install && CLAUDE_DIR=/tmp/test-claude-install ./install.sh`. Confirm (a) `diff -q skills/active-read/SKILL.md /tmp/test-claude-install/skills/active-read/SKILL.md` shows identical (no output, exit 0); (b) `diff -q rules/probe-not-assume.md /tmp/test-claude-install/rules/probe-not-assume.md` identical; (c) `[ -s /tmp/test-claude-install/scripts/pr-deeplink.sh ] && [ -x /tmp/test-claude-install/scripts/pr-deeplink.sh ] && diff -q scripts/pr-deeplink.sh /tmp/test-claude-install/scripts/pr-deeplink.sh`; (d) same triple-check for `scripts/statusline.sh`; (e) `diff -q CLAUDE.md /tmp/test-claude-install/CLAUDE.md` identical; (f) `.skill-issue-manifest.json` exists and `jq '.files | length' /tmp/test-claude-install/.skill-issue-manifest.json` equals `find /tmp/test-claude-install/{skills,rules,scripts} /tmp/test-claude-install/CLAUDE.md -type f ! -name '.skill-issue-manifest.json' | wc -l`; (g) `settings.json` exists and `jq -r .statusLine.command /tmp/test-claude-install/settings.json` equals `~/.claude/scripts/statusline.sh`. Then add a user-local file: `mkdir -p /tmp/test-claude-install/skills/my-personal && touch /tmp/test-claude-install/skills/my-personal/SKILL.md`. Re-run install.sh. Verify the personal skill survives (`[ -f /tmp/test-claude-install/skills/my-personal/SKILL.md ] && echo OK`). Append a "Test result" section to THIS plan file with the full grep output of all 7 confirmations plus the personal-skill preservation check. Files: `docs/plans/2026-05-17-install-script.md` (this file). Verify: `grep -c '^## Test result' docs/plans/2026-05-17-install-script.md` returns 1; the Test result section contains literal lines `manifest count:`, `statusLine command:`, and `personal skill preserved:` (`grep -E '^(manifest count|statusLine command|personal skill preserved):' docs/plans/2026-05-17-install-script.md | wc -l` returns 3); all task boxes ticked (`grep -c '^- \[x\]' docs/plans/2026-05-17-install-script.md` returns 12, `grep -c '^- \[ \]' docs/plans/2026-05-17-install-script.md` returns 0).
+
+## Test result
+
+```
+=== (a) skills/active-read/SKILL.md ===
+identical
+=== (b) rules/probe-not-assume.md ===
+identical
+=== (c) scripts/pr-deeplink.sh ===
+size+exec OK
+identical
+=== (d) scripts/statusline.sh ===
+size+exec OK
+identical
+=== (e) CLAUDE.md ===
+identical
+=== (f) manifest ===
+manifest count: 81
+find count:     81
+match
+=== (g) settings.json ===
+statusLine command: ~/.claude/scripts/statusline.sh
+match
+=== personal-file preservation ===
+personal skill preserved: OK
+```
