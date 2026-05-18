@@ -4,12 +4,57 @@ Personal user-level agent skills, rules, and settings. Available across all proj
 
 ## Install
 
-Clone or symlink this repo to the user-level config directory:
+`~/.claude/` is a managed install target. The canonical clone lives elsewhere (e.g. `~/src/github.com/paultyng/skill-issue`); `install.sh` copies `skills/`, `rules/`, `scripts/`, and `CLAUDE.md` into `~/.claude/`, and jq-merges a curated set of `settings.json` keys.
 
-| Editor | Path |
-|--------|------|
-| [Claude Code](https://docs.claude.com/en/docs/claude-code/skills) | `~/.claude/` |
-| [Cursor](https://cursor.com/) | `~/.cursor/` |
+### Prerequisites
+
+- `bash` 4+
+- `rsync` (the macOS 2.x system rsync is fine)
+- `jq`
+
+### One-time setup
+
+```sh
+git clone git@github.com:paultyng/skill-issue ~/src/github.com/paultyng/skill-issue
+cd ~/src/github.com/paultyng/skill-issue
+./install.sh --migrate   # only if ~/.claude/ is currently a git clone
+```
+
+`--migrate` tars `~/.claude/` to `~/.claude.backup-<epoch>.tar.gz`, then removes `~/.claude/.git` and `~/.claude/.gitignore`. It refuses to run against a dirty tree unless `--force` is passed.
+
+### Normal use
+
+After pulling new changes in the canonical clone:
+
+```sh
+task install        # or: ./install.sh
+```
+
+The script is **additive** — no `--delete`, no `rsync --delete`. Your personal skills, rules, and scripts dropped anywhere under `~/.claude/skills/`, `~/.claude/rules/`, or `~/.claude/scripts/` are never touched.
+
+A manifest of every file the script writes lands at `~/.claude/.skill-issue-manifest.json`.
+
+### Pruning files canonical no longer ships
+
+```sh
+task install:prune   # or: ./install.sh --prune
+```
+
+`--prune` reads the manifest and removes only files that this script previously installed and that the canonical clone no longer contains. Personal files (anything not in a prior manifest) are preserved.
+
+### Dry runs
+
+Every mode supports `--dry-run`:
+
+```sh
+task install:dry
+./install.sh --migrate --dry-run
+./install.sh --prune --dry-run
+```
+
+### Settings merge
+
+`settings.merge.json` in the canonical clone is jq-merged into `~/.claude/settings.json`. Keys `model`, `effortLevel`, `statusLine`, `enabledPlugins`, `extraKnownMarketplaces` replace user values. `permissions.allow` is unioned and deduped. `hooks` merge per-event, per-matcher: canonical entries replace user entries with matching matchers; user entries with non-overlapping matchers (and entirely user-only events) pass through.
 
 ## Skills
 
