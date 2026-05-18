@@ -41,7 +41,7 @@ Make the canonical clone the single source of truth for `skills/`, `rules/`, `sc
 
 - [x] **Task 1: Move statusline scripts into `scripts/`.** Run `git mv statusline.sh scripts/statusline.sh && git mv statusline.ps1 scripts/statusline.ps1` from repo root. Files: `statusline.sh`, `statusline.ps1`, `scripts/statusline.sh`, `scripts/statusline.ps1`. Verify: `[ ! -f statusline.sh ] && [ ! -f statusline.ps1 ] && [ -x scripts/statusline.sh ] && [ -f scripts/statusline.ps1 ] && echo OK` prints `OK`; `git status --porcelain | grep -E '^R' | wc -l` returns 2.
 
-- [ ] **Task 2: Remove `scripts/terseness-check.sh` from canonical.** Run `git rm scripts/terseness-check.sh`. Files: `scripts/terseness-check.sh`. Verify: `[ ! -f scripts/terseness-check.sh ] && echo OK` prints `OK`; `git ls-files scripts/ | grep -c terseness-check` returns 0.
+- [x] **Task 2: Remove `scripts/terseness-check.sh` from canonical.** Run `git rm scripts/terseness-check.sh`. Files: `scripts/terseness-check.sh`. Verify: `[ ! -f scripts/terseness-check.sh ] && echo OK` prints `OK`; `git ls-files scripts/ | grep -c terseness-check` returns 0.
 
 - [ ] **Task 3: Rename `settings.json` → `settings.merge.json` and update statusLine path.** `git mv settings.json settings.merge.json`, then edit so `statusLine.command` is `"~/.claude/scripts/statusline.sh"`. Files: `settings.json`, `settings.merge.json`. Verify: `[ ! -f settings.json ] && [ -f settings.merge.json ] && echo OK` prints `OK`; `jq -r .statusLine.command settings.merge.json` returns the literal string `~/.claude/scripts/statusline.sh`.
 
