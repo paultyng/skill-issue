@@ -7,8 +7,6 @@ Implementation plan to convert `~/.claude/` from a git clone of `paultyng/skill-
 - Branch: 2026-04-30-1708-claude-user-settings-skill-issue
 - Base: origin/main
 
-(The Ideate per-idea branch — reuses the current worktree branch.)
-
 ## Goal
 
 Make the canonical clone the single source of truth for `skills/`, `rules/`, `scripts/`, `CLAUDE.md`, and a curated set of `settings.json` keys. `~/.claude/` becomes a managed install target — no `.git`, no "this file is dirty per CLAUDE.md" gymnastics. Edits flow canonical → `~/.claude/` via `./install.sh` (or `task install`). User-local skills/rules/scripts are preserved across installs.
@@ -29,7 +27,7 @@ Make the canonical clone the single source of truth for `skills/`, `rules/`, `sc
 
 ## Constraints
 
-- All work happens in this Ideate worktree on the per-idea branch.
+- All work happens on the feature branch declared above.
 - install.sh is bash (not zsh, not python); shellcheck-clean.
 - jq is the only non-stdlib dependency for settings merging.
 - Per `~/.claude/rules/probe-not-assume.md`: every task verification uses grep / wc / run-and-capture, not "section present".
