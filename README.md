@@ -61,7 +61,7 @@ Rules load automatically every session (or on file-path match) and shape agent b
 
 ## Statusline
 
-Custom status line scripts (`statusline.sh` / `statusline.ps1`) that display live session info below the prompt. No API calls — all data comes from stdin JSON and local git/gh commands.
+Custom status line scripts (`scripts/statusline.sh` / `scripts/statusline.ps1`) that display live session info below the prompt. No API calls — all data comes from stdin JSON and local git/gh commands.
 
 **Segments displayed:**
 
