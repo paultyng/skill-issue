@@ -108,7 +108,7 @@ Prompt the subagent to:
 - Load explicit conformance rules from: REVIEW.md (if provided by review-all or present at repo root), CLAUDE.md (if present at repo root), AGENTS.md (if present at repo root), and all files in `.claude/rules/` (if directory exists). These are the **explicit rules**.
 - Determine conformance mode:
   - **Lightweight** (default, or when `conformance_mode` is `lightweight`): For each in-scope file, read sibling files in the same package to infer local patterns. Require at least 3 sibling files showing the same pattern before flagging a deviation. Check whether the in-scope file conforms to both explicit rules and inferred local patterns.
-  - **Full** (when `conformance_mode` is `full`): If `REVIEW_DIR` was provided by the review-all orchestrator, read `${REVIEW_DIR}/PATTERNS.md`. Otherwise, find the most recent patterns file (`ls -t reviews/*/PATTERNS.md 2>/dev/null | head -1`); if none exists, run `/discover-patterns` first. Check all in-scope files against both explicit rules and the discovered patterns.
+  - **Full** (when `conformance_mode` is `full`): If `REVIEW_DIR` was provided by the review-all orchestrator, read `${REVIEW_DIR}/PATTERNS.md`. Otherwise, find the most recent patterns file (`ls -t .reviews/*/PATTERNS.md reviews/*/PATTERNS.md 2>/dev/null | head -1`; the legacy `reviews/` path is honored for one transition release); if none exists, run `/discover-patterns` first. Check all in-scope files against both explicit rules and the discovered patterns.
 - When `has_changes` is true (diff mode): focus findings on changed/added lines only. For each deviation, reference the established pattern with an exemplar.
 - When `has_changes` is false (full mode): identify outlier files/packages that deviate from the majority pattern.
 - For each finding, search nearby code for TODOs or notes.
@@ -129,8 +129,9 @@ Resolve the review output directory (skip if `REVIEW_DIR` was provided by the re
 
 ```sh
 REVIEW_DATE=$(date +%Y-%m-%d)
-REVIEW_DIR="reviews/${REVIEW_DATE}"
-if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR="reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+REVIEW_DIR=".reviews/${REVIEW_DATE}"
+if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR=".reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+~/.claude/scripts/ensure-gitignore.sh '.reviews/'
 mkdir -p "$REVIEW_DIR"
 ```
 
