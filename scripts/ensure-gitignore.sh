@@ -14,8 +14,9 @@ fi
 HEADER='# Claude Code working files'
 
 for pat in "$@"; do
+    [ -n "$pat" ] || continue
     [ -f .gitignore ] || : > .gitignore
-    if ! grep -qxF "$pat" .gitignore; then
+    if ! grep -qxF -- "$pat" .gitignore; then
         if ! grep -qxF "$HEADER" .gitignore; then
             printf '\n%s\n' "$HEADER" >> .gitignore
         fi
