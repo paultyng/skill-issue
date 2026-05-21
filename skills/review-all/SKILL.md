@@ -81,12 +81,13 @@ This system overview is shared context for all review subagents.
 
 ### 2b. Run pattern discovery (if full conformance mode)
 
-If `conformance_mode` is `full`, resolve the review output directory first:
+If `conformance_mode` is `full`, resolve the review output directory first. `.reviews/` is gitignored on first use; review outputs are working artifacts, not source:
 
 ```sh
 REVIEW_DATE=$(date +%Y-%m-%d)
-REVIEW_DIR="reviews/${REVIEW_DATE}"
-if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR="reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+REVIEW_DIR=".reviews/${REVIEW_DATE}"
+if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR=".reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+~/.claude/scripts/ensure-gitignore.sh '.reviews/'
 mkdir -p "$REVIEW_DIR"
 ```
 
@@ -150,8 +151,9 @@ If `REVIEW_DIR` was resolved in step 2b, reuse it. Otherwise, resolve it now:
 
 ```sh
 REVIEW_DATE=$(date +%Y-%m-%d)
-REVIEW_DIR="reviews/${REVIEW_DATE}"
-if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR="reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+REVIEW_DIR=".reviews/${REVIEW_DATE}"
+if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR=".reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+~/.claude/scripts/ensure-gitignore.sh '.reviews/'
 mkdir -p "$REVIEW_DIR"
 ```
 
@@ -343,5 +345,5 @@ Uncovered functions (grouped by package, sorted by severity):
 - Search the organization's codebase (Sourcegraph, GitHub) for existing patterns before recommending new dependencies or approaches.
 - Cross-reference findings between reviews to avoid duplicate entries in the consolidated tables.
 - Include effort estimates to help prioritize implementation.
-- When the user asks for a follow-up review, find the most recent review directory (`ls -d reviews/*/ 2>/dev/null | sort | tail -1`) containing `SUMMARY.md`, re-evaluate all prior findings against the current code state, and update with the re-evaluation table appended.
+- When the user asks for a follow-up review, find the most recent review directory containing `SUMMARY.md`. Primary lookup: `ls -d .reviews/*/ 2>/dev/null | sort | tail -1`. Legacy fallback if empty: `ls -d reviews/*/ 2>/dev/null | sort | tail -1`. Re-evaluate all prior findings against the current code state, and update with the re-evaluation table appended.
 - Findings must cite probed evidence (`path:line`, grep output, command result), not pattern-matched suspicion. Per `~/.claude/rules/probe-not-assume.md`.
