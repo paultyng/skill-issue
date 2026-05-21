@@ -14,11 +14,14 @@ This is a **document** review, not a code review. No static analyzers. No diff s
 ### 1. Resolve the plan file
 
 Priority order:
-1. Explicit path from the invocation (e.g. `/review-plan docs/plans/auth-rewrite.md`).
-2. `./PLAN.md` in the current working directory.
-3. Latest by mtime in `./docs/plans/*.md` (typically `YYYY-MM-DD-<feature>.md` per convention).
+1. Explicit path from the invocation (e.g. `/review-plan .plans/auth-rewrite.md`).
+2. `./.plans/PLAN.md` in the current working directory.
+3. Latest by mtime in `./.plans/*.md` (typically `YYYY-MM-DD-<feature>.md` per convention).
+4. **Legacy fallback** (one-release transition): `./PLAN.md`, then latest by mtime in `./docs/plans/*.md`. If either resolves, warn once: `Plan resolved from legacy path <X>; consider moving under .plans/`.
 
 If none resolve, stop and ask the user for a path. Do not guess.
+
+**CLAUDE.md override**: if the project `CLAUDE.md` (or `CLAUDE.local.md`) contains a `Plans live in <path>` directive, use `<path>` as the primary discovery dir instead of `.plans/`.
 
 ### 2. Load context
 
@@ -75,12 +78,13 @@ Apply in order; first match wins:
 
 ### 6. Present results
 
-Resolve the review output directory (same pattern as sibling reviews):
+Resolve the review output directory (same pattern as sibling reviews). `.reviews/` is gitignored on first use; review outputs are working artifacts, not source:
 
 ```sh
 REVIEW_DATE=$(date +%Y-%m-%d)
-REVIEW_DIR="reviews/${REVIEW_DATE}"
-if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR="reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+REVIEW_DIR=".reviews/${REVIEW_DATE}"
+if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR=".reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+~/.claude/scripts/ensure-gitignore.sh '.reviews/'
 mkdir -p "$REVIEW_DIR"
 ```
 

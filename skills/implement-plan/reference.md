@@ -222,7 +222,7 @@ The parent branches on the status line without parsing the body. The body is onl
 
 ## Nits accumulator format
 
-The file `./.implement-plan-nits.md` is created (or appended) when a non-blocking finding (P2/P3/nit) is recorded. Format:
+The file `./.plans/nits.md` is created (or appended) when a non-blocking finding (P2/P3/nit) is recorded. The parent `.plans/` directory is gitignored on first use, so the nits file is not committed. Format:
 
 ```markdown
 # Nits accumulated during implement-plan
@@ -242,4 +242,4 @@ Started: <run datetime>
 
 At end-of-plan the user is asked: address now, defer (keep the file), or discard (delete the file).
 
-This file is not committed by the per-task commits. If the user chooses "defer", they decide whether to commit it.
+This file is not committed by the per-task commits. If the user chooses "defer", the file persists under `.plans/` on the working tree only.

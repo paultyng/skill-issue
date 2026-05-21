@@ -40,8 +40,9 @@ Resolve the review output directory:
 
 ```sh
 REVIEW_DATE=$(date +%Y-%m-%d)
-REVIEW_DIR="reviews/${REVIEW_DATE}"
-if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR="reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+REVIEW_DIR=".reviews/${REVIEW_DATE}"
+if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR=".reviews/${REVIEW_DATE}-$(date +%H%M)"; fi
+~/.claude/scripts/ensure-gitignore.sh '.reviews/'
 mkdir -p "$REVIEW_DIR"
 ```
 

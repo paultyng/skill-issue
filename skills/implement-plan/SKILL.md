@@ -1,6 +1,6 @@
 ---
 name: implement-plan
-description: Use when the user wants to execute an approved implementation plan and says any of "do it" (with a plan in scope), "lets do it" / "let's do it", "confirmed" (as approval to proceed on a plan), "implement the plan", "implement this", "execute the plan", "start implementing", "work through the plan", "implement the next phase", "build it out", "knock out the plan", or "/implement-plan PATH". Also use when a plan file (`./PLAN.md`, or any `./docs/plans/*.md`) is present and the user signals readiness to begin coding. Do NOT use when the user is still discussing, refining, or asking questions about the plan, nor when no plan exists — short imperatives like "do it" or "confirmed" alone are ambiguous; verify a plan is in scope before activating.
+description: Use when the user wants to execute an approved implementation plan and says any of "do it" (with a plan in scope), "lets do it" / "let's do it", "confirmed" (as approval to proceed on a plan), "implement the plan", "implement this", "execute the plan", "start implementing", "work through the plan", "implement the next phase", "build it out", "knock out the plan", or "/implement-plan PATH". Also use when a plan file (`./.plans/PLAN.md`, any `./.plans/*.md`, or legacy `./PLAN.md` / `./docs/plans/*.md`) is present and the user signals readiness to begin coding. Do NOT use when the user is still discussing, refining, or asking questions about the plan, nor when no plan exists — short imperatives like "do it" or "confirmed" alone are ambiguous; verify a plan is in scope before activating.
 ---
 
 # Implement Plan
@@ -12,10 +12,19 @@ Drive an approved implementation plan to completion: review-plan gate → per-ta
 ### 1. Resolve the plan and check preconditions
 
 **Plan resolution** (priority order):
-1. Explicit path argument (e.g. `/implement-plan docs/plans/auth-rewrite.md`).
-2. `./PLAN.md` in cwd.
-3. Latest by mtime in `./docs/plans/*.md`.
-4. None resolve → **stop, ask the user**. Do not guess. Do not assume "do it" meant something else; if no plan, this skill should not have activated — exit cleanly.
+1. Explicit path argument (e.g. `/implement-plan .plans/auth-rewrite.md`).
+2. `./.plans/PLAN.md` in cwd.
+3. Latest by mtime in `./.plans/*.md`.
+4. **Legacy fallback** (one-release transition): `./PLAN.md` in cwd, then latest by mtime in `./docs/plans/*.md`. If either resolves, warn once: `Plan resolved from legacy path <X>; consider moving under .plans/`.
+5. None resolve → **stop, ask the user**. Do not guess. Do not assume "do it" meant something else; if no plan, this skill should not have activated — exit cleanly.
+
+**CLAUDE.md override**: if the project `CLAUDE.md` (or `CLAUDE.local.md`) contains a directive like `Plans live in <path>`, use `<path>` as the primary discovery dir instead of `.plans/`. Skip the gitignore bootstrap below in that case — the user has taken responsibility for the path.
+
+After resolving a path under `.plans/` (steps 2 or 3), call once per run:
+```sh
+~/.claude/scripts/ensure-gitignore.sh '.plans/'
+```
+This is idempotent. Skip for legacy paths (step 4) and for CLAUDE.md overrides.
 
 Read the plan file fully. Capture: total task count, unchecked task count, and any **Branch policy** section (see [reference.md → Plan header conventions](reference.md#plan-header-conventions)).
 
@@ -25,14 +34,14 @@ Read the plan file fully. Capture: total task count, unchecked task count, and a
 # In a git repo?
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || abort "not a git repo"
 
-# Working tree clean? Catches uncommitted + untracked.
+# Working tree clean? Catches uncommitted + untracked (.plans/ is gitignored, so plan files are invisible to git — that is intentional).
 [ -z "$(git status --porcelain)" ] || abort "working tree not clean — commit, stash, or discard first"
 
 # origin remote exists?
 git remote get-url origin >/dev/null 2>&1 || abort "no 'origin' remote — see reference.md for fallback"
 ```
 
-If the plan file itself is uncommitted, the clean-tree check will catch it. Tell the user to commit the plan first, then re-invoke.
+Plan files in `.plans/` are gitignored by design; they do not need to be committed and will not appear in `git status`. Legacy plans under `docs/plans/` (if also gitignored locally) behave the same.
 
 ### 2. Pre-flight gate: review-plan
 
@@ -58,7 +67,7 @@ Read the plan's **Branch policy** section if present (see [reference.md → Plan
 2. **Plan declares `Base: <ref>`** → use that base. Branch name = `Branch:` if declared, else plan-derived default.
 3. **Default** → base = `origin/<default-branch>`. Branch name = plan-derived default.
 
-**Plan-derived default branch name**: `impl/<plan-slug>`, where `<plan-slug>` is the plan filename without `.md`. Example: `docs/plans/2026-05-16-auth-rewrite.md` → `impl/2026-05-16-auth-rewrite`.
+**Plan-derived default branch name**: `impl/<plan-slug>`, where `<plan-slug>` is the plan filename without `.md`. Example: `.plans/2026-05-16-auth-rewrite.md` → `impl/2026-05-16-auth-rewrite`.
 
 **Default-branch detection**:
 
@@ -132,7 +141,7 @@ Use `model: opus` for reviewers. Deeper judgment than the implementer, and the m
 
 In the parent:
 - **P0, P1, `bug`, `risk`** → loop back to (a) with the finding text. Max **2 retries**. Then escalate.
-- **P2, P3, `nit`** → append to `./.implement-plan-nits.md` (a plan-scoped accumulator). Non-blocking.
+- **P2, P3, `nit`** → append to `./.plans/nits.md` (a plan-scoped accumulator). Non-blocking. Create the parent dir if needed.
 
 #### (e) Commit
 
@@ -140,7 +149,7 @@ One commit per task that leaves the tree buildable (per `commit-per-phase` rule)
 
 #### (f) Tick the checkbox
 
-Edit the plan file in place: `- [ ]` → `- [x]`. Same commit as (e) is fine; this is metadata on the same logical change.
+Edit the plan file in place: `- [ ]` → `- [x]`. **Do not** add the plan file to commit (e) — plans under `.plans/` are gitignored and progress is tracked on disk only. For legacy plans (under `docs/plans/` or root `PLAN.md`) that the user has explicitly committed, including the tickmark in the same commit is fine.
 
 #### (g) Next
 
@@ -163,7 +172,7 @@ Surface: current task number, status line, last subagent return, and the specifi
 When all `- [ ]` tasks are `- [x]`:
 
 1. **Spawn `review-all`** across the full branch diff against the plan's base ref. Surface its findings as one final cross-cutting review.
-2. **Surface the nits file** (`./.implement-plan-nits.md`). Ask: address now, defer, or discard?
+2. **Surface the nits file** (`./.plans/nits.md`). Ask: address now, defer, or discard?
 3. **Do NOT auto-create the PR** (per `defer-external-orchestration`). Print the suggested command, e.g.:
    ```
    gh pr create --draft --title "<plan title>" --body "<...>"
@@ -176,7 +185,7 @@ When all `- [ ]` tasks are `- [x]`:
 
 Per `terse-output`: one sentence per key moment. Not every step. Examples:
 
-- `Preconditions OK. Plan: docs/plans/2026-05-16-auth-rewrite.md (8 tasks).` — Step 1 done
+- `Preconditions OK. Plan: .plans/2026-05-16-auth-rewrite.md (8 tasks).` — Step 1 done
 - `review-plan: READY (3 nits noted)` — Step 2 done
 - `Branch: impl/2026-05-16-auth-rewrite from origin/main (@a1b2c3d).` — Step 3 done (new branch) — or
 - `Resuming on impl/2026-05-16-auth-rewrite (3/8 tasks already done).` — Step 3 done (resume mode)
@@ -191,11 +200,13 @@ Silence between these is fine. Don't narrate deliberation.
 
 ## Plan path conventions
 
-- Plans live in `./docs/plans/` (working directory; typically a repo root) or `./PLAN.md` for ad-hoc.
+- Plans live in `./.plans/` (working directory; typically a repo root). `./.plans/PLAN.md` is the ad-hoc single-plan path.
 - Filename convention: `YYYY-MM-DD-<feature-slug>.md` (matches Superpowers' convention and most "writing-plans" skills).
+- `./.plans/` is gitignored on first use via `~/.claude/scripts/ensure-gitignore.sh '.plans/'`. Plans are **working artifacts**, not source — they are not committed and not pushed in PRs.
+- Legacy paths (`./PLAN.md`, `./docs/plans/*.md`) remain readable for one transition release; on resolve, the skill warns once. Move to `.plans/` at convenience.
 - This skill does not create plans. Use Claude Code's native Plan mode or a future writing-plans skill upstream.
-- Plans are **committed to the repo** before invocation — the clean-tree precondition in Step 1 enforces this. Plans are not session-scoped or hidden.
 - Plans may declare branch policy in a `## Branch policy` section near the top — see [reference.md → Plan header conventions](reference.md#plan-header-conventions). Absence means: fresh branch off `origin/<default>`.
+- Project `CLAUDE.md` / `CLAUDE.local.md` may override the plans dir with a `Plans live in <path>` directive. When overridden, the skill skips the gitignore bootstrap.
 
 ---
 
