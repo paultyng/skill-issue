@@ -135,6 +135,22 @@ Post-filter the JSON result: keep entries where `title || headRefName || labels[
 
 **Fail-soft**: if `gh` errors (no auth, no remote, command not found), record one line `PR lookup unavailable: <reason>` in the run metadata and continue with the remaining sources.
 
+**Source: open GitHub issues**
+
+Skip if `REVIEW.md` declares `Open context: Skip: true` or `Open context: Include issues: false`.
+
+```sh
+gh issue list --state open --limit 100 \
+  --search "updated:>$(date -v-30d +%Y-%m-%d 2>/dev/null || date -d '30 days ago' +%Y-%m-%d)" \
+  --json number,title,labels,updatedAt,url 2>/dev/null
+```
+
+Post-filter: keep entries where `title || labels[*].name` contains ≥1 keyword. Sort by `updatedAt` desc, cap at 10.
+
+**Label boost**: when a hit carries any of `bug`, `regression`, `flaky`, `security`, prefix the rendered row with `★` (visual emphasis only — ordering is unchanged).
+
+**Fail-soft**: same as the PR source — record `Issue lookup unavailable: <reason>` and continue.
+
 ### 2. System overview
 
 Produce a brief architecture summary covering:
