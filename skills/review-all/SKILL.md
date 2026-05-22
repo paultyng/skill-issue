@@ -31,6 +31,19 @@ Orchestrate all domain-specific review skills as parallel subagents, then consol
   - `has_changes`: true when scope is "changed files (PR or branch)", or when scope is "explicit paths" and those paths have a diff against the base ref (run `git diff --name-only --diff-filter=d <base>...HEAD -- <paths>` to check; default base is `main`). False for full-codebase reviews with no diff baseline.
 - **Detect opt-in flags** from the user's request phrasing:
   - `include_performance`: true when the user explicitly asks for performance, perf, benchmark, profiling, pprof, hot-path, or latency review alongside the comprehensive request. Default false. Never auto-enable from file types.
+- **Determine which review types are applicable** using the flags above:
+  - **review-security**: applicable if `has_code` or `has_infra`
+  - **review-reliability**: applicable if `has_code` or `has_iac`
+  - **review-code**: applicable if `has_code` or `has_proto`
+  - **review-database**: applicable if `has_sql`, or database-interacting code exists (check imports for DB drivers like `pgx`, `pq`, `database/sql`, `sqlx`, `diesel`, `sqlalchemy`, etc.)
+  - **review-coverage**: applicable if `has_go` and `has_changes`
+  - **review-documentation**: always applicable
+  - **review-infrastructure**: applicable if `has_iac`
+  - **review-ci**: applicable if `has_ci`
+  - **review-observability**: applicable if `has_code` (observability gaps are code-level; configs alone aren't enough)
+  - **review-api-compat**: applicable if `has_api_specs` AND `has_changes` (it's a diff-aware review; no diff baseline = nothing to compare)
+  - **review-performance**: applicable ONLY if `include_performance` is true. Never auto-launched.
+
 ### 1a. Detect conformance mode
 
 If the user's request includes phrases like "full conformance", "pattern discovery", "check patterns", or "discover patterns", set `conformance_mode` to `full`. Otherwise default to `lightweight`. This flag is passed to review-code in step 3.
@@ -62,19 +75,6 @@ If no `REVIEW.md` exists, proceed without it. All review skills have their own r
 ```
 
 `Open context` controls step 1d (below). `Policy gate` controls step 1c (above).
-
-- Determine which review types are applicable using these flags:
-  - **review-security**: applicable if `has_code` or `has_infra`
-  - **review-reliability**: applicable if `has_code` or `has_iac`
-  - **review-code**: applicable if `has_code` or `has_proto`
-  - **review-database**: applicable if `has_sql`, or database-interacting code exists (check imports for DB drivers like `pgx`, `pq`, `database/sql`, `sqlx`, `diesel`, `sqlalchemy`, etc.)
-  - **review-coverage**: applicable if `has_go` and `has_changes`
-  - **review-documentation**: always applicable
-  - **review-infrastructure**: applicable if `has_iac`
-  - **review-ci**: applicable if `has_ci`
-  - **review-observability**: applicable if `has_code` (observability gaps are code-level; configs alone aren't enough)
-  - **review-api-compat**: applicable if `has_api_specs` AND `has_changes` (it's a diff-aware review; no diff baseline = nothing to compare)
-  - **review-performance**: applicable ONLY if `include_performance` is true. Never auto-launched.
 
 ### 1c. Policy-change detection (gate)
 
@@ -285,6 +285,7 @@ Prompt it to:
 4. **Prioritize**. Produce consolidated findings tables ordered by severity/priority, grouped by category (security, reliability, code, infrastructure, ci, observability, api-compatibility, performance, database, coverage, documentation).
 5. **Recommend fix order**, considering dependencies between findings and effort estimates. Already-tracked findings may be deprioritized if the existing TODO indicates a plan.
 6. **Tool Availability summary**. Consolidate from all reviews into a summary listing which automated tools ran successfully, which were skipped, and why.
+7. **Open-context cross-reference** (only when the step 1d block is non-empty). For each consolidated finding whose `path:line` matches the keyword set of any open PR / issue / Jira ticket from step 1d, annotate the finding row with `→ overlaps with PR #N` (or `ISSUE #N`, or `KEY-N`). This is purely informational; severity is unchanged.
 
 ### 5. Present results
 
@@ -307,8 +308,6 @@ Write the summarization output to `${REVIEW_DIR}/SUMMARY.md`, structured as:
 4. Open work context (from step 1d; omit this section entirely if the block was empty)
 5. Consolidated findings tables (with tracking status inline), grouped by category
 6. Recommended fix order
-
-When the open-work-context block is present, instruct the summarization subagent (step 4) to cross-reference each consolidated finding against the open-work items: when a finding's `path:line` matches the keyword set of any open PR / issue / Jira ticket, annotate the finding row with `→ overlaps with PR #N` (or `ISSUE #N`, or `KEY-N`). This is purely an annotation; it never demotes a finding's severity.
 
 Present the report to the user.
 
