@@ -31,6 +31,19 @@ Orchestrate all domain-specific review skills as parallel subagents, then consol
   - `has_changes`: true when scope is "changed files (PR or branch)", or when scope is "explicit paths" and those paths have a diff against the base ref (run `git diff --name-only --diff-filter=d <base>...HEAD -- <paths>` to check; default base is `main`). False for full-codebase reviews with no diff baseline.
 - **Detect opt-in flags** from the user's request phrasing:
   - `include_performance`: true when the user explicitly asks for performance, perf, benchmark, profiling, pprof, hot-path, or latency review alongside the comprehensive request. Default false. Never auto-enable from file types.
+- **Determine which review types are applicable** using the flags above:
+  - **review-security**: applicable if `has_code` or `has_infra`
+  - **review-reliability**: applicable if `has_code` or `has_iac`
+  - **review-code**: applicable if `has_code` or `has_proto`
+  - **review-database**: applicable if `has_sql`, or database-interacting code exists (check imports for DB drivers like `pgx`, `pq`, `database/sql`, `sqlx`, `diesel`, `sqlalchemy`, etc.)
+  - **review-coverage**: applicable if `has_go` and `has_changes`
+  - **review-documentation**: always applicable
+  - **review-infrastructure**: applicable if `has_iac`
+  - **review-ci**: applicable if `has_ci`
+  - **review-observability**: applicable if `has_code` (observability gaps are code-level; configs alone aren't enough)
+  - **review-api-compat**: applicable if `has_api_specs` AND `has_changes` (it's a diff-aware review; no diff baseline = nothing to compare)
+  - **review-performance**: applicable ONLY if `include_performance` is true. Never auto-launched.
+
 ### 1a. Detect conformance mode
 
 If the user's request includes phrases like "full conformance", "pattern discovery", "check patterns", or "discover patterns", set `conformance_mode` to `full`. Otherwise default to `lightweight`. This flag is passed to review-code in step 3.
@@ -44,18 +57,138 @@ Check for a `REVIEW.md` file at the repository root. If it exists, read it and e
 
 If no `REVIEW.md` exists, proceed without it. All review skills have their own reference checklists.
 
-- Determine which review types are applicable using these flags:
-  - **review-security**: applicable if `has_code` or `has_infra`
-  - **review-reliability**: applicable if `has_code` or `has_iac`
-  - **review-code**: applicable if `has_code` or `has_proto`
-  - **review-database**: applicable if `has_sql`, or database-interacting code exists (check imports for DB drivers like `pgx`, `pq`, `database/sql`, `sqlx`, `diesel`, `sqlalchemy`, etc.)
-  - **review-coverage**: applicable if `has_go` and `has_changes`
-  - **review-documentation**: always applicable
-  - **review-infrastructure**: applicable if `has_iac`
-  - **review-ci**: applicable if `has_ci`
-  - **review-observability**: applicable if `has_code` (observability gaps are code-level; configs alone aren't enough)
-  - **review-api-compat**: applicable if `has_api_specs` AND `has_changes` (it's a diff-aware review; no diff baseline = nothing to compare)
-  - **review-performance**: applicable ONLY if `include_performance` is true. Never auto-launched.
+**`REVIEW.md` schema extensions used by this skill** (all subsections optional):
+
+```markdown
+## Open context
+
+- Skip: true                    # disable open-work-context lookup entirely
+- Include PRs: false            # disable GH PR source
+- Include issues: false         # disable GH issue source
+- Jira project: AUTH            # enable Jira source with this project key
+- Recency days: 60              # override the 30-day window
+
+## Policy gate
+
+- Skip: true                    # suppress the gate prompt; always proceed with original scope
+- Policy files: [glob, ...]     # additional globs appended to the default policy-file list
+```
+
+`Open context` controls step 1d (below). `Policy gate` controls step 1c (above).
+
+### 1c. Policy-change detection (gate)
+
+If diff scope is in use, check whether any changed file is a **policy file** — a rule/config artifact that affects review of the whole repo, not just itself:
+
+- `REVIEW.md`, `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md` (at any path depth; typically repo root)
+- Any file under `.claude/rules/` or `.cursor/rules/` (recursive)
+- Any glob declared in `REVIEW.md` under `Policy gate: Policy files: [glob, ...]` — appended to (not replacing) the default list
+
+Detection:
+
+```sh
+POLICY_HITS=$(printf '%s\n' "$CHANGED_FILES" \
+  | grep -E '(^|/)(REVIEW|CLAUDE|CLAUDE\.local|AGENTS)\.md$|^\.claude/rules/|^\.cursor/rules/' \
+  || true)
+# Append matches for any REVIEW.md-declared globs to POLICY_HITS.
+```
+
+When `POLICY_HITS` is empty, skip the rest of step 1c and continue to 1d. When non-empty, apply the gate below.
+
+**Opt-out**: if `REVIEW.md` declares `Policy gate: Skip: true`, suppress the prompt and continue with the original diff scope silently. Record `Scope: diff (kept; policy gate skipped via REVIEW.md)` in the run metadata.
+
+**Gate behavior** when `POLICY_HITS` is non-empty and not opted out:
+
+1. Surface to the user a brief block listing the policy files in `POLICY_HITS`, plus the one-line explanation: *"Policy/rule changes affect the whole codebase; diff review only audits the policy itself."*
+2. Ask: **"Switch to full-repo review against this policy? [y/N]"**
+3. **`y`** → rescope: clear `pr_url`, set scope to full codebase (run the file-type classification on the entire tree the way a no-PR / no-base-ref invocation would), set `conformance_mode=full`. Append to run metadata: `Scope: full-repo (escalated from diff due to policy change in <files>)`.
+4. **`N`** → keep diff scope unchanged. Append to run metadata: `Scope: diff (kept despite policy change in <files>)`.
+
+Continue to 1d once the gate decision is recorded.
+
+### 1d. Resolve open-work context
+
+Surface in-flight work that may overlap with the (post-gate) scope so subagents can flag conflicts and duplicates. Skip the entire step if `REVIEW.md` declares `Open context: Skip: true`.
+
+**Keyword extraction** from the changed file list (output of step 1):
+
+1. Unique top-level dirs from changed paths.
+2. Unique immediate parent dir names.
+3. For `.go` files: `filepath.Base(pkg_dir)`.
+4. For `.proto` files: the declared `package` line.
+
+De-dup, lowercase, drop the stop-list `(internal|pkg|cmd|test|tests|vendor|gen|api|proto|src|lib)`. If the resulting keyword set is empty (e.g. all changed files sit inside stop-listed dirs), skip step 1d entirely — no useful filter is possible.
+
+The keyword set drives the three source queries below (PRs, issues, Jira).
+
+**Source: open GitHub PRs**
+
+Skip if `REVIEW.md` declares `Open context: Skip: true` or `Open context: Include PRs: false`.
+
+```sh
+gh pr list --state open --limit 50 \
+  --search "updated:>$(date -v-30d +%Y-%m-%d 2>/dev/null || date -d '30 days ago' +%Y-%m-%d)" \
+  --json number,title,headRefName,labels,updatedAt,url 2>/dev/null
+```
+
+Post-filter the JSON result: keep entries where `title || headRefName || labels[*].name` contains ≥1 keyword (case-insensitive substring). Sort by `updatedAt` desc, cap at 10.
+
+**Fail-soft**: if `gh` errors (no auth, no remote, command not found), record one line `PR lookup unavailable: <reason>` in the run metadata and continue with the remaining sources.
+
+**Source: open GitHub issues**
+
+Skip if `REVIEW.md` declares `Open context: Skip: true` or `Open context: Include issues: false`.
+
+```sh
+gh issue list --state open --limit 100 \
+  --search "updated:>$(date -v-30d +%Y-%m-%d 2>/dev/null || date -d '30 days ago' +%Y-%m-%d)" \
+  --json number,title,labels,updatedAt,url 2>/dev/null
+```
+
+Post-filter: keep entries where `title || labels[*].name` contains ≥1 keyword. Sort by `updatedAt` desc, cap at 10.
+
+**Label boost**: when a hit carries any of `bug`, `regression`, `flaky`, `security`, prefix the rendered row with `★` (visual emphasis only — ordering is unchanged).
+
+**Fail-soft**: same as the PR source — record `Issue lookup unavailable: <reason>` and continue.
+
+**Source: open Jira tickets (opt-in)**
+
+Run this substep **only** when `REVIEW.md` declares `Open context: Jira project: <KEY>`. No default; absence means no Jira lookup.
+
+Use the MCP tool `claude_ai_Atlassian_Rovo:searchJiraIssuesUsingJql` with this JQL template (substitute `<KEY>` and `<RECENCY>`; `<RECENCY>` defaults to 30, override via `Open context: Recency days:`):
+
+```
+project = <KEY> AND statusCategory != Done AND updated >= -<RECENCY>d
+```
+
+Post-filter: keep entries where `summary || description` contains ≥1 keyword (case-insensitive substring). Sort by `updated` desc, cap at 10. Render each as `<KEY>-<NUM>: <summary>` with status.
+
+**Fail-soft**: if the MCP is unavailable or returns an auth error, record `Jira lookup unavailable: <reason>` and continue.
+
+**Rendered block** — `Open work context`:
+
+```markdown
+## Open work context
+
+Filter: changed-path keywords `<keyword-list>`; updated within last 30 days.
+
+**Open PRs (n)**
+| # | Title | Branch | Updated |
+| --- | --- | --- | --- |
+| [#412](url) | <title> | <branch> | YYYY-MM-DD |
+
+**Open issues (n)**
+| # | Title | Labels | Updated |
+| --- | --- | --- | --- |
+| ★[#523](url) | <title> | bug | YYYY-MM-DD |
+
+**Open Jira (n)**
+| Key | Summary | Status | Updated |
+| --- | --- | --- | --- |
+| [AUTH-2583](url) | <summary> | In Progress | YYYY-MM-DD |
+```
+
+Omit each sub-block when count is 0. Omit the whole section when all three counts are 0 (do not render an empty `## Open work context` heading).
 
 ### 2. System overview
 
@@ -106,6 +239,14 @@ For each subagent, include in its prompt:
 - If `REVIEW.md` was loaded in step 1b: the "Always check" rules (for all subagents) and the relevant domain-specific section for that subagent (e.g. Security section → review-security, Database section → review-database). Instruct the subagent to treat "Always check" rules as HIGH severity and domain-specific rules as MEDIUM severity, in addition to its own reference checklist.
 - Instructions to follow the corresponding skill's workflow (read the SKILL.md for reference on what each skill does)
 - Request that it return the full findings output (including tracking annotations and tool availability sections)
+- **If the `Open work context` block from step 1d is non-empty**, include it in the subagent prompt under a dedicated heading:
+  ```
+  # Open work context that may overlap
+  <paste the rendered block from step 1d here>
+
+  Flag in your findings if any item below conflicts with, duplicates, or would be invalidated by your recommendations. Do not treat the existence of an open PR as license to skip a finding.
+  ```
+  This is the **sole injection point** for the open-context block. The system overview from step 2 is **not** modified to carry it — keep step 2 focused on architecture, step 3's per-subagent prompt focused on reviewer-facing context.
 
 **Review subagents to launch:**
 
@@ -144,6 +285,7 @@ Prompt it to:
 4. **Prioritize**. Produce consolidated findings tables ordered by severity/priority, grouped by category (security, reliability, code, infrastructure, ci, observability, api-compatibility, performance, database, coverage, documentation).
 5. **Recommend fix order**, considering dependencies between findings and effort estimates. Already-tracked findings may be deprioritized if the existing TODO indicates a plan.
 6. **Tool Availability summary**. Consolidate from all reviews into a summary listing which automated tools ran successfully, which were skipped, and why.
+7. **Open-context cross-reference** (only when the step 1d block is non-empty). For each consolidated finding whose `path:line` matches the keyword set of any open PR / issue / Jira ticket from step 1d, annotate the finding row with `→ overlaps with PR #N` (or `ISSUE #N`, or `KEY-N`). This is purely informational; severity is unchanged.
 
 ### 5. Present results
 
@@ -163,8 +305,9 @@ Write the summarization output to `${REVIEW_DIR}/SUMMARY.md`, structured as:
 1. Run metadata header
 2. Tool availability summary
 3. System overview (from step 2)
-4. Consolidated findings tables (with tracking status inline), grouped by category
-5. Recommended fix order
+4. Open work context (from step 1d; omit this section entirely if the block was empty)
+5. Consolidated findings tables (with tracking status inline), grouped by category
+6. Recommended fix order
 
 Present the report to the user.
 
