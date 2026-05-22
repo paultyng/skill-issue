@@ -304,8 +304,11 @@ Write the summarization output to `${REVIEW_DIR}/SUMMARY.md`, structured as:
 1. Run metadata header
 2. Tool availability summary
 3. System overview (from step 2)
-4. Consolidated findings tables (with tracking status inline), grouped by category
-5. Recommended fix order
+4. Open work context (from step 1d; omit this section entirely if the block was empty)
+5. Consolidated findings tables (with tracking status inline), grouped by category
+6. Recommended fix order
+
+When the open-work-context block is present, instruct the summarization subagent (step 4) to cross-reference each consolidated finding against the open-work items: when a finding's `path:line` matches the keyword set of any open PR / issue / Jira ticket, annotate the finding row with `→ overlaps with PR #N` (or `ISSUE #N`, or `KEY-N`). This is purely an annotation; it never demotes a finding's severity.
 
 Present the report to the user.
 
