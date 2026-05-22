@@ -165,6 +165,31 @@ Post-filter: keep entries where `summary || description` contains ≥1 keyword (
 
 **Fail-soft**: if the MCP is unavailable or returns an auth error, record `Jira lookup unavailable: <reason>` and continue.
 
+**Rendered block** — `Open work context`:
+
+```markdown
+## Open work context
+
+Filter: changed-path keywords `<keyword-list>`; updated within last 30 days.
+
+**Open PRs (n)**
+| # | Title | Branch | Updated |
+| --- | --- | --- | --- |
+| [#412](url) | <title> | <branch> | YYYY-MM-DD |
+
+**Open issues (n)**
+| # | Title | Labels | Updated |
+| --- | --- | --- | --- |
+| ★[#523](url) | <title> | bug | YYYY-MM-DD |
+
+**Open Jira (n)**
+| Key | Summary | Status | Updated |
+| --- | --- | --- | --- |
+| [AUTH-2583](url) | <summary> | In Progress | YYYY-MM-DD |
+```
+
+Omit each sub-block when count is 0. Omit the whole section when all three counts are 0 (do not render an empty `## Open work context` heading).
+
 ### 2. System overview
 
 Produce a brief architecture summary covering:
