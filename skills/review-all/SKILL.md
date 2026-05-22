@@ -106,6 +106,21 @@ When `POLICY_HITS` is empty, skip the rest of step 1c and continue to 1d. When n
 
 Continue to 1d once the gate decision is recorded.
 
+### 1d. Resolve open-work context
+
+Surface in-flight work that may overlap with the (post-gate) scope so subagents can flag conflicts and duplicates. Skip the entire step if `REVIEW.md` declares `Open context: Skip: true`.
+
+**Keyword extraction** from the changed file list (output of step 1):
+
+1. Unique top-level dirs from changed paths.
+2. Unique immediate parent dir names.
+3. For `.go` files: `filepath.Base(pkg_dir)`.
+4. For `.proto` files: the declared `package` line.
+
+De-dup, lowercase, drop the stop-list `(internal|pkg|cmd|test|tests|vendor|gen|api|proto|src|lib)`. If the resulting keyword set is empty (e.g. all changed files sit inside stop-listed dirs), skip step 1d entirely — no useful filter is possible.
+
+The keyword set drives the three source queries below (PRs, issues, Jira).
+
 ### 2. System overview
 
 Produce a brief architecture summary covering:
