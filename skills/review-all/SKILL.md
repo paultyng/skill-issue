@@ -57,6 +57,25 @@ If no `REVIEW.md` exists, proceed without it. All review skills have their own r
   - **review-api-compat**: applicable if `has_api_specs` AND `has_changes` (it's a diff-aware review; no diff baseline = nothing to compare)
   - **review-performance**: applicable ONLY if `include_performance` is true. Never auto-launched.
 
+### 1c. Policy-change detection (gate)
+
+If diff scope is in use, check whether any changed file is a **policy file** — a rule/config artifact that affects review of the whole repo, not just itself:
+
+- `REVIEW.md`, `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md` (at any path depth; typically repo root)
+- Any file under `.claude/rules/` or `.cursor/rules/` (recursive)
+- Any glob declared in `REVIEW.md` under `Policy gate: Policy files: [glob, ...]` — appended to (not replacing) the default list
+
+Detection:
+
+```sh
+POLICY_HITS=$(printf '%s\n' "$CHANGED_FILES" \
+  | grep -E '(^|/)(REVIEW|CLAUDE|CLAUDE\.local|AGENTS)\.md$|^\.claude/rules/|^\.cursor/rules/' \
+  || true)
+# Append matches for any REVIEW.md-declared globs to POLICY_HITS.
+```
+
+When `POLICY_HITS` is empty, skip the rest of step 1c and continue to 1d. When non-empty, apply the gate per the next section.
+
 ### 2. System overview
 
 Produce a brief architecture summary covering:
