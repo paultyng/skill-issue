@@ -151,6 +151,20 @@ Post-filter: keep entries where `title || labels[*].name` contains ≥1 keyword.
 
 **Fail-soft**: same as the PR source — record `Issue lookup unavailable: <reason>` and continue.
 
+**Source: open Jira tickets (opt-in)**
+
+Run this substep **only** when `REVIEW.md` declares `Open context: Jira project: <KEY>`. No default; absence means no Jira lookup.
+
+Use the MCP tool `claude_ai_Atlassian_Rovo:searchJiraIssuesUsingJql` with this JQL template (substitute `<KEY>` and `<RECENCY>`; `<RECENCY>` defaults to 30, override via `Open context: Recency days:`):
+
+```
+project = <KEY> AND statusCategory != Done AND updated >= -<RECENCY>d
+```
+
+Post-filter: keep entries where `summary || description` contains ≥1 keyword (case-insensitive substring). Sort by `updated` desc, cap at 10. Render each as `<KEY>-<NUM>: <summary>` with status.
+
+**Fail-soft**: if the MCP is unavailable or returns an auth error, record `Jira lookup unavailable: <reason>` and continue.
+
 ### 2. System overview
 
 Produce a brief architecture summary covering:
