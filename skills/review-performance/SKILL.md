@@ -71,7 +71,7 @@ Static analyzers feed the subagent. **Do not run benchmarks** as part of the rev
 
 ### 5. Present results
 
-Resolve the review output directory (same pattern as siblings):
+Resolve the review output directory (skip if `REVIEW_DIR` was provided by the review-all orchestrator):
 
 ```sh
 REVIEW_DATE=$(date +%Y-%m-%d)
