@@ -121,6 +121,20 @@ De-dup, lowercase, drop the stop-list `(internal|pkg|cmd|test|tests|vendor|gen|a
 
 The keyword set drives the three source queries below (PRs, issues, Jira).
 
+**Source: open GitHub PRs**
+
+Skip if `REVIEW.md` declares `Open context: Skip: true` or `Open context: Include PRs: false`.
+
+```sh
+gh pr list --state open --limit 50 \
+  --search "updated:>$(date -v-30d +%Y-%m-%d 2>/dev/null || date -d '30 days ago' +%Y-%m-%d)" \
+  --json number,title,headRefName,labels,updatedAt,url 2>/dev/null
+```
+
+Post-filter the JSON result: keep entries where `title || headRefName || labels[*].name` contains ≥1 keyword (case-insensitive substring). Sort by `updatedAt` desc, cap at 10.
+
+**Fail-soft**: if `gh` errors (no auth, no remote, command not found), record one line `PR lookup unavailable: <reason>` in the run metadata and continue with the remaining sources.
+
 ### 2. System overview
 
 Produce a brief architecture summary covering:
