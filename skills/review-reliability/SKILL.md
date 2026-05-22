@@ -52,7 +52,7 @@ Prompt it to:
 
 ### 4. Present results
 
-Resolve the review output directory:
+Resolve the review output directory (skip if `REVIEW_DIR` was provided by the review-all orchestrator):
 
 ```sh
 REVIEW_DATE=$(date +%Y-%m-%d)
