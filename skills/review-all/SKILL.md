@@ -239,6 +239,14 @@ For each subagent, include in its prompt:
 - If `REVIEW.md` was loaded in step 1b: the "Always check" rules (for all subagents) and the relevant domain-specific section for that subagent (e.g. Security section → review-security, Database section → review-database). Instruct the subagent to treat "Always check" rules as HIGH severity and domain-specific rules as MEDIUM severity, in addition to its own reference checklist.
 - Instructions to follow the corresponding skill's workflow (read the SKILL.md for reference on what each skill does)
 - Request that it return the full findings output (including tracking annotations and tool availability sections)
+- **If the `Open work context` block from step 1d is non-empty**, include it in the subagent prompt under a dedicated heading:
+  ```
+  # Open work context that may overlap
+  <paste the rendered block from step 1d here>
+
+  Flag in your findings if any item below conflicts with, duplicates, or would be invalidated by your recommendations. Do not treat the existence of an open PR as license to skip a finding.
+  ```
+  This is the **sole injection point** for the open-context block. The system overview from step 2 is **not** modified to carry it — keep step 2 focused on architecture, step 3's per-subagent prompt focused on reviewer-facing context.
 
 **Review subagents to launch:**
 
