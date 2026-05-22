@@ -74,7 +74,18 @@ POLICY_HITS=$(printf '%s\n' "$CHANGED_FILES" \
 # Append matches for any REVIEW.md-declared globs to POLICY_HITS.
 ```
 
-When `POLICY_HITS` is empty, skip the rest of step 1c and continue to 1d. When non-empty, apply the gate per the next section.
+When `POLICY_HITS` is empty, skip the rest of step 1c and continue to 1d. When non-empty, apply the gate below.
+
+**Opt-out**: if `REVIEW.md` declares `Policy gate: Skip: true`, suppress the prompt and continue with the original diff scope silently. Record `Scope: diff (kept; policy gate skipped via REVIEW.md)` in the run metadata.
+
+**Gate behavior** when `POLICY_HITS` is non-empty and not opted out:
+
+1. Surface to the user a brief block listing the policy files in `POLICY_HITS`, plus the one-line explanation: *"Policy/rule changes affect the whole codebase; diff review only audits the policy itself."*
+2. Ask: **"Switch to full-repo review against this policy? [y/N]"**
+3. **`y`** → rescope: clear `pr_url`, set scope to full codebase (run the file-type classification on the entire tree the way a no-PR / no-base-ref invocation would), set `conformance_mode=full`. Append to run metadata: `Scope: full-repo (escalated from diff due to policy change in <files>)`.
+4. **`N`** → keep diff scope unchanged. Append to run metadata: `Scope: diff (kept despite policy change in <files>)`.
+
+Continue to 1d once the gate decision is recorded.
 
 ### 2. System overview
 
