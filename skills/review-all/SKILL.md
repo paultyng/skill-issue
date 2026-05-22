@@ -44,6 +44,25 @@ Check for a `REVIEW.md` file at the repository root. If it exists, read it and e
 
 If no `REVIEW.md` exists, proceed without it. All review skills have their own reference checklists.
 
+**`REVIEW.md` schema extensions used by this skill** (all subsections optional):
+
+```markdown
+## Open context
+
+- Skip: true                    # disable open-work-context lookup entirely
+- Include PRs: false            # disable GH PR source
+- Include issues: false         # disable GH issue source
+- Jira project: AUTH            # enable Jira source with this project key
+- Recency days: 60              # override the 30-day window
+
+## Policy gate
+
+- Skip: true                    # suppress the gate prompt; always proceed with original scope
+- Policy files: [glob, ...]     # additional globs appended to the default policy-file list
+```
+
+`Open context` controls step 1d (below). `Policy gate` controls step 1c (above).
+
 - Determine which review types are applicable using these flags:
   - **review-security**: applicable if `has_code` or `has_infra`
   - **review-reliability**: applicable if `has_code` or `has_iac`
