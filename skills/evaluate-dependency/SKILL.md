@@ -29,19 +29,26 @@ Run through these. Cite specific data: no hand-waving, no `I think`.
 
 1. **License.** Detect via the ecosystem's registry or the repo's `LICENSE` / `LICENSE.md` / `COPYING`. Permissive (MIT, BSD, Apache-2.0, ISC, MPL-2.0) is generally fine. Copyleft (GPL, AGPL, LGPL) needs an explicit compatibility check against the user's project license. **No license = no use.** Note relicense history; relicenses are a red flag.
 
-2. **Popularity / community signal.** Stars (rough proxy), the ecosystem's "depended by" / "imported by" count, Sourcegraph importer search if available. Popularity without recent maintenance is a trap, not validation.
+2. **Internal precedent.** Before weighing external popularity, check whether the candidate (or an equivalent) is already used or wrapped internally. Sources, in order:
+   1. Project-local hints: `CLAUDE.md`, `REVIEW.md`, `.claude/rules/`, and the manifests of sibling services if mounted locally.
+   2. Internal code search if available: Sourcegraph (`mcp__sourcegraph__keyword_search` / `mcp__sourcegraph__list_repos`), `gh search code` scoped to the user's orgs.
+   3. Internal package registry / module index if the project documents one.
 
-3. **Maintenance / activity.** Last commit date: `<12 months` = active, `12–24` = stale, `>24` = abandoned. Last release vs last commit (releases lagging commits = pre-release work or maintainer absent). Open issues / PRs ratio; unanswered bug reports older than 6 months; "looking for maintainers" signals.
+   A candidate with strong internal precedent beats a marginally more-popular external alternative — consistency, shared CVE response, shared tooling all compound. An internal wrapper or replacement (e.g. an `internal/x` package covering the same need) usually means **don't add the external dep**; use the internal one. If no internal-search tooling is reachable, mark this row `unsure: no internal index available` rather than skipping.
 
-4. **Vulnerability history.** Check the ecosystem's vuln DB ([vuln.go.dev](https://vuln.go.dev/) for Go, [GitHub Advisory DB](https://github.com/advisories), [OSV](https://osv.dev/), `npm audit`, `pip-audit`, [RustSec](https://rustsec.org/)). Pattern of repeat CVEs in the same subsystem = avoid.
+3. **Popularity / community signal.** Stars (rough proxy), the ecosystem's "depended by" / "imported by" count, Sourcegraph importer search if available. Popularity without recent maintenance is a trap, not validation.
 
-5. **API stability.** Semver discipline. Major-version bump cadence: every six months is chaotic. `v0.x.y` after years signals unstable surface. Look for a documented breaking-changes / release-notes practice.
+4. **Maintenance / activity.** Last commit date: `<12 months` = active, `12–24` = stale, `>24` = abandoned. Last release vs last commit (releases lagging commits = pre-release work or maintainer absent). Open issues / PRs ratio; unanswered bug reports older than 6 months; "looking for maintainers" signals.
 
-6. **Surface and transitive cost.** Each dep brings its own deps. Count transitive deps; smaller is better when alternatives are comparable. Note pulled-in transitive risk (e.g. a Go module that quietly pulls in a deprecated logger).
+5. **Vulnerability history.** Check the ecosystem's vuln DB ([vuln.go.dev](https://vuln.go.dev/) for Go, [GitHub Advisory DB](https://github.com/advisories), [OSV](https://osv.dev/), `npm audit`, `pip-audit`, [RustSec](https://rustsec.org/)). Pattern of repeat CVEs in the same subsystem = avoid.
 
-7. **Fit.** Does it do what's needed with minimal surface? A library doing 10× what's needed brings 10× the risk. **Check the language's standard library / built-ins first.** Many ecosystems' stdlib covers what third-party libs once owned (e.g. Go's `slices`, `maps`, `cmp`, `errors`; Python's `pathlib`, `dataclasses`; JS's modern `URL`, `fetch`, `structuredClone`).
+6. **API stability.** Semver discipline. Major-version bump cadence: every six months is chaotic. `v0.x.y` after years signals unstable surface. Look for a documented breaking-changes / release-notes practice.
 
-8. **Footguns.** Ecosystem-specific (init-time side effects, monkey-patching, peer-dep churn, global mutable state, unbounded goroutines/threads). Check the language reference for known patterns; surface anything weird in the README or top-level types.
+7. **Surface and transitive cost.** Each dep brings its own deps. Count transitive deps; smaller is better when alternatives are comparable. Note pulled-in transitive risk (e.g. a Go module that quietly pulls in a deprecated logger).
+
+8. **Fit.** Does it do what's needed with minimal surface? A library doing 10× what's needed brings 10× the risk. **Check the language's standard library / built-ins first.** Many ecosystems' stdlib covers what third-party libs once owned (e.g. Go's `slices`, `maps`, `cmp`, `errors`; Python's `pathlib`, `dataclasses`; JS's modern `URL`, `fetch`, `structuredClone`).
+
+9. **Footguns.** Ecosystem-specific (init-time side effects, monkey-patching, peer-dep churn, global mutable state, unbounded goroutines/threads). Check the language reference for known patterns; surface anything weird in the README or top-level types.
 
 ## Workflow
 
@@ -49,9 +56,9 @@ Run through these. Cite specific data: no hand-waving, no `I think`.
 
 2. **Resolve canonical coordinate.** Read the per-language reference if one exists; apply its rules **first**. This is non-negotiable. Examples: Go's `/vN` path probe, npm's scope check, Python's distribution-name lookup.
 
-3. **Survey alternatives** (selection mode, optional). When multiple candidates are in the running, delegate per-candidate data lookups to `Explore` subagents (`model: haiku` per `subagent-model-routing` — mechanical lookup across 8 fixed criteria; per `parallelize-subagents` and `delegate-investigation`). Each subagent returns one verdict table prefixed with `Status:` per `subagent-prompt-contract`. Parent merges and applies the final verdict synthesis (`model: opus` per `subagent-model-routing` — hard reasoning combining multiple criteria across candidates).
+3. **Survey alternatives** (selection mode, optional). When multiple candidates are in the running, delegate per-candidate data lookups to `Explore` subagents (`model: haiku` per `subagent-model-routing` — mechanical lookup across 9 fixed criteria; per `parallelize-subagents` and `delegate-investigation`). Each subagent returns one verdict table prefixed with `Status:` per `subagent-prompt-contract`. Parent merges and applies the final verdict synthesis (`model: opus` per `subagent-model-routing` — hard reasoning combining multiple criteria across candidates).
 
-4. **Run the 8 criteria** against the resolved coordinate. Cite specific numbers, dates, license names.
+4. **Run the 9 criteria** against the resolved coordinate. Cite specific numbers, dates, license names.
 
 5. **Produce verdict**: GO / CAUTION / NO-GO. Always include the **coordinate to use** explicitly (so the user doesn't import the wrong major / wrong scope / wrong distribution).
 
@@ -69,6 +76,7 @@ Run through these. Cite specific data: no hand-waving, no `I think`.
 |---|---|
 | Language-specific path/coordinate | (e.g. v2 is current; root path is at v1.4.7, 2022) |
 | License | (e.g. Apache-2.0) |
+| Internal precedent | (e.g. used in 3 sibling repos as `internal/httpx` wrapper; or: no internal usage found) |
 | Popularity | (e.g. 12.4k stars, ~3200 importers) |
 | Last commit | (e.g. 2026-04-29, active) |
 | Vulnerabilities | (e.g. None at v2.1.0; govulncheck clean) |
@@ -96,4 +104,5 @@ Run through these. Cite specific data: no hand-waving, no `I think`.
 - Accepting "X is popular" as sufficient. Popularity without recent maintenance is a trap.
 - Hand-waving with hedge words instead of citing numbers ("seems active", "I think it's maintained"). Use `unsure:` when you don't know.
 - Auto-running `go get` / `npm install` / `pip install`. Out of scope; the skill recommends, the user applies.
+- Recommending an external dep when an internal package already covers the use case. Internal precedent overrides external popularity unless there's a hard reason (missing feature, abandoned, license incompatibility) — name it.
 - Per `~/.claude/rules/probe-not-assume.md`: confirm via tool/command before recommending; do not infer.
