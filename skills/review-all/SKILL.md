@@ -31,6 +31,7 @@ Orchestrate all domain-specific review skills as parallel subagents, then consol
   - `has_changes`: true when scope is "changed files (PR or branch)", or when scope is "explicit paths" and those paths have a diff against the base ref (run `git diff --name-only --diff-filter=d <base>...HEAD -- <paths>` to check; default base is `main`). False for full-codebase reviews with no diff baseline.
 - **Detect opt-in flags** from the user's request phrasing:
   - `include_performance`: true when the user explicitly asks for performance, perf, benchmark, profiling, pprof, hot-path, or latency review alongside the comprehensive request. Default false. Never auto-enable from file types.
+  - `include_deep_security`: true when the user explicitly asks for a deep / thorough security review, "CodeQL", "capability audit", "supply-chain audit", or otherwise signals willingness to pay the multi-minute cost of CodeQL database builds and capslock VTA. Default false. Standard `review-security` still runs without this flag; the flag only enables the deep static-analysis tier. Never auto-enable from file types.
 - **Determine which review types are applicable** using the flags above:
   - **review-security**: applicable if `has_code` or `has_infra`
   - **review-reliability**: applicable if `has_code` or `has_iac`
@@ -236,6 +237,7 @@ For each subagent, include in its prompt:
 - The `has_changes` flag, base ref, and changed file list from step 1 (so change-aware subagents like review-code's Regression History can use them)
 - The `pr_url` from step 1 (used to wrap `path:line` finding references via `~/.claude/scripts/pr-deeplink.sh`; empty string disables wrapping)
 - The `conformance_mode` flag from step 1a (for review-code only)
+- The `include_deep_security` flag from step 1 (for review-security only)
 - If `REVIEW.md` was loaded in step 1b: the "Always check" rules (for all subagents) and the relevant domain-specific section for that subagent (e.g. Security section → review-security, Database section → review-database). Instruct the subagent to treat "Always check" rules as HIGH severity and domain-specific rules as MEDIUM severity, in addition to its own reference checklist.
 - Instructions to follow the corresponding skill's workflow (read the SKILL.md for reference on what each skill does)
 - Request that it return the full findings output (including tracking annotations and tool availability sections)
@@ -252,7 +254,7 @@ For each subagent, include in its prompt:
 
 | Subagent | Skill | Condition |
 |----------|-------|-----------|
-| Security | review-security | `has_code` or `has_infra` |
+| Security | review-security | `has_code` or `has_infra` (pass `include_deep_security` to enable CodeQL + capslock VTA) |
 | Reliability | review-reliability | `has_code` or `has_iac` |
 | Code | review-code | `has_code` or `has_proto` |
 | Database | review-database | `has_sql` or DB code in scope |

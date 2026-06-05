@@ -72,6 +72,9 @@ Prompt the subagent to run automated security scanning tools via Shell and repor
   - Note any `CAPABILITY_UNANALYZED` count so reviewers know how much of the program escaped analysis.
 - If a tool fails, skip it but note why in a **Tool Availability** section.
 - **SSA / callgraph blind spots**: `govulncheck`, `bearer`, and `capslock` rely on SSA + call-graph analysis. They miss code reached via reflection (`reflect.Value.Call`), the `cgo` boundary, `unsafe.Pointer` arithmetic, and build-tag-gated paths for inactive tags. Surface this caveat alongside any SSA-derived finding so reviewers don't over-trust it.
+- **Deep tier** (gated on `include_deep_security` from `review-all`, or explicit user opt-in like "deep security review" when running this skill directly). Adds minutes per run, so default-off. Skip cleanly if the flag is not set; otherwise run alongside the standard tools:
+  - **CodeQL**: if `codeql` is on PATH, build a database (`codeql database create db --language=go --source-root=. --overwrite`) and run the Go security-and-quality query pack (`codeql database analyze db codeql/go-queries:codeql-suites/go-security-and-quality.qls --format=sarif-latest --output=codeql.sarif`). Parse the SARIF `runs[].results[]` for findings; map `ruleId` to STRIDE/OWASP. DB build is the cost — measure in minutes on large repos. If `codeql` is not installed, skip and note in Tool Availability.
+  - **capslock VTA**: `capslock -output=json -algo=vta ./...`. The VTA call-graph algorithm is more precise than the default CHA but heavier and **experimental** (API may change). Use the VTA report's `path[]` to cite concrete reachability of high-risk sinks (e.g. user request → `(*os/exec.Cmd).Run`) rather than just capability presence.
 - For each finding, search nearby code and project documentation for existing TODOs or notes.
 - Return findings using the **per-category findings** template with `SEC-` prefixed IDs.
 
