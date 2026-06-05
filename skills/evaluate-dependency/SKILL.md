@@ -50,15 +50,21 @@ Run through these. Cite specific data: no hand-waving, no `I think`.
 
 9. **Footguns.** Ecosystem-specific (init-time side effects, monkey-patching, peer-dep churn, global mutable state, unbounded goroutines/threads). Check the language reference for known patterns; surface anything weird in the README or top-level types.
 
+10. **Capabilities.** What privileged operations can the dep (and its transitive closure) reach? A logging library that transitively pulls `os/exec` or `net/http` is doing more than it advertises. For Go, capslock (see [references/go.md](references/go.md#capability-analysis)) classifies transitive calls into capability buckets (`NETWORK`, `FILES`, `EXEC`, `REFLECT`, `CGO`, `UNSAFE_POINTER`, `ARBITRARY_EXECUTION`, etc.). Two modes:
+   - **Selection mode**: snapshot capabilities of the candidate. Flag high-signal combinations — `ARBITRARY_EXECUTION` (any), `REFLECT + EXEC` (dynamic-code gadget), `EXEC` in a non-exec-purpose dep, `CGO` / `UNSAFE_POINTER` (analyzer blind spots downstream).
+   - **Review mode (bump)**: diff capabilities against the prior version. A dep gaining `NETWORK` or `EXEC` it didn't have before is a strong supply-chain signal, regardless of release notes.
+   - For non-Go ecosystems, equivalents are immature; use `unsure: no capability tool available` rather than skipping.
+   - **SSA / callgraph blind spots**: capability analysis relies on SSA + call graph; reflection, `cgo` boundaries, `unsafe.Pointer` arithmetic, and inactive build tags are invisible. A clean capslock report doesn't prove safety — calibrate against the `UNANALYZED` count.
+
 ## Workflow
 
 1. **Confirm scope** (per `confirm-before-implementing`): selection (prospective add) or review (PR touched manifest). Identify the language and the candidate package.
 
 2. **Resolve canonical coordinate.** Read the per-language reference if one exists; apply its rules **first**. This is non-negotiable. Examples: Go's `/vN` path probe, npm's scope check, Python's distribution-name lookup.
 
-3. **Survey alternatives** (selection mode, optional). When multiple candidates are in the running, delegate per-candidate data lookups to `Explore` subagents (`model: haiku` per `subagent-model-routing` — mechanical lookup across 9 fixed criteria; per `parallelize-subagents` and `delegate-investigation`). Each subagent returns one verdict table prefixed with `Status:` per `subagent-prompt-contract`. Parent merges and applies the final verdict synthesis (`model: opus` per `subagent-model-routing` — hard reasoning combining multiple criteria across candidates).
+3. **Survey alternatives** (selection mode, optional). When multiple candidates are in the running, delegate per-candidate data lookups to `Explore` subagents (`model: haiku` per `subagent-model-routing` — mechanical lookup across 10 fixed criteria; per `parallelize-subagents` and `delegate-investigation`). Each subagent returns one verdict table prefixed with `Status:` per `subagent-prompt-contract`. Parent merges and applies the final verdict synthesis (`model: opus` per `subagent-model-routing` — hard reasoning combining multiple criteria across candidates).
 
-4. **Run the 9 criteria** against the resolved coordinate. Cite specific numbers, dates, license names.
+4. **Run the 10 criteria** against the resolved coordinate. Cite specific numbers, dates, license names.
 
 5. **Produce verdict**: GO / CAUTION / NO-GO. Always include the **coordinate to use** explicitly (so the user doesn't import the wrong major / wrong scope / wrong distribution).
 
@@ -83,6 +89,7 @@ Run through these. Cite specific data: no hand-waving, no `I think`.
 | API stability | (e.g. v2 released 2023-06, no major bumps since) |
 | Surface | (e.g. 4 transitive deps, all common) |
 | Fit | (e.g. Covers HTTP-client retry; no stdlib equivalent) |
+| Capabilities | (e.g. NETWORK, FILES — expected; or: EXEC unexpectedly transitive via `findExternalDriver`; or: `unsure: no capability tool available`) |
 
 **Mitigations** (CAUTION only): pin to specific minor; vendor; wrap behind an internal interface.
 **Alternatives** (NO-GO only): `<alt-1>` — brief reason; `<alt-2>` — brief reason.

@@ -1,5 +1,12 @@
 # Go dependency specifics
 
+- [Semantic Import Versioning (SIV)](#semantic-import-versioning-siv)
+- [Toolchain commands](#toolchain-commands)
+- [Metadata sources](#metadata-sources)
+- [Go-specific footguns](#go-specific-footguns)
+- [Capability analysis](#capability-analysis)
+- [When to flag CAUTION rather than NO-GO](#when-to-flag-caution-rather-than-no-go)
+
 Read this **before** running the general evaluation in `SKILL.md` when the dep is a Go module. The path is the dep; picking it wrong invalidates every other criterion.
 
 ## Semantic Import Versioning (SIV)
@@ -62,6 +69,47 @@ The canonical coordinate to recommend is the **highest stable major** that has t
 - **CGO. Prefer pure Go.** A CGO dep brings a C-toolchain requirement, breaks cross-compilation, complicates Docker builds (musl vs glibc, static linking), and adds a different memory/error model at the boundary. Accept only when a pure-Go alternative with comparable coverage doesn't exist, and even then, name the pure-Go option you considered and rejected, with the reason. (Example: `mattn/go-sqlite3` is CGO; `modernc.org/sqlite` is pure-Go. Usually prefer the latter unless a specific feature forces the former.)
 - **Platform-specific build constraints.** A dep with `//go:build linux` or similar constrains the consuming project. Note in the verdict; usually a CAUTION rather than NO-GO unless the constraint conflicts with the consumer's target platforms.
 - **Generated code dependencies.** Libraries like `protoc-gen-go`, `sqlc`, etc. need a corresponding generator version. Document the generator pinning.
+
+## Capability analysis
+
+`capslock` ([github.com/google/capslock](https://github.com/google/capslock)) classifies the privileged operations a package transitively reaches. It builds a callgraph over the candidate and its dependency closure, then maps every reachable stdlib function to one of ~15 capability classes (`NETWORK`, `FILES`, `EXEC`, `REFLECT`, `CGO`, `UNSAFE_POINTER`, `ARBITRARY_EXECUTION`, `SYSTEM_CALLS`, `MODIFY_SYSTEM_STATE`, `READ_SYSTEM_STATE`, etc.).
+
+Install: `go install github.com/google/capslock/cmd/capslock@latest`. Run JSON: `capslock -output=json ./...`.
+
+### Selection mode — snapshot scan
+
+Before adopting a Go dep, capslock on the candidate. Surface the row's `Finding` cell as a short list of present capabilities, then flag the high-signal patterns:
+
+- **`CAPABILITY_ARBITRARY_EXECUTION` (any presence)**: `plugin.Open`, codegen at runtime. Always merits human review.
+- **`CAPABILITY_REFLECT` + `CAPABILITY_EXEC`**: dynamic-code gadget. High-signal supply-chain combination.
+- **`CAPABILITY_EXEC` in a non-exec-purpose dep**: "why does my JSON parser shell out?"
+- **`CAPABILITY_CGO` / `CAPABILITY_UNSAFE_POINTER`**: not necessarily bad, but they are SSA-analyzer blind spots — every downstream check (taint, nilness, callgraph) loses fidelity at these boundaries. Note presence so the verdict accounts for reduced confidence.
+- **`CAPABILITY_UNANALYZED` count**: high count = lots of code outside the analyzer's reach (asm, plugins). Calibrates trust in the rest of the report.
+
+The JSON output's per-finding `path[]` field contains filename, line, column at every hop in the transitive call chain — useful for citing the actual reachability path in the verdict instead of just "EXEC present".
+
+### Review mode — capability diff on a bump
+
+When a PR bumps a Go dep, capslock the **new** version and diff against the **old**. Concrete recipe:
+
+```sh
+# At base commit:
+capslock -output=json ./... > /tmp/caps-base.json
+
+# At head commit:
+capslock -output=json ./... > /tmp/caps-head.json
+
+# Diff capability sets:
+jq -r '.capabilityInfo[]? | "\(.packageName) \(.capability)"' /tmp/caps-base.json | sort -u > /tmp/caps-base.txt
+jq -r '.capabilityInfo[]? | "\(.packageName) \(.capability)"' /tmp/caps-head.json | sort -u > /tmp/caps-head.txt
+diff /tmp/caps-base.txt /tmp/caps-head.txt
+```
+
+**New capabilities appearing in the diff are the actionable signal** — a dep that previously had no `NETWORK` reach now has it; either a deliberate telemetry feature, or a supply-chain payload. The August 2022 `os.Setenv` / `http.Post` / `exec.Command` init-payload pattern is exactly this shape.
+
+### Blind spots
+
+capslock relies on SSA + callgraph. It misses code reached via reflection (`reflect.Value.Call`), the `cgo` boundary, `unsafe.Pointer` arithmetic, and build-tag-gated paths for inactive tags. A clean report is not a safety proof — read it alongside the `UNANALYZED` count.
 
 ## When to flag CAUTION rather than NO-GO
 
