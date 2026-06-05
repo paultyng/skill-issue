@@ -62,8 +62,16 @@ Prompt the subagent to:
 
 Prompt the subagent to run automated security scanning tools via Shell and report findings with `SEC-` prefixed IDs. In each command below, replace `./...` with the resolved package paths when scope is narrowed (e.g. `./internal/auth/...`). Use `./...` only for full-codebase scope.
 - **gosec**: `go run github.com/securego/gosec/v2/cmd/gosec@latest -fmt json -quiet ./...`. Parse JSON output for security findings. Map each gosec rule to the relevant STRIDE/OWASP category.
-- **govulncheck**: `go run golang.org/x/vuln/cmd/govulncheck@latest ./...`. Report known CVEs in dependencies, filtered to actually-called functions.
+- **govulncheck**: `go run golang.org/x/vuln/cmd/govulncheck@latest ./...`. Report known CVEs in dependencies, filtered to actually-called functions via the call graph.
+- **bearer** (dataflow SAST): if `bearer` is on PATH, run `bearer scan --quiet --format json --output bearer.json .`. Parses dataflow for injection sinks and sensitive-data tracking. If not installed, skip and note in Tool Availability. Treat as the dataflow-flavored complement to gosec's pattern matching.
+- **capslock** (capability snapshot): if `capslock` is on PATH, run `capslock -output=json ./...`. Surface the top high-signal capabilities only — do **not** dump the full report inline. Specifically flag:
+  - `CAPABILITY_ARBITRARY_EXECUTION` (any presence)
+  - `CAPABILITY_REFLECT` combined with `CAPABILITY_EXEC` (dynamic-code gadget)
+  - `CAPABILITY_EXEC` reaching from request-handling code (filter `path[]` to chains ending at `(*os/exec.Cmd).Run`)
+  - `CAPABILITY_CGO` / `CAPABILITY_UNSAFE_POINTER` (calibrate the report's confidence — see SSA blind spots)
+  - Note any `CAPABILITY_UNANALYZED` count so reviewers know how much of the program escaped analysis.
 - If a tool fails, skip it but note why in a **Tool Availability** section.
+- **SSA / callgraph blind spots**: `govulncheck`, `bearer`, and `capslock` rely on SSA + call-graph analysis. They miss code reached via reflection (`reflect.Value.Call`), the `cgo` boundary, `unsafe.Pointer` arithmetic, and build-tag-gated paths for inactive tags. Surface this caveat alongside any SSA-derived finding so reviewers don't over-trust it.
 - For each finding, search nearby code and project documentation for existing TODOs or notes.
 - Return findings using the **per-category findings** template with `SEC-` prefixed IDs.
 
