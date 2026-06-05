@@ -69,15 +69,17 @@ Prompt the subagent to:
 
 **Subagent D. Go Static Analysis** (`subagent_type="generalPurpose"`, requires `.go` files)
 
-Prompt the subagent to run all 6 automated Go analysis tools via **parallel Shell calls** (launch all concurrently, then collect results) and report findings with `SA-` prefixed IDs. In each command below, replace `./...` with the resolved package paths when scope is narrowed (e.g. `./internal/auth/...`). Use `./...` only for full-codebase scope.
+Prompt the subagent to run the automated Go analysis tools below via **parallel Shell calls** (launch all concurrently, then collect results) and report findings with `SA-` prefixed IDs. In each command below, replace `./...` with the resolved package paths when scope is narrowed (e.g. `./internal/auth/...`). Use `./...` only for full-codebase scope.
 - **gocyclo**: `go run github.com/fzipp/gocyclo/cmd/gocyclo@latest -over 12 -ignore "_test|vendor" ./...`. Cyclomatic complexity scan. Include each flagged function with its complexity score and refactoring guidance.
 - **staticcheck**: `go run honnef.co/go/tools/cmd/staticcheck@latest ./...`. Bugs (SA*), simplifications (S*), dead code, deprecated API usage.
 - **errcheck**: `go run github.com/kisielk/errcheck@latest ./...`. Unchecked error return values.
 - **nilaway**: `go run go.uber.org/nilaway/cmd/nilaway@latest ./...`. Nil pointer dereference detection via type-flow inference.
+- **nilness** (SSA): `go run golang.org/x/tools/go/analysis/passes/nilness/cmd/nilness@latest ./...`. Nil dereference along SSA control-flow paths. Complements `nilaway`: `nilaway` traces nil flow across packages via type inference; `nilness` walks the per-function SSA CFG. Both are cheap; run together.
 - **exhaustive**: `go run github.com/nishanths/exhaustive/cmd/exhaustive@latest ./...`. Non-exhaustive enum switch statements and map literal keys.
-- **deadcode**: `go run golang.org/x/tools/cmd/deadcode@latest -filter=$(go list -m) ./...`. Unreachable functions via call graph analysis.
+- **deadcode** (SSA): `go run golang.org/x/tools/cmd/deadcode@latest -filter=$(go list -m) ./...`. Unreachable functions via whole-program call graph analysis.
 - **revive**: if a `.golangci.yml` enables revive, run `go run github.com/mgechev/revive@latest ./...` with the project's revive config. If no revive config is found, skip and note in Tool Availability.
 - If a tool fails, skip it but note why in a **Tool Availability** section.
+- **SSA blind spots**: `nilness` and `deadcode` walk SSA, so their findings miss code reached via reflection (`reflect.Value.Call`), the `cgo` boundary, `unsafe.Pointer` arithmetic, and build-tag-gated paths for inactive tags. Generics need the SSA builder's `InstantiateGenerics` mode (default since Go 1.22). Surface this caveat alongside any SSA-derived finding so reviewers don't over-trust it.
 - For each finding, search nearby code and project documentation for existing TODOs or notes.
 - Return findings using the **per-category findings** template with `SA-` prefixed IDs.
 
