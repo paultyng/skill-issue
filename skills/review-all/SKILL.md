@@ -284,7 +284,7 @@ Prompt it to:
    - code ↔ api-compat (e.g. a proto change flagged for design AND for wire compat)
 2. **Cross-reference** each deduplicated finding to its source review and IDs.
 3. **Compute unified tracking** for each deduplicated finding. Populate `tracking: {status, sources, possibly_overlaps}` per [reference-tracking.md](reference-tracking.md). Combines in-repo signals (TODO / FIXME etc., always evaluated) with open-work signals (tier-1 path mention / tier-2 symbol mention / tier-3 keyword match against the step-1d set). Tier-1 and tier-2 promote to `tracked`; tier-3 stays `untracked` with a `possibly_overlaps` annotation. Terminal-state items (closed / merged PRs, closed issues, `statusCategory = Done` Jira) never produce a source entry.
-4. **Prioritize**. Produce consolidated findings tables ordered by severity/priority, grouped by category (security, reliability, code, infrastructure, ci, observability, api-compatibility, performance, database, coverage, documentation). Render `tracking` inline on each row per [reference-tracking.md § Badge rendering](reference-tracking.md#badge-rendering).
+4. **Prioritize and lay out** per [reference-tracking.md § Findings layout in SUMMARY.md](reference-tracking.md#findings-layout-in-summarymd): two flat tables (untracked above the fold; tracked collapsed in a `<details>` block), severity desc then category alpha, `tracking` rendered inline per [reference-tracking.md § Badge rendering](reference-tracking.md#badge-rendering).
 5. **Recommend fix order**, considering dependencies between findings and effort estimates. Tracked findings (tier-1 or tier-2 source) may be deprioritized when the source indicates an active plan. A `possibly_overlaps` annotation (tier-3 only) does not affect ordering.
 6. **Tool Availability summary**. Consolidate from all reviews into a summary listing which automated tools ran successfully, which were skipped, and why.
 
@@ -307,10 +307,11 @@ Write the summarization output to `${REVIEW_DIR}/SUMMARY.md`, structured as:
 2. Tool availability summary
 3. System overview (from step 2)
 4. Open work context (from step 1d; omit this section entirely if the block was empty)
-5. Consolidated findings tables (with tracking status inline), grouped by category
-6. Recommended fix order
+5. **Findings — untracked** (one flat table; see [reference-tracking.md § Findings layout in SUMMARY.md](reference-tracking.md#findings-layout-in-summarymd))
+6. **Findings — tracked** (collapsed `<details>` block, one flat table; omit when empty)
+7. Recommended fix order (untracked first; tracked items only if they're high-severity blockers despite an owner)
 
-Present the report to the user.
+Render both findings sections per [reference-tracking.md § Findings layout in SUMMARY.md](reference-tracking.md#findings-layout-in-summarymd) — flat tables (categories are a column, not a header), severity desc then category alpha, empty-group rules defined there. Per-domain Output Templates below describe what each subagent emits; the summarization subagent compresses them into the unified shape. Present the report to the user.
 
 ---
 

@@ -2,6 +2,8 @@
 
 How `/review-all` decides whether a consolidated finding is `tracked` and how the result renders. The summarization step (step 4 of the workflow) reads this file.
 
+**Contents:** [Schema](#schema) · [Signal classes](#signal-classes) · [Badge rendering](#badge-rendering) · [Findings layout in SUMMARY.md](#findings-layout-in-summarymd)
+
 ## Schema
 
 Every consolidated finding carries:
@@ -68,3 +70,35 @@ Rules:
 - Sources / overlaps are rendered as Markdown links when the source entry has a `url` (use the URL captured in step 1d).
 - In-repo sources that include `path:line` follow the same wrapping as [Finding link wrapping](SKILL.md#finding-link-wrapping).
 - A tracked finding never carries `→ possibly overlaps` alongside its `tracked` badge — promotion (tier-1/tier-2) supersedes weak matches; do not render both.
+
+## Findings layout in SUMMARY.md
+
+Both findings sections in `SUMMARY.md` render as a single **flat** table — categories are a column, not a section header. Per-domain Output Templates in SKILL.md describe what each subagent emits; the summarization subagent compresses them into this unified shape.
+
+```markdown
+## Findings — untracked
+
+| Category | Severity | Finding | Class | Tracked |
+|----------|----------|---------|-------|---------|
+| security | HIGH     | <description with file:line> | S1, A01 | — |
+| code     | MEDIUM   | <description with file:line> | GO1, SA3 | [→ possibly overlaps: PR #4] |
+
+<details><summary>Findings — tracked (N)</summary>
+
+| Category | Severity | Finding | Class | Tracked |
+|----------|----------|---------|-------|---------|
+| security | HIGH     | <description with file:line> | T2 | [tracked: ISSUE #5] |
+
+</details>
+```
+
+Rules:
+
+- **Class column** holds category-specific tags compressed from the per-domain templates: STRIDE/OWASP for security; `Impact / Effort` joined with `/` for reliability / infra / ci / observability / performance; source IDs (ARCH1, GO1, etc.) for code / documentation / coverage; change-class for api-compatibility. Empty when not applicable.
+- **Severity scale** is unified to `CRITICAL / HIGH / MEDIUM / LOW`. Per-domain `P0 / P1 / P2 / P3` map to `CRITICAL / HIGH / MEDIUM / LOW`.
+- **Sort order:** severity desc, then category alpha.
+- **Tracked column** renders per [Badge rendering](#badge-rendering) above.
+- **Empty groups:**
+  - Tracked empty → omit the `<details>` block entirely.
+  - Untracked empty → render `> No untracked findings at this scope.` callout in place of the table (meaningful signal — don't render an empty table).
+  - Both empty → render `> No findings.` and skip both sections.
