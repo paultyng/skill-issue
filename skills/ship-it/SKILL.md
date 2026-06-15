@@ -11,6 +11,14 @@ Run the full pre-commit pipeline, commit, push, and handle PR housekeeping.
 
 Run verification per [verify-when-complete](../verify-when-complete/SKILL.md). Stop if any step fails.
 
+**Review-status check (informational, non-blocking).** If a `.reviews/<date>/SUMMARY.md` exists whose `GIT_COMMIT_FULL` metadata header matches the current HEAD SHA, count the rows under `## Findings — untracked` and inside the `<details>` block for `Findings — tracked`, then print a single line:
+
+```
+Review status: <N> untracked / <M> tracked findings @ <short-sha> (<.reviews/path>)
+```
+
+Do **not** block on `N > 0` — `/ship-it` runs because the user said so. The line is a sanity check, not a gate. If no matching SUMMARY.md exists, skip the line silently (don't run `/review-all` from here).
+
 ## 2. Changelog
 
 Check if the project has a changelog convention:
