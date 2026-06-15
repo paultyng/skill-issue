@@ -48,6 +48,8 @@ If `/review-all` errors or produces zero findings, **say so explicitly** and sto
 
 Read `SUMMARY.md` and the PR metadata. Produce the output below.
 
+`SUMMARY.md` is laid out as two flat tables (see `review-all`'s [reference-tracking.md § Findings layout in SUMMARY.md](../review-all/reference-tracking.md#findings-layout-in-summarymd)): `Findings — untracked` above the fold, `Findings — tracked` in a collapsed `<details>` block. **Default to untracked.** Tracked findings have an owner already — they're not where the human reviewer's eyeballs should go first.
+
 Hard rules:
 
 - Every finding emitted must trace to a row in the loaded `SUMMARY.md` (or to the underlying review-* subagent output it was deduped from). No inventing findings.
@@ -59,11 +61,14 @@ Hard rules:
 ~/.claude/scripts/pr-deeplink.sh "$pr_url" <path>          # → [path](...#diff-<hash>) (file-level)
 ```
 
-For each in-scope finding (severity filter applied — default `medium+`):
+For each in-scope **untracked** finding (severity filter applied — default `medium+`):
 
 - Build the line-level deep-link.
 - Write a terse paste-ready comment body — single sentence preferred, ≤2 sentences max. Imperative mood. No "consider…", "you might want to…", "I noticed…" hedging.
 - Tag with severity (`high` / `medium` / `low` / `nit`).
+- Carry over any `→ possibly overlaps: <ref>` annotation from `SUMMARY.md` as a trailing `(see also: <ref>)` note on the comment draft. Do not let weak overlap suppress the comment.
+
+When `--include-tracked` is set, also emit a `Tracked (already known)` section after the untracked drafts. Each row keeps its source badge (`[tracked: PR #N + JIRA …]`) so the human can decide whether to comment again or defer to the existing owner.
 
 For the "Read these first" ranking, weight by:
 
@@ -88,10 +93,10 @@ Emit the output template below inline. No file written. After presenting, **stop
 2. [path/to/other.ext](<file-level deeplink>) — <one-line why this matters>
 …
 
-## Inline comment drafts (medium+)
+## Inline comment drafts (medium+, untracked)
 
 ### high
-- [path:line](<line deeplink>) — <terse paste-ready comment>
+- [path:line](<line deeplink>) — <terse paste-ready comment> (see also: PR #4)   <!-- only when carrying a tier-3 overlap -->
 - [path:line](<line deeplink>) — <terse paste-ready comment>
 
 ### medium
@@ -100,6 +105,11 @@ Emit the output template below inline. No file written. After presenting, **stop
 
 <!-- Only emit this footer if there are low / nit findings -->
 _<N> low / nit items hidden. Ask "show all" to surface them._
+
+<!-- Only when --include-tracked is set AND there are tracked findings -->
+## Tracked (already known)
+- [path:line](<line deeplink>) — <terse comment> · [tracked: PR #412]
+- [path:line](<line deeplink>) — <terse comment> · [tracked: TODO at path:line + ISSUE #523]
 ```
 
 ## Modes
@@ -108,6 +118,7 @@ Recognize these arguments after the target (`/active-review <PR> --rereview`, et
 
 - **`--severity high|medium|low|all`** — default `medium`. Filter the inline-comments section to this floor and above.
 - **`--focus "<area>"`** — passed through to `/review-all` when a fresh run is needed. Ignored when reusing a fresh artifact (the focus was baked in at run time; re-run if the scope shifted).
+- **`--include-tracked`** — also emit the `Tracked (already known)` section after the untracked drafts. Default omits it (tracked items have owners; redirect the human's eyes to untracked).
 - **`--rereview`** — assumes a prior `SUMMARY.md` exists at an earlier SHA. Load both, and in the inline-comments section group findings as: **still present**, **addressed**, **new since last review**. Use this when the author has pushed updates.
 - **`--gap`** — given the user has already left PR comments, fetch them (`gh api repos/$org/$repo/pulls/$pr_number/comments`), then emit only findings whose `path:line` does **not** overlap with any existing comment. Frame the output as "things you may have missed".
 
