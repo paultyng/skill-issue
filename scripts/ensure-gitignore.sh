@@ -15,6 +15,18 @@ HEADER='# Claude Code working files'
 
 for pat in "$@"; do
     [ -n "$pat" ] || continue
+
+    # Already ignored anywhere git resolves (global excludes via
+    # core.excludesFile, .git/info/exclude, parent .gitignore, repo
+    # .gitignore, …)? Skip — don't add a redundant explicit entry.
+    # `git check-ignore` consults every source for us. Pass the
+    # pattern verbatim: a trailing slash is significant (directory-only
+    # patterns like `.reviews/` only match when the candidate path has
+    # the trailing slash too).
+    if git check-ignore -q -- "$pat" 2>/dev/null; then
+        continue
+    fi
+
     [ -f .gitignore ] || : > .gitignore
     if ! grep -qxF -- "$pat" .gitignore; then
         if ! grep -qxF "$HEADER" .gitignore; then
