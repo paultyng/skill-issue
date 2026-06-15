@@ -283,11 +283,10 @@ Prompt it to:
    - reliability ↔ infrastructure (e.g. k8s probes vs. shutdown contract — `review-infrastructure` covers probe presence, `review-reliability` covers shutdown semantics)
    - code ↔ api-compat (e.g. a proto change flagged for design AND for wire compat)
 2. **Cross-reference** each deduplicated finding to its source review and IDs.
-3. **Preserve tracking status**. A finding is tracked if any source review marked it as tracked.
-4. **Prioritize**. Produce consolidated findings tables ordered by severity/priority, grouped by category (security, reliability, code, infrastructure, ci, observability, api-compatibility, performance, database, coverage, documentation).
-5. **Recommend fix order**, considering dependencies between findings and effort estimates. Already-tracked findings may be deprioritized if the existing TODO indicates a plan.
+3. **Compute unified tracking** for each deduplicated finding. Populate `tracking: {status, sources, possibly_overlaps}` per [reference-tracking.md](reference-tracking.md). Combines in-repo signals (TODO / FIXME etc., always evaluated) with open-work signals (tier-1 path mention / tier-2 symbol mention / tier-3 keyword match against the step-1d set). Tier-1 and tier-2 promote to `tracked`; tier-3 stays `untracked` with a `possibly_overlaps` annotation. Terminal-state items (closed / merged PRs, closed issues, `statusCategory = Done` Jira) never produce a source entry.
+4. **Prioritize**. Produce consolidated findings tables ordered by severity/priority, grouped by category (security, reliability, code, infrastructure, ci, observability, api-compatibility, performance, database, coverage, documentation). Render `tracking` inline on each row per [reference-tracking.md § Badge rendering](reference-tracking.md#badge-rendering).
+5. **Recommend fix order**, considering dependencies between findings and effort estimates. Tracked findings (tier-1 or tier-2 source) may be deprioritized when the source indicates an active plan. A `possibly_overlaps` annotation (tier-3 only) does not affect ordering.
 6. **Tool Availability summary**. Consolidate from all reviews into a summary listing which automated tools ran successfully, which were skipped, and why.
-7. **Open-context cross-reference** (only when the step 1d block is non-empty). For each consolidated finding whose `path:line` matches the keyword set of any open PR / issue / Jira ticket from step 1d, annotate the finding row with `→ overlaps with PR #N` (or `ISSUE #N`, or `KEY-N`). This is purely informational; severity is unchanged.
 
 ### 5. Present results
 
@@ -368,9 +367,13 @@ Notes:
 
 This applies to the consolidated tables below **and** to per-category finding tables emitted by each subagent (reproduced into the consolidated report).
 
+The `Tracked` column in those tables renders the badge defined in [reference-tracking.md § Badge rendering](reference-tracking.md#badge-rendering).
+
 ---
 
 ## Output Templates
+
+The `Tracked` column in every table below renders the unified tracking badge defined in [reference-tracking.md § Badge rendering](reference-tracking.md#badge-rendering). The example cell values (`—`, `TODO in file:line`) are placeholders — real rows render `[tracked: …]` or `[→ possibly overlaps: …]` per that section's rules.
 
 ### Consolidated security findings
 
