@@ -31,7 +31,7 @@ Resolve *who* the person is on each source and *where* to look. Do not summarize
 - **GitHub** — `gh auth status` enumerates logged-in hosts/accounts. Record each `host` + `login`. The person may have multiple (e.g. work + personal); mine all unless overridden.
 - **Jira** — call the Atlassian MCP `atlassianUserInfo` (server name varies by install) for the account id; `getAccessibleAtlassianResources` for the cloud id(s).
 - **Notion** — get the self user via the Notion MCP (`get-users` / self lookup).
-- **Slack** — the search tool reports the logged-in `user_id`. **Enumerate active channels + DMs first**: a single global `from:me` search is incomplete (it misses DMs and needs real keywords, not stopwords). Run `from:me after:<start>` to collect the set of channels the person actually posts in, then drive Phase 2 per-channel.
+- **Slack** — resolve the logged-in `user_id` (the search tool reports it). Mine **two axes**, since neither alone is complete: (a) **authored** — `from:<@USERID> after:<start>` to enumerate the channels the person posts in (a global `from:me` misses DMs and needs real keywords, not stopwords), then drive Phase 2 per-channel; (b) **mentions of the person** — `<@USERID> after:<start> -from:<@USERID>` and `to:<@USERID>`, surfacing where others defer to, route work to, or @-mention them. Prefer the `<@USERID>` token over literal-name search — a common first name is noisy and misses @-mentions entirely.
 - **Local agent histories + memory** — reuse `audit-history` Phase 1: Claude Code transcripts under `~/.claude/projects/*`, Cursor under `~/.cursor/projects/*`, memory under `~/.claude/projects/*/memory/`. Filter to files modified in the window.
 
 Report a one-screen inventory (accounts found per source, channel count, transcript/memory counts) before proceeding.
@@ -51,7 +51,7 @@ Representative queries (adapt to tool versions; prefer `jq -c` for JSON):
   - `assignee = currentUser() AND resolved >= "<start>" ORDER BY resolved DESC` (primary — completed)
   - `(reporter = currentUser() OR assignee = currentUser()) AND updated >= "<start>"` (broader activity)
 - **Notion** — search is keyword-based and cannot filter by editor+date directly. Search broadly for likely topics, then `fetch` candidates and keep those whose `created_by`/`last_edited_by` is the self user and whose edit time is in-window. Capture page title + url + edit date.
-- **Slack** — per channel from Phase 1: `from:me in:<#channel> after:<start>`. Keep substantive messages (unblocking, explaining, decisions, proposals); **drop** acknowledgements (👍, "thanks", "sgtm") and recurring standup posts. Separately, capture **praise received**: search `<name> after:<start>` for shoutouts / kudos / Bonusly mentions naming the person.
+- **Slack** — three sweeps: (a) **authored** — per channel from Phase 1, `from:<@USERID> in:<#channel> after:<start>`; keep substantive messages (unblocking, explaining, decisions, proposals), **drop** acks (👍, "thanks", "sgtm") and recurring standups. (b) **mentions** — `<@USERID> after:<start> -from:<@USERID>` and `to:<@USERID>`; this is the richest Collaboration/Influence/Leadership signal (where others route decisions to the person), and a `from:`/literal-name pass misses it. (c) **praise received** — shoutouts / kudos / Bonusly naming the person. Use `detailed` output to capture **resolvable permalinks**, not the search tool's raw timestamps.
 - **Local** — extract per-transcript work topic + tools + outcomes via `jq` (see `audit-history` extraction patterns). Pull project memory files in-window.
 
 ## Phase 3 — Fan-out summarization (subagents)
@@ -100,7 +100,7 @@ Optionally seed reflection with these prompts (answer only from the cards, not i
 ## Anti-patterns
 
 - Summarizing before the raw dump is written — you lose the citations.
-- A single global Slack `from:me` query — incomplete; enumerate channels first.
+- Relying only on `from:me` or literal-name Slack search — misses DMs and @-mentions; also sweep the `<@USERID>` mention token + `to:<@USERID>`.
 - Counting opened/planned work as accomplished — weight completion.
 - Inventing a rubric when none was supplied — group by theme instead.
 - Any write/post/mutate call — this skill is strictly read-only.
