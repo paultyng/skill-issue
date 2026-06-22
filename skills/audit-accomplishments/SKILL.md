@@ -50,7 +50,7 @@ Representative queries (adapt to tool versions; prefer `jq -c` for JSON):
 - **Jira** — `searchJiraIssuesUsingJql`:
   - `assignee = currentUser() AND resolved >= "<start>" ORDER BY resolved DESC` (primary — completed)
   - `(reporter = currentUser() OR assignee = currentUser()) AND updated >= "<start>"` (broader activity)
-- **Notion** — search is keyword-based and cannot filter by editor+date directly. Search broadly for likely topics, then `fetch` candidates and keep those whose `created_by`/`last_edited_by` is the self user and whose edit time is in-window. Capture page title + url + edit date.
+- **Notion** — search is keyword-based and cannot filter by editor+date directly. Search broadly for likely topics, then `fetch` candidates and keep those whose `created_by`/`last_edited_by` is the self user and whose edit time is in-window. Capture page title + url + edit date, **plus organizational reach** (applies to any shared-document source): audience/visibility (lives in a team wiki or org-wide database vs a personal space; shared-to-web), breadth of collaborators/commenters/discussion, and **view/impression counts if the source exposes them** — often unavailable via API, so fall back to those visibility proxies and record which signal was used.
 - **Slack** — three sweeps: (a) **authored** — per channel from Phase 1, `from:<@USERID> in:<#channel> after:<start>`; keep substantive messages (unblocking, explaining, decisions, proposals), **drop** acks (👍, "thanks", "sgtm") and recurring standups. (b) **mentions** — `<@USERID> after:<start> -from:<@USERID>` and `to:<@USERID>`; this is the richest Collaboration/Influence/Leadership signal (where others route decisions to the person), and a `from:`/literal-name pass misses it. (c) **praise received** — shoutouts / kudos / Bonusly naming the person. Use `detailed` output to capture **resolvable permalinks**, not the search tool's raw timestamps.
 - **Local** — extract per-transcript work topic + tools + outcomes via `jq` (see `audit-history` extraction patterns). Pull project memory files in-window.
 
@@ -84,7 +84,8 @@ In the parent, after subagents return:
 2. **Group by theme.** Cluster cards into a handful of named themes.
 3. **Map to taxonomy** (if supplied). Tag each card's `dimension`; note which dimensions are well-covered.
 4. **Gap-flag.** Call out dimensions/themes with thin or no evidence — so the person knows where to add detail or seek opportunities. Do not pad.
-5. **Surface AI-capability examples.** Collect cards with an `ai_usage` aspect into a dedicated list — concrete examples of AI/agentic work, with citations.
+5. **Weight shared docs by reach.** For shared-document evidence (Notion, etc.), weight by organizational reach: a doc that is narrowly shared or barely viewed is likely not organizationally relevant; one that is broadly shared or frequently/widely viewed is higher-impact — rank it up and say which signal (audience, view count, or a visibility proxy) drove the call. A widely-read doc is stronger evidence than a private one.
+6. **Surface AI-capability examples.** Collect cards with an `ai_usage` aspect into a dedicated list — concrete examples of AI/agentic work, with citations.
 
 ### Output
 
