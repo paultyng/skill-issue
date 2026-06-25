@@ -47,6 +47,11 @@ Representative queries (adapt to tool versions; prefer `jq -c` for JSON):
   - Opened in window (for in-flight work): `... "author:@me created:>=<start>"`
   - Reviews given: `gh search prs "reviewed-by:@me updated:>=<start>" --json ...`
   - Substantive commits where PR data is thin: `gh search commits "author:@me committer-date:>=<start>" --json ...`
+  - **Contribution rank (optional — grounds "top/most/primary contributor" claims):** only for repos where the person is materially active (derive the repo set from the merged-PR dump above; cap the count to respect rate limits). For each such repo:
+    - `gh api repos/{owner}/{repo}/stats/contributors` → per-contributor weekly `{w, c, a, d}`. **Returns HTTP 202 while GitHub computes the stats** — retry with backoff until 200. Sum the weeks falling inside the window, then rank the person by commits / additions / deletions. The endpoint caps at the last **52 weeks** (fine for the 6-month default; flag the gap for longer windows).
+    - Merged-PR rank: group the window's merged PRs by `user.login` for a merged-PR-count rank; each PR's `additions`/`deletions` gives a line-churn rank. Reviews-per-author is **not** in the stats endpoint (needs per-PR review listing) — defer.
+    - Ignore bot authors; where feasible exclude generated/vendored paths (they skew additions/deletions). **Squash-merge attributes a PR's whole churn to the squash author** — note this caveat in the output.
+    - Iterate gh accounts/hosts as elsewhere in this phase.
 - **Jira** — `searchJiraIssuesUsingJql`:
   - `assignee = currentUser() AND resolved >= "<start>" ORDER BY resolved DESC` (primary — completed)
   - `(reporter = currentUser() OR assignee = currentUser()) AND updated >= "<start>"` (broader activity)
@@ -78,6 +83,7 @@ Each subagent follows `subagent-prompt-contract`: one-sentence goal, the relevan
 - evidence:  [<re-fetchable refs: PR url, ticket id, Notion url, file:line, Slack permalink, transcript UUID>]
 - theme:     <discovered grouping>
 - dimension: <from supplied taxonomy, if any; else omit>
+- rank:      <grounded contributor rank when computed: "#1 of N by commits / merged PRs over <window>" with raw numbers; omit otherwise>
 - ai_usage:  <include ONLY when the work was notably AI/agent-driven; one line on how>   # an aspect, not a required field
 ```
 
@@ -90,7 +96,8 @@ In the parent, after subagents return:
 3. **Map to taxonomy** (if supplied). Tag each card's `dimension`; note which dimensions are well-covered.
 4. **Gap-flag.** Call out dimensions/themes with thin or no evidence — so the person knows where to add detail or seek opportunities. Do not pad.
 5. **Weight shared docs by reach + engagement.** Rank shared-document evidence up when it shows organizational reach/engagement — broad audience, high comment/discussion volume, many inbound links from other docs (PageRank-style), or corroborating Slack shares — and down when narrowly shared, undiscussed, or in a personal scratchpad. Say which signal drove the call; a widely-read, cited, discussed doc is far stronger evidence than a private one. External/Slack signals are positive-only (retention/access gaps mean absence ≠ low reach).
-6. **Surface AI-capability examples.** Collect cards with an `ai_usage` aspect into a dedicated list — concrete examples of AI/agentic work, with citations.
+6. **Ground superlatives with rank.** Where a card implies "top / most / primary contributor," attach the computed GitHub rank (`#1 of N by commits / merged PRs over <window>`) with the raw numbers. If no rank was computed for that repo, soften the claim — never assert a superlative the stats don't support.
+7. **Surface AI-capability examples.** Collect cards with an `ai_usage` aspect into a dedicated list — concrete examples of AI/agentic work, with citations.
 
 ### Output
 
@@ -108,6 +115,7 @@ Optionally seed reflection with these prompts (answer only from the cards, not i
 - Summarizing before the raw dump is written — you lose the citations.
 - Relying only on `from:me` or literal-name Slack search — misses DMs and @-mentions; also sweep the `<@USERID>` mention token + `to:<@USERID>`.
 - Counting opened/planned work as accomplished — weight completion.
+- Asserting "top contributor" or other superlatives without the stats to back them — compute the rank (`stats/contributors` + merged-PR group-by) or soften the claim.
 - Inventing a rubric when none was supplied — group by theme instead.
 - Any write/post/mutate call — this skill is strictly read-only.
 - Hardcoding identities, hosts, org names, or level taxonomies — discover them at runtime.
