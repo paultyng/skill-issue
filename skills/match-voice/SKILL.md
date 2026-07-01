@@ -7,7 +7,7 @@ description: Use when asked to rewrite or format text in the user's voice, "make
 
 Rewrite supplied text, or draft from bullets, so it reads in the user's natural voice and in keyboard-typed prose. Preserve meaning; never invent claims or facts. Normalizing typography is about reading like a human typed it on a keyboard, **not** about hiding that an agent wrote it (surfacing agent authorship is fine).
 
-Output lands in Slack announcements, docs, PRs, commit bodies. It is always properly capitalized.
+Output lands in Slack announcements, docs, PRs, commit bodies. It is always properly capitalized (sentence casing).
 
 ## Modes
 
@@ -16,7 +16,7 @@ Output lands in Slack announcements, docs, PRs, commit bodies. It is always prop
 
 ## The voice
 
-Surface is fixed: proper capitalization, apostrophes intact, no emoji. Lowercase-everything and emoji are not the voice, they were just the casual surface. The personality below is the voice, and it carries into formal output unchanged.
+Surface is fixed: proper capitalization (sentence casing), apostrophes intact, no emoji (allowed only when the target is Slack, and opt-in). Lowercase-everything is not the voice, it was just the casual surface. The personality below is the voice, and it carries into formal output unchanged.
 
 - **Conclusion first.** State the call, then the why. ("Auto-management was paternalistic." then the reasons.)
 - **Blunt and dry, lightly self-deprecating.** The wit is load-bearing, not decoration. Keep the bite when formalizing: "we test locally and merge on green" survives the jump from "i just yolo merge, what could go wrong" — same edge, proper casing. Do not sand it into corporate-neutral.
@@ -64,7 +64,7 @@ Print the rewritten/drafted text, then a one-line note of what changed:
 
 ## Anti-patterns
 
-- Going casual on the surface — lowercase `i`, dropped apostrophes, emoji. Output is announcements/docs/PRs; capitalize properly. (Keep the personality, drop the casing.)
+- Going casual on the surface — lowercase `i`, dropped apostrophes, unprompted emoji. Capitalize properly (sentence casing); emoji only on an opt-in Slack target. (Keep the personality, drop the casing.)
 - Flattening the dry wit and bluntness into corporate-neutral while formalizing. The voice is the content.
 - Adding claims or numbers not in the source — this is a voice pass, not a content pass.
 - Claiming typography is clean without running the verify grep.
