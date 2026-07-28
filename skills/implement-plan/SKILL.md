@@ -216,7 +216,7 @@ Silence between these is fine. Don't narrate deliberation.
 - Post-implementation gate: `verify-when-complete`
 - Reviewer dispatch: `review-code`, `review-infrastructure`, `review-ci`, `review-database`, `review-security`, `review-observability`, `review-api-compat`
 - End-of-plan: `review-all`
-- Rules consulted: `subagent-prompt-contract`, `subagent-model-routing`, `parallelize-subagents`, `commit-per-phase`, `escalation`, `defer-external-orchestration`, `minimal-changes`, `confirm-before-implementing`, `git-no-amend`, `terse-output`, `auto-verify-after-rebase` (applies to the chained-PR case if a rebase is needed mid-loop), `probe-not-assume`
+- Rules consulted: `subagent-prompt-contract`, `subagent-model-routing`, `parallelize-subagents`, `commit-per-phase`, `escalation`, `defer-external-orchestration`, `minimal-changes`, `implementation-minimalism`, `confirm-before-implementing`, `git-no-amend`, `terse-output`, `auto-verify-after-rebase` (applies to the chained-PR case if a rebase is needed mid-loop), `probe-not-assume`
 
 For detailed subagent prompt templates, the reviewer dispatch table, and the red-flag rationalization table, see [reference.md](reference.md).
 
