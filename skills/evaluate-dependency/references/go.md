@@ -1,5 +1,6 @@
 # Go dependency specifics
 
+- [Standard library & golang.org/x first](#standard-library--golangorgx-first)
 - [Semantic Import Versioning (SIV)](#semantic-import-versioning-siv)
 - [Toolchain commands](#toolchain-commands)
 - [Metadata sources](#metadata-sources)
@@ -8,6 +9,28 @@
 - [When to flag CAUTION rather than NO-GO](#when-to-flag-caution-rather-than-no-go)
 
 Read this **before** running the general evaluation in `SKILL.md` when the dep is a Go module. The path is the dep; picking it wrong invalidates every other criterion.
+
+## Standard library & golang.org/x first
+
+Before evaluating any third-party module, check whether the need is already covered — in ladder order (per `implementation-minimalism` rung 3): **stdlib > `golang.org/x/*` > third-party**. If stdlib or an `x` package covers it, the third-party candidate is CAUTION (needless dependency) or NO-GO.
+
+`golang.org/x/*` is the quasi-standard tier: Go-team-maintained, versioned, proven, but deliberately not in the stdlib. Prefer it over an unaffiliated module for the same need.
+
+| Need | stdlib | `golang.org/x` |
+|---|---|---|
+| Slice / map helpers | `slices`, `maps` | — |
+| Ordered comparison | `cmp` | — |
+| Error wrapping / matching | `errors`, `fmt` | — |
+| Structured logging | `log/slog` | — |
+| min / max / clear | builtins | — |
+| errgroup / semaphore / singleflight | — | `golang.org/x/sync/...` |
+| Rate limiting | — | `golang.org/x/time/rate` |
+| Unicode normalization, cases, language tags | `unicode`, `unicode/utf8` | `golang.org/x/text` |
+| Crypto beyond stdlib (bcrypt, argon2, chacha20) | `crypto/...` | `golang.org/x/crypto` |
+| HTTP/2, WebSocket, proxy helpers | `net/http` | `golang.org/x/net` |
+| Experimental generics helpers | — | `golang.org/x/exp` (unstable — pin, expect churn) |
+
+Only after confirming neither tier fits, evaluate the third-party candidate.
 
 ## Semantic Import Versioning (SIV)
 
