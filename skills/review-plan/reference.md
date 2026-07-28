@@ -56,6 +56,8 @@ Rules:
 - Each `ADDED` / `MODIFIED` entry carries ≥1 `Acceptance:` criterion — an *observable* behavioral outcome, not a task-level "grep for X". The task list verifies the mechanism ran; the acceptance criterion verifies the behavior.
 - `MODIFIED` / `REMOVED` are compatibility signals: they feed the Scope and Risk/blast-radius checks and hook `review-api-compat` when they touch a contract boundary.
 
+Relation to [Completeness and gap](#completeness-and-gap): that section's *end-state* is the plan-level "done"; a Behavior delta's `Acceptance:` lines are the per-requirement "done". Use both — one exit criterion for the whole plan, one observable check per changed behavior.
+
 Worked example:
 
 ```markdown
@@ -63,11 +65,11 @@ Worked example:
 - ADDED: `/healthz` returns 200 with the build SHA once the server is ready.
   - Acceptance: `curl -s localhost:8080/healthz` returns 200 and a JSON body containing the current SHA.
 - MODIFIED: login rejects passwords shorter than 12 chars (was 8).
-  - Acceptance: a 10-char password is rejected with 422; an existing session stays valid.
+  - Acceptance: a 10-char password is rejected with 422. (Blast-radius check: existing sessions stay valid.)
 - REMOVED: the legacy `/v1/token` endpoint.
 ```
 
-When to include: optional for small, internal-only plans; expected for any plan changing public API or user-visible behavior (enforced by the SKILL.md plan-shape contract).
+When to include: optional for small, internal-only plans; expected for any plan changing public API or user-visible behavior. (The SKILL.md plan-shape contract will flag its absence on boundary-crossing plans once the review-plan enforcement update lands.)
 
 ## Open questions
 
