@@ -117,7 +117,7 @@ Implement the following task and return DONE when it is complete, verified by yo
 # Self-review before reporting DONE
 - Does the change implement the task as written? (completeness)
 - Did you add anything not requested? (scope discipline)
-- Is this the least code that works — any speculative abstraction, needless helper, or new dependency to drop? (per `implementation-minimalism`)
+- Is this the least code that works — any speculative abstraction or needless helper to drop? (per `implementation-minimalism`)
 - Did you write a test where the task asked for one?
 - Have you actually run the verification step from the task? Paste its output below.
 
