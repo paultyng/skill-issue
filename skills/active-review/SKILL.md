@@ -44,7 +44,28 @@ When `SUMMARY` is empty, invoke `/review-all` against the resolved scope. Pass `
 
 If `/review-all` errors or produces zero findings, **say so explicitly** and stop. Do not fabricate findings to fill the output.
 
-### 4. Synthesize
+### 4. Fetch existing PR comments
+
+Always fetch the PR's inline review comments so findings can be tagged against what reviewers already said. Skip only in branch-only fallback mode (no PR).
+
+```sh
+gh api repos/$org/$repo/pulls/$pr_number/comments --paginate \
+  --jq '.[] | {author: .user.login, path: .path, line: (.line // .original_line), body: .body}'
+```
+
+Capture each comment's `author`, `path`, `line`, and `body`. Group by `path`.
+
+### 5. Assess coverage
+
+For each in-scope finding, look for existing comments on the same `path` at or near its line (same line, or within a few lines when the diff shifted). For each overlap, read the comment `body` and judge it against the finding's concern:
+
+- **full** — the comment already raises the same concern. The user likely need not re-comment.
+- **partial** — the comment touches the area but misses an aspect of the finding. A follow-up is warranted; the draft should target the **uncovered** aspect.
+- **unrelated** — the comment is on the same location but a different topic. Treat as **not covered** — do not tag it as commented (that would mislead).
+
+Coverage is a semantic judgment on the comment body, not a line-number match. Never drop a finding because a comment overlaps it; annotate and keep it (except under `--gap`, see Modes).
+
+### 6. Synthesize
 
 Read `SUMMARY.md` and the PR metadata. Produce the output below.
 
@@ -66,6 +87,7 @@ For each in-scope **untracked** finding (severity filter applied — default `me
 - Build the line-level deep-link.
 - Write a terse paste-ready comment body — single sentence preferred, ≤2 sentences max. Imperative mood. No "consider…", "you might want to…", "I noticed…" hedging.
 - Tag with severity (`high` / `medium` / `low` / `nit`).
+- If an existing comment covers the finding (from step 5), append a trailing coverage note naming the author and the state: `· @<author> commented here — full; likely skip` or `· @<author> commented here — partial (<what's uncovered>); follow-up warranted`. For `partial`, rewrite the draft to target the uncovered aspect. Never suppress — the finding stays in its severity section. `unrelated` overlaps get no note.
 - Carry over any `→ possibly overlaps: <ref>` annotation from `SUMMARY.md` as a trailing `(see also: <ref>)` note on the comment draft. Do not let weak overlap suppress the comment.
 
 When `--include-tracked` is set, also emit a `Tracked (already known)` section after the untracked drafts. Each row keeps its source badge (`[tracked: PR #N + JIRA …]`) so the human can decide whether to comment again or defer to the existing owner.
@@ -78,7 +100,7 @@ For the "Read these first" ranking, weight by:
 
 Rank no more than 5 files unless the user asks for more. The point is targeting, not enumeration.
 
-### 5. Present
+### 7. Present
 
 Emit the output template below inline. No file written. After presenting, **stop**. Do not offer to post the comments. Do not auto-advance to a follow-up step. The user drives next steps.
 
@@ -97,7 +119,8 @@ Emit the output template below inline. No file written. After presenting, **stop
 
 ### high
 - [path:line](<line deeplink>) — <terse paste-ready comment> (see also: PR #4)   <!-- only when carrying a tier-3 overlap -->
-- [path:line](<line deeplink>) — <terse paste-ready comment>
+- [path:line](<line deeplink>) — <terse paste-ready comment> · @alice commented here — full; likely skip   <!-- only when an existing comment covers it -->
+- [path:line](<line deeplink>) — <terse paste-ready comment targeting the gap> · @bob commented here — partial (misses the nil path); follow-up warranted
 
 ### medium
 - [path:line](<line deeplink>) — <terse paste-ready comment>
@@ -120,7 +143,7 @@ Recognize these arguments after the target (`/active-review <PR> --rereview`, et
 - **`--focus "<area>"`** — passed through to `/review-all` when a fresh run is needed. Ignored when reusing a fresh artifact (the focus was baked in at run time; re-run if the scope shifted).
 - **`--include-tracked`** — also emit the `Tracked (already known)` section after the untracked drafts. Default omits it (tracked items have owners; redirect the human's eyes to untracked).
 - **`--rereview`** — assumes a prior `SUMMARY.md` exists at an earlier SHA. Load both, and in the inline-comments section group findings as: **still present**, **addressed**, **new since last review**. Use this when the author has pushed updates.
-- **`--gap`** — given the user has already left PR comments, fetch them (`gh api repos/$org/$repo/pulls/$pr_number/comments`), then emit only findings whose `path:line` does **not** overlap with any existing comment. Frame the output as "things you may have missed".
+- **`--gap`** — narrow the drafts to the *remaining gap*: emit only findings that are **not fully covered** by an existing comment (uncovered + `partial`), hiding `full` ones. Coverage is assessed for every run (steps 4–5); this flag only changes what's emitted. Frame the output as "things you may have missed".
 
 The flags compose: `--rereview --severity high` is "what's still broken at high severity since I last looked."
 
@@ -167,6 +190,6 @@ Quick distinction from neighboring skills:
 
 - **Posting** (any form). Intentionally permanent — this is the skill's identity.
 - **Multi-PR batch review.** One PR per invocation.
-- **Diff-against-prior-PR-comments by author identity.** `--gap` matches on `path:line`, not on conversation threading.
+- **Conversation threading / reply chains.** Coverage assessment reads each comment's author and body, but treats comments as a flat set — it does not follow reply threads or resolve/unresolve state.
 - **Persisted walkthrough state across sessions.** Each invocation is self-contained; reuse comes from the `/review-all` artifact, not from active-review's own memory.
 - **Correlation against open issues / PRs / Jira.** Owned by `/review-all`'s summarization step; consume what's already tagged in `SUMMARY.md`.
