@@ -44,18 +44,24 @@ The plan must satisfy these structural rules. Any violation contributes to `NEED
 | Tasks are sized 2-5 min (small) to ~30 min (max) | NEEDS_REVISION — too coarse to track or recover from failure |
 | Plan has a stated end-state (one paragraph or "Definition of Done") | NEEDS_REVISION — no exit criterion |
 | Plan has a "Constraints" or "Out of scope" section (or equivalent) | LOW — preferred but not required |
+| Plan has a **Behavior delta** section (see [reference.md](reference.md#behavior-delta)) when it crosses an API / user-visible boundary | NEEDS_REVISION on a boundary-crossing plan; LOW on a small internal-only plan |
+| Each behavior-delta entry is tagged `ADDED` / `MODIFIED` / `REMOVED` | NEEDS_REVISION — untagged deltas aren't reviewable as compat signals |
+| Each `ADDED` / `MODIFIED` entry carries ≥1 observable `Acceptance:` criterion | NEEDS_REVISION — behavior change is unverifiable |
 
 ### 4. Apply the content checklist
 
 Review the plan against the checklist in [reference.md](reference.md):
 - Feasibility
 - Completeness / gap
+- Behavior delta
 - Open questions
 - Ordering
 - Verification
 - Scope creep
 - Risk / blast radius
 - Improvements
+
+When a Behavior delta is present, treat `MODIFIED` / `REMOVED` entries as compatibility signals: fold them into the Scope-creep and Risk / blast-radius checks, and recommend a `review-api-compat` pass when they touch a contract boundary (proto, public API, wire format).
 
 For each finding, cite the plan line (e.g. `PLAN.md:42`). When `pr_url` is provided (a plan being reviewed inside a PR), wrap line references via `~/.claude/scripts/pr-deeplink.sh "$pr_url" <plan-path> <line>` — same convention as siblings.
 
