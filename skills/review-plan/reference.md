@@ -11,6 +11,7 @@ Reference sources:
 
 - [Feasibility](#feasibility)
 - [Completeness and gap](#completeness-and-gap)
+- [Behavior delta](#behavior-delta)
 - [Open questions](#open-questions)
 - [Ordering](#ordering)
 - [Verification](#verification)
@@ -34,6 +35,39 @@ Reference sources:
 - **State transitions are explicit**. "Now the cache is populated" between two tasks is fine; "now everything works" is not.
 - **Cleanup is planned**. Temporary feature flags, scaffolding, deprecation steps — if the plan adds something temporary, it should plan its removal or cite where the removal is tracked.
 - **Migrations are paired with rollbacks**. A schema change task should have an explicit "rollback strategy" note (even if "drop new column").
+
+## Behavior delta
+
+An optional but recommended plan section stating *what changes about system behavior* before the *how* (tasks). Borrowed from spec-driven tools (OpenSpec); the format is ours — no `openspec/` tree, no CLI. It makes intent reviewable and gives the completeness/gap, scope, and risk checks something concrete to test against.
+
+Format:
+
+```markdown
+## Behavior delta
+- ADDED: <one-line requirement — a behavior the system did not have>
+  - Acceptance: <observable criterion that proves it>
+- MODIFIED: <one-line requirement — a behavior that changes>
+  - Acceptance: <criterion for the new behavior>
+- REMOVED: <one-line requirement — a behavior that goes away>
+```
+
+Rules:
+- Each entry is tagged `ADDED` / `MODIFIED` / `REMOVED`.
+- Each `ADDED` / `MODIFIED` entry carries ≥1 `Acceptance:` criterion — an *observable* behavioral outcome, not a task-level "grep for X". The task list verifies the mechanism ran; the acceptance criterion verifies the behavior.
+- `MODIFIED` / `REMOVED` are compatibility signals: they feed the Scope and Risk/blast-radius checks and hook `review-api-compat` when they touch a contract boundary.
+
+Worked example:
+
+```markdown
+## Behavior delta
+- ADDED: `/healthz` returns 200 with the build SHA once the server is ready.
+  - Acceptance: `curl -s localhost:8080/healthz` returns 200 and a JSON body containing the current SHA.
+- MODIFIED: login rejects passwords shorter than 12 chars (was 8).
+  - Acceptance: a 10-char password is rejected with 422; an existing session stays valid.
+- REMOVED: the legacy `/v1/token` endpoint.
+```
+
+When to include: optional for small, internal-only plans; expected for any plan changing public API or user-visible behavior (enforced by the SKILL.md plan-shape contract).
 
 ## Open questions
 
