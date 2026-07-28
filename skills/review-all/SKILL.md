@@ -28,7 +28,7 @@ Orchestrate all domain-specific review skills as parallel subagents, then consol
   - `has_infra`: shorthand for `has_iac || has_ci` (kept for backwards compatibility with existing review-* subagents)
   - `has_api_specs`: any `.proto`, OpenAPI/Swagger specs (`openapi.{yml,yaml,json}`, `swagger.{yml,yaml,json}`), or GraphQL schemas (`*.graphql`, `*.gql`)
   - `has_docs`: any `.md` files or OpenAPI/Swagger specs
-  - `has_manifest`: any dependency manifest (`go.mod`, `package.json`, `requirements.txt`, `pyproject.toml`, `Cargo.toml`, `Gemfile`, `mix.exs`, `composer.json`, and their lockfiles)
+  - `has_manifest`: any dependency manifest (`go.mod`, `package.json`, `requirements.txt`, `pyproject.toml`, `Cargo.toml`, `Gemfile`, `mix.exs`, `composer.json`)
   - `has_changes`: true when scope is "changed files (PR or branch)", or when scope is "explicit paths" and those paths have a diff against the base ref (run `git diff --name-only --diff-filter=d <base>...HEAD -- <paths>` to check; default base is `main`). False for full-codebase reviews with no diff baseline.
 - **Detect opt-in flags** from the user's request phrasing:
   - `include_performance`: true when the user explicitly asks for performance, perf, benchmark, profiling, pprof, hot-path, or latency review alongside the comprehensive request. Default false. Never auto-enable from file types.
@@ -269,9 +269,7 @@ For each subagent, include in its prompt:
 | Performance | review-performance | `include_performance` is true (opt-in only) |
 | Dependency eval | evaluate-dependency | `has_manifest` and `has_changes` — one review-mode run per added/bumped dependency |
 
-Each subagent should NOT write its own output file; it returns findings to this orchestrator.
-
-For `evaluate-dependency`, launch one review-mode subagent per added/bumped dependency (batch under the concurrency cap); each returns a GO/CAUTION/NO-GO finding row. The summarization step (§4) dedupes these against `review-security` findings — a dependency's vuln history overlaps `review-security`'s `govulncheck` output.
+Each subagent should NOT write its own output file; it returns findings to this orchestrator. (`evaluate-dependency` is launched once per added/bumped dependency, batched under the concurrency cap; each returns a GO/CAUTION/NO-GO row.)
 
 **Concurrency cap.** Launch up to 4 subagents at a time. With all skills enabled the dispatch can exceed 4; queue the rest and launch them as earlier ones complete.
 
