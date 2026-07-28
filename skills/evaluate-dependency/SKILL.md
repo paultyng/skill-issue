@@ -56,15 +56,17 @@ Run through these. Cite specific data: no hand-waving, no `I think`.
    - For non-Go ecosystems, equivalents are immature; use `unsure: no capability tool available` rather than skipping.
    - **SSA / callgraph blind spots**: capability analysis relies on SSA + call graph; reflection, `cgo` boundaries, `unsafe.Pointer` arithmetic, and inactive build tags are invisible. A clean capslock report doesn't prove safety — calibrate against the `UNANALYZED` count.
 
+11. **Tenure / track record.** How long the package has existed **and** been continuously maintained — the *duration* of the maintenance history, not just recent activity (that's #4). A steadily-maintained multi-year package is lower-risk than a six-month-old one with a star spike and daily commits. Reward proven longevity (Lindy / boring-technology bias). Flag the **new-hotness anti-signal**: high stars + recent creation + rapid churn = hype; discount it. Novelty without a track record is a trap — the mirror of #3's "popularity without maintenance is a trap." **Guardrail**: tenure is not unalloyed good. An old-but-abandoned package (caught by #4) or one that never adapted (missing modern idioms — no context support, no ESM, dead ecosystem) is stale, not proven. Weight tenure *alongside* #4 (recency) and #6 (API stability), never instead of them.
+
 ## Workflow
 
 1. **Confirm scope** (per `confirm-before-implementing`): selection (prospective add) or review (PR touched manifest). Identify the language and the candidate package.
 
 2. **Resolve canonical coordinate.** Read the per-language reference if one exists; apply its rules **first**. This is non-negotiable. Examples: Go's `/vN` path probe, npm's scope check, Python's distribution-name lookup.
 
-3. **Survey alternatives** (selection mode, optional). When multiple candidates are in the running, delegate per-candidate data lookups to `Explore` subagents (`model: haiku` per `subagent-model-routing` — mechanical lookup across 10 fixed criteria; per `parallelize-subagents` and `delegate-investigation`). Each subagent returns one verdict table prefixed with `Status:` per `subagent-prompt-contract`. Parent merges and applies the final verdict synthesis (`model: opus` per `subagent-model-routing` — hard reasoning combining multiple criteria across candidates).
+3. **Survey alternatives** (selection mode, optional). When multiple candidates are in the running, delegate per-candidate data lookups to `Explore` subagents (`model: haiku` per `subagent-model-routing` — mechanical lookup across 11 fixed criteria; per `parallelize-subagents` and `delegate-investigation`). Each subagent returns one verdict table prefixed with `Status:` per `subagent-prompt-contract`. Parent merges and applies the final verdict synthesis (`model: opus` per `subagent-model-routing` — hard reasoning combining multiple criteria across candidates).
 
-4. **Run the 10 criteria** against the resolved coordinate. Cite specific numbers, dates, license names.
+4. **Run the 11 criteria** against the resolved coordinate. Cite specific numbers, dates, license names.
 
 5. **Produce verdict**: GO / CAUTION / NO-GO. Always include the **coordinate to use** explicitly (so the user doesn't import the wrong major / wrong scope / wrong distribution).
 
@@ -85,6 +87,7 @@ Run through these. Cite specific data: no hand-waving, no `I think`.
 | Internal precedent | (e.g. used in 3 sibling repos as `internal/httpx` wrapper; or: no internal usage found) |
 | Popularity | (e.g. 12.4k stars, ~3200 importers) |
 | Last commit | (e.g. 2026-04-29, active) |
+| Tenure / track record | (e.g. first released 2016, 9y of steady releases — proven; or: created 2026-01, 4mo old with a star spike — discount the hype) |
 | Vulnerabilities | (e.g. None at v2.1.0; govulncheck clean) |
 | API stability | (e.g. v2 released 2023-06, no major bumps since) |
 | Surface | (e.g. 4 transitive deps, all common) |
@@ -109,6 +112,7 @@ Run through these. Cite specific data: no hand-waving, no `I think`.
 - Verdict without a recommended coordinate. Always name the exact import path / package name / scope to use.
 - Recommending an older major because docs are better. Name a *hard* reason (missing feature, breaking change incompatible with caller) or recommend current.
 - Accepting "X is popular" as sufficient. Popularity without recent maintenance is a trap.
+- Recommending the new hotness over a proven, long-maintained solution without a hard reason. Novelty without a track record is a trap.
 - Hand-waving with hedge words instead of citing numbers ("seems active", "I think it's maintained"). Use `unsure:` when you don't know.
 - Auto-running `go get` / `npm install` / `pip install`. Out of scope; the skill recommends, the user applies.
 - Recommending an external dep when an internal package already covers the use case. Internal precedent overrides external popularity unless there's a hard reason (missing feature, abandoned, license incompatibility) — name it.
