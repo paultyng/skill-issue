@@ -28,6 +28,7 @@ Orchestrate all domain-specific review skills as parallel subagents, then consol
   - `has_infra`: shorthand for `has_iac || has_ci` (kept for backwards compatibility with existing review-* subagents)
   - `has_api_specs`: any `.proto`, OpenAPI/Swagger specs (`openapi.{yml,yaml,json}`, `swagger.{yml,yaml,json}`), or GraphQL schemas (`*.graphql`, `*.gql`)
   - `has_docs`: any `.md` files or OpenAPI/Swagger specs
+  - `has_manifest`: any dependency manifest (`go.mod`, `package.json`, `requirements.txt`, `pyproject.toml`, `Cargo.toml`, `Gemfile`, `mix.exs`, `composer.json`, and their lockfiles)
   - `has_changes`: true when scope is "changed files (PR or branch)", or when scope is "explicit paths" and those paths have a diff against the base ref (run `git diff --name-only --diff-filter=d <base>...HEAD -- <paths>` to check; default base is `main`). False for full-codebase reviews with no diff baseline.
 - **Detect opt-in flags** from the user's request phrasing:
   - `include_performance`: true when the user explicitly asks for performance, perf, benchmark, profiling, pprof, hot-path, or latency review alongside the comprehensive request. Default false. Never auto-enable from file types.
@@ -44,6 +45,7 @@ Orchestrate all domain-specific review skills as parallel subagents, then consol
   - **review-observability**: applicable if `has_code` (observability gaps are code-level; configs alone aren't enough)
   - **review-api-compat**: applicable if `has_api_specs` AND `has_changes` (it's a diff-aware review; no diff baseline = nothing to compare)
   - **review-performance**: applicable ONLY if `include_performance` is true. Never auto-launched.
+  - **evaluate-dependency**: applicable if `has_manifest` AND `has_changes`. Diff the manifest to find added or version-bumped dependencies (`git diff <base>...HEAD -- <manifest>`); run it in **review mode** once per added/bumped dependency. Skip when the only manifest change is a removal or a checksum-only lockfile churn.
 
 ### 1a. Detect conformance mode
 
@@ -265,8 +267,11 @@ For each subagent, include in its prompt:
 | Observability | review-observability | `has_code` |
 | API compatibility | review-api-compat | `has_api_specs` and `has_changes` |
 | Performance | review-performance | `include_performance` is true (opt-in only) |
+| Dependency eval | evaluate-dependency | `has_manifest` and `has_changes` — one review-mode run per added/bumped dependency |
 
 Each subagent should NOT write its own output file; it returns findings to this orchestrator.
+
+For `evaluate-dependency`, launch one review-mode subagent per added/bumped dependency (batch under the concurrency cap); each returns a GO/CAUTION/NO-GO finding row. The summarization step (§4) dedupes these against `review-security` findings — a dependency's vuln history overlaps `review-security`'s `govulncheck` output.
 
 **Concurrency cap.** Launch up to 4 subagents at a time. With all skills enabled the dispatch can exceed 4; queue the rest and launch them as earlier ones complete.
 
@@ -279,6 +284,7 @@ Prompt it to:
    - security ↔ reliability (e.g. unbounded result sets)
    - security ↔ infrastructure (e.g. inline secrets in TF / k8s)
    - security ↔ ci (e.g. PR-target script injection)
+   - security ↔ dependency-eval (e.g. a new dep's vuln history overlaps `govulncheck` output)
    - reliability ↔ observability (e.g. missing error spans on hot paths)
    - reliability ↔ infrastructure (e.g. k8s probes vs. shutdown contract — `review-infrastructure` covers probe presence, `review-reliability` covers shutdown semantics)
    - code ↔ api-compat (e.g. a proto change flagged for design AND for wire compat)
