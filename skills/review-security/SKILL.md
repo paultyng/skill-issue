@@ -33,6 +33,7 @@ Determine which subagents are applicable based on the scoped files:
 - **STRIDE Threat Model**: applicable if code files (`.go`, `.rs`, `.ts`, `.tsx`, `.js`, `.jsx`, `.swift`, `.kt`, `.kts`, `.py`, `.rb`) or infrastructure files (Dockerfiles, k8s manifests, Terraform, CI configs) exist in scope
 - **OWASP Top 10 Analysis**: applicable if code files or infrastructure files exist in scope
 - **Security Static Analysis**: applicable if `.go` files exist in scope
+- **Dependency Evaluation**: applicable if a dependency manifest (`go.mod`, `package.json`, `requirements.txt`, `pyproject.toml`, `Cargo.toml`, `Gemfile`, `mix.exs`, `composer.json`) changed in scope. Diff the manifest for added/bumped dependencies and invoke `evaluate-dependency` in **review mode** per dependency — this covers license, maintenance, tenure, and capability surface that `govulncheck` (a CVE scan of called functions) does not. Dedupe the vuln portion against `govulncheck` output in step 4.
 
 If only non-code files (e.g. `.md`, images) are in scope, skip all subagents and report that no security-relevant code was found.
 

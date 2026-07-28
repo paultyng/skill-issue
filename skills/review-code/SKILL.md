@@ -28,6 +28,7 @@ Structured code review covering architecture, Go best practices, and protobuf/AP
   - **Protobuf Linting**: applicable if `.proto` files exist in scope
   - **Regression History**: applicable if code files exist in scope and `has_changes` is true
   - **Conformance Check**: applicable if code files exist in scope (lightweight mode by default; full mode when `conformance_mode` is `full`)
+  - **Dependency Evaluation**: applicable if a dependency manifest (`go.mod`, `package.json`, `requirements.txt`, `pyproject.toml`, `Cargo.toml`, `Gemfile`, `mix.exs`, `composer.json`) is in scope **and** `has_changes` is true
 
 ### 2. Launch investigation subagents in parallel
 
@@ -121,6 +122,13 @@ Prompt the subagent to:
   - HIGH: deviation from ESTABLISHED pattern (>80% conformance)
   - MEDIUM: deviation from EMERGING pattern (50-80% conformance)
 
+**Subagent H. Dependency Evaluation** (`subagent_type="generalPurpose"`, requires a dependency manifest in scope and `has_changes`)
+
+Prompt the subagent to:
+- Diff each in-scope manifest against the base ref (`git diff <base>...HEAD -- <manifest>`) to find added or version-bumped dependencies. Skip pure removals and checksum-only lockfile churn.
+- Invoke the `evaluate-dependency` skill in **review mode** once per added/bumped dependency (read its SKILL.md for the criteria and finding-row format). This is a single subagent that loops over the deps internally — unlike review-all, which fans out one subagent per dep.
+- Return each verdict using the **per-category findings** template with `DEPEV-` prefixed IDs (distinct from `DEP-`, which is internal import-graph/testability). Severity: NO-GO → HIGH (`bug:`), CAUTION → MEDIUM (`risk:`).
+
 ### 3. Summarize
 
 After all subagents complete, deduplicate overlapping findings, produce a consolidated table ordered by severity, and recommend fix order.
@@ -204,6 +212,7 @@ The display text stays `path:line` so plain and linked tables look identical; on
 | PBL1 | Description with code reference. | LOW | — |
 | REG1 | Description with code reference and historical commit. | HIGH | — |
 | CONF1 | Description with pattern exemplar and violating code. | MEDIUM | — |
+| DEPEV1 | **New dep `pkg@v1.2.3`: CAUTION.** Reason (license / maintenance / tenure / vuln). Coordinate to use. | MEDIUM | — |
 ```
 
 ### Consolidated findings
