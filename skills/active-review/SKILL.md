@@ -17,7 +17,7 @@ Determine what's being reviewed and capture metadata.
 
 - Argument forms accepted: `<PR number>`, `<PR URL>`, `<branch>`, or nothing (default).
 - Default: current branch's PR (`gh pr view --json number,url,headRefOid,baseRefName,title,body,headRepository,headRepositoryOwner`). If no PR exists for the current branch, fall back to a branch-vs-base diff and skip the deep-link generation steps that require a PR.
-- Capture: `pr_url`, `pr_number`, `org`, `repo`, `head_sha`, `base_ref`, `title`, `body` (PR description, may be empty).
+- Capture: `pr_url`, `pr_number`, `org` (from `headRepositoryOwner.login`), `repo` (from `headRepository.name`), `head_sha`, `base_ref`, `title`, `body` (PR description, may be empty).
 
 If a `<branch>` argument is given but no PR exists, ask the user once whether to (a) open a draft PR first, or (b) proceed branch-only without deep-links. Do not infer.
 
@@ -62,6 +62,8 @@ For each in-scope finding, look for existing comments on the same `path` at or n
 - **full** — the comment already raises the same concern. The user likely need not re-comment.
 - **partial** — the comment touches the area but misses an aspect of the finding. A follow-up is warranted; the draft should target the **uncovered** aspect.
 - **unrelated** — the comment is on the same location but a different topic. Treat as **not covered** — do not tag it as commented (that would mislead).
+
+When several comments overlap one finding with different judgments, take the most-covering (full > partial > unrelated) and tag only that author.
 
 Coverage is a semantic judgment on the comment body, not a line-number match. Never drop a finding because a comment overlaps it; annotate and keep it (except under `--gap`, see Modes).
 
@@ -143,9 +145,9 @@ Recognize these arguments after the target (`/active-review <PR> --rereview`, et
 - **`--focus "<area>"`** — passed through to `/review-all` when a fresh run is needed. Ignored when reusing a fresh artifact (the focus was baked in at run time; re-run if the scope shifted).
 - **`--include-tracked`** — also emit the `Tracked (already known)` section after the untracked drafts. Default omits it (tracked items have owners; redirect the human's eyes to untracked).
 - **`--rereview`** — assumes a prior `SUMMARY.md` exists at an earlier SHA. Load both, and in the inline-comments section group findings as: **still present**, **addressed**, **new since last review**. Use this when the author has pushed updates.
-- **`--gap`** — narrow the drafts to the *remaining gap*: emit only findings that are **not fully covered** by an existing comment (uncovered + `partial`), hiding `full` ones. Coverage is assessed for every run (steps 4–5); this flag only changes what's emitted. Frame the output as "things you may have missed".
+- **`--gap`** — narrow the drafts to the *remaining gap*: emit only findings that are **not fully covered** by an existing comment (findings with no comment, plus `partial` ones), hiding `full` ones. Coverage is assessed for every run (steps 4–5); this flag only changes what's emitted. Frame the output as "things you may have missed".
 
-The flags compose: `--rereview --severity high` is "what's still broken at high severity since I last looked."
+The flags compose: `--rereview --severity high` is "what's still broken at high severity since I last looked." `--rereview --gap` applies coverage within each rereview bucket (still present / addressed / new).
 
 ## Constraints
 
