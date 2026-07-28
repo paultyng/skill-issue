@@ -26,7 +26,7 @@ After resolving a path under `.plans/` (steps 2 or 3), call once per run:
 ```
 This is idempotent. Skip for legacy paths (step 4) and for CLAUDE.md overrides.
 
-Read the plan file fully. Capture: total task count, unchecked task count, and any **Branch policy** section (see [reference.md → Plan header conventions](reference.md#plan-header-conventions)).
+Read the plan file fully. Capture: total task count, unchecked task count, any **Branch policy** section (see [reference.md → Plan header conventions](reference.md#plan-header-conventions)), and any **Behavior delta** section (its `Acceptance:` criteria are verified at end-of-plan, step 5).
 
 **Precondition checks** (fail-fast — abort with a clear message if any fails):
 
@@ -172,8 +172,9 @@ Surface: current task number, status line, last subagent return, and the specifi
 When all `- [ ]` tasks are `- [x]`:
 
 1. **Spawn `review-all`** across the full branch diff against the plan's base ref. Surface its findings as one final cross-cutting review.
-2. **Surface the nits file** (`./.plans/nits.md`). Ask: address now, defer, or discard?
-3. **Do NOT auto-create the PR** (per `defer-external-orchestration`). Print the suggested command, e.g.:
+2. **Verify the Behavior delta** (if the plan has one, captured in step 1). For each `ADDED` / `MODIFIED` entry, run its `Acceptance:` criterion against the built branch and confirm it holds. Per-task verification proved the mechanisms ran; acceptance criteria prove the behavior. Surface any unmet criterion as a blocker — do not declare the plan done with an unsatisfied acceptance criterion.
+3. **Surface the nits file** (`./.plans/nits.md`). Ask: address now, defer, or discard?
+4. **Do NOT auto-create the PR** (per `defer-external-orchestration`). Print the suggested command, e.g.:
    ```
    gh pr create --draft --title "<plan title>" --body "<...>"
    ```
