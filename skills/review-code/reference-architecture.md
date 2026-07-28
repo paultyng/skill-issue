@@ -133,20 +133,32 @@ When code implements a recognized design pattern, it should use the canonical Go
 - If the shared code is trivial (< 10 lines), prefer copying over coupling
 - Shared packages must earn their existence through genuine reuse, not speculative DRY
 
-## Minimal-Changes Alignment
+## Minimal-Changes Alignment (scope)
 
-Architecture should serve current, demonstrated needs, not hypothetical futures.
+Scope discipline, per the `minimal-changes` rule: the change should do only what was requested. This is distinct from *weight* (Over-Engineering, below) — here we flag work that shouldn't be in the diff at all.
+
+What to flag (`ARCH-`):
+- Unrequested work folded into the diff — cleanup, renames, reformatting, "while I'm here" edits not asked for.
+- Something that should change but wasn't requested, silently included rather than mentioned after the requested work.
+
+Speculative abstractions, premature generalization, and over-engineering of the *in-scope* code are weight concerns — grade them under Over-Engineering below, not here.
+
+## Over-Engineering (implementation-minimalism)
+
+*Weight*, not scope: for the code that IS in scope, was the least-code path taken? Grade against the `implementation-minimalism` ladder and cite the rung in the finding (`MIN-` IDs).
 
 What to flag:
-- **Speculative abstractions**: interfaces or abstraction layers with a single implementation and no concrete plan for a second
-- **Premature generalization**: making something generic before there are multiple concrete use cases
-- **Over-engineering**: abstraction layers that add indirection without adding value (wrapper types that just delegate, factory functions that always return the same type)
-- **Unused extension points**: plugin interfaces, hook mechanisms, or strategy patterns with only one implementation and no documented roadmap for more
+- **Rung 1 (YAGNI)**: speculative abstractions or extension points with a single implementation and no concrete second use case, premature generalization, unused parameters/return values, a single-caller helper.
+- **Rung 2 (reuse)**: reimplementing something the codebase already provides.
+- **Rung 3 (built-ins)**: a hand-rolled helper the standard library or platform already does (e.g. a manual `contains` loop over `slices.Contains`).
+- **Rung 4 (deps)**: a new dependency where an existing one or stdlib suffices — defer the call to `evaluate-dependency`, don't re-argue it here. (`DEP-` covers import-graph / circular-dep / testability findings; the rung-4 *choice to add a dependency* is `MIN-`.)
+- **Rung 5 (smaller)**: dense "clever" one-liners that read worse than the plain form — clear beats clever.
+- **Rung 6 (minimal patterns)**: indirection without value (wrapper types that just delegate, factories always returning the same type), or config/generics nobody requested.
 
-What good looks like:
-- Abstractions are introduced when the second (or third) use case arrives, not preemptively
-- The cost of an abstraction is justified by concrete, current benefit
-- If something should change but wasn't requested, it's mentioned after completing the requested work, not silently included
+False-positive guard — do NOT flag as over-engineering:
+- The non-negotiables: input validation, error handling, security checks, accessibility. Reducing these is a bug, not minimalism.
+- A consumer-defined interface used for DI/mocking (per `go-defaults` / `testing-philosophy`) — the test fake is a genuine second implementation.
+- Duplication that hasn't earned an abstraction yet — a little copying is better than a premature abstraction (rule of three, weighted to drift risk).
 
 ## Testability Indicators
 
