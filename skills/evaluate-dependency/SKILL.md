@@ -46,7 +46,7 @@ Run through these. Cite specific data: no hand-waving, no `I think`.
 
 7. **Surface and transitive cost.** Each dep brings its own deps. Count transitive deps; smaller is better when alternatives are comparable. Note pulled-in transitive risk (e.g. a Go module that quietly pulls in a deprecated logger).
 
-8. **Fit.** Does it do what's needed with minimal surface? A library doing 10× what's needed brings 10× the risk. **Check the language's standard library / built-ins first.** Many ecosystems' stdlib covers what third-party libs once owned (e.g. Go's `slices`, `maps`, `cmp`, `errors`; Python's `pathlib`, `dataclasses`; JS's modern `URL`, `fetch`, `structuredClone`).
+8. **Fit + stdlib-first.** Does it do what's needed with minimal surface? A library doing 10× what's needed brings 10× the risk. **Before weighing fit, check whether the standard library or built-ins already cover the need — an explicit gate, not an afterthought.** If they do, the candidate is CAUTION (needless dependency) or NO-GO. Many ecosystems' stdlib covers what third-party libs once owned (Go's `slices`, `maps`, `cmp`, `errors`, `log/slog`; Python's `pathlib`, `dataclasses`; JS's `URL`, `fetch`, `structuredClone`). **Go additionally has a quasi-standard tier**, `golang.org/x/*` (Go-team-maintained: `x/sync`, `x/time`, `x/text`, `x/crypto`, …), sitting between stdlib and third-party — prefer it. Ordering: **stdlib > `golang.org/x` > third-party**. See [references/go.md → Standard library & golang.org/x first](references/go.md) for the needs→package table.
 
 9. **Footguns.** Ecosystem-specific (init-time side effects, monkey-patching, peer-dep churn, global mutable state, unbounded goroutines/threads). Check the language reference for known patterns; surface anything weird in the README or top-level types.
 
@@ -113,6 +113,7 @@ Run through these. Cite specific data: no hand-waving, no `I think`.
 - Recommending an older major because docs are better. Name a *hard* reason (missing feature, breaking change incompatible with caller) or recommend current.
 - Accepting "X is popular" as sufficient. Popularity without recent maintenance is a trap.
 - Recommending the new hotness over a proven, long-maintained solution without a hard reason. Novelty without a track record is a trap.
+- Recommending a third-party dep when the stdlib or (for Go) `golang.org/x` already covers the need.
 - Hand-waving with hedge words instead of citing numbers ("seems active", "I think it's maintained"). Use `unsure:` when you don't know.
 - Auto-running `go get` / `npm install` / `pip install`. Out of scope; the skill recommends, the user applies.
 - Recommending an external dep when an internal package already covers the use case. Internal precedent overrides external popularity unless there's a hard reason (missing feature, abandoned, license incompatibility) — name it.
