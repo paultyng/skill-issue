@@ -5,6 +5,21 @@ Reference sources:
 - [Effective Go](https://go.dev/doc/effective_go): embedding, composition, naming
 - [Go Proverbs](https://go-proverbs.github.io/): design philosophy
 
+## Table of contents
+
+- [S. Single Responsibility Principle](#s-single-responsibility-principle)
+- [O. Open/Closed Principle](#o-openclosed-principle)
+- [L. Liskov Substitution Principle](#l-liskov-substitution-principle)
+- [I. Interface Segregation Principle](#i-interface-segregation-principle)
+- [D. Dependency Inversion Principle](#d-dependency-inversion-principle)
+- [Design Patterns (Gang of Four)](#design-patterns-gang-of-four)
+- [Package Design](#package-design)
+- [Minimal-Changes Alignment (scope)](#minimal-changes-alignment-scope)
+- [Over-Engineering (implementation-minimalism)](#over-engineering-implementation-minimalism)
+- [Testability Indicators](#testability-indicators)
+- [Dead Code Detection](#dead-code-detection)
+- [Cross-references](#cross-references)
+
 ## S. Single Responsibility Principle
 
 A package or type should have one reason to change. Each package should own a single cohesive concern.
