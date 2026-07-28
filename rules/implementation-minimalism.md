@@ -30,10 +30,10 @@ A shorter solution that drops one of these is not minimal, it's broken. Never tr
 
 - A 20-line helper for what the stdlib does in one call.
 - Adding a dependency to save a one-liner.
-- A speculative interface with a single implementation.
+- A speculative interface with a single implementation. (An interface defined at the consumer for DI/mocking per `go-defaults` / `testing-philosophy` is not speculative — the test fake is its second implementation.)
 - Config options, hooks, or generics nobody requested.
 - "Might need it later" code — later can add it later.
-- Code golf: a dense one-liner that reads worse than the plain version. Clear beats clever.
+- Code golf: a dense one-liner that reads worse than the plain version.
 - Extracting a shared abstraction before it's earned — a little copying is better than a little dependency (or a premature abstraction). Default to the rule of three (≥3 call sites); abstract sooner only when the copies must stay in lockstep and would cause bugs if they drift.
 
 ## See also
