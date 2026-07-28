@@ -27,8 +27,11 @@ Before evaluating any third-party module, check whether the need is already cove
 | Rate limiting | — | `golang.org/x/time/rate` |
 | Unicode normalization, cases, language tags | `unicode`, `unicode/utf8` | `golang.org/x/text` |
 | Crypto beyond stdlib (bcrypt, argon2, chacha20) | `crypto/...` | `golang.org/x/crypto` |
-| HTTP/2, WebSocket, proxy helpers | `net/http` | `golang.org/x/net` |
+| HTTP/2 | `net/http` (transparent over TLS) | — |
+| WebSocket, proxy dialers | — | `golang.org/x/net/{websocket,proxy}` (websocket is minimal — a third-party lib is often preferred) |
 | Experimental generics helpers | — | `golang.org/x/exp` (unstable — pin, expect churn) |
+
+`min` / `max` / `clear` are language builtins, not a stdlib package — but still already-there, no dependency.
 
 Only after confirming neither tier fits, evaluate the third-party candidate.
 
