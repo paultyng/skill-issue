@@ -41,12 +41,12 @@ Prompt the subagent to:
 - Read all in-scope source files.
 - Analyze against all 5 SOLID principles, GoF design pattern usage, package cohesion/coupling, minimal-changes alignment, and testability indicators (see [reference-architecture.md](reference-architecture.md)).
 - Check design pattern usage: verify canonical naming, flag pattern anti-patterns (singletons via globals, forced patterns, pattern names without the pattern). Flag code that implements a recognizable pattern but doesn't use the canonical name.
-- Apply the minimal-changes lens: flag speculative abstractions, premature generalization, and over-engineering.
+- Apply the `implementation-minimalism` lens: flag over-engineering against the ladder — speculative abstractions, premature generalization, a helper or dependency where stdlib/built-ins suffice, config nobody asked for. Cite the rung (e.g. "rung 3: stdlib covers this"; "rung 1: speculative, single caller — YAGNI"). Use `MIN-` prefixed IDs. **False-positive guard**: never flag the non-negotiables (input validation, error handling, security, accessibility) as bloat, and do not flag a consumer-defined interface used for DI/mocking (its test fake is a real second implementation).
 - Analyze dependency graphs, import structure, and circular dependencies.
 - Check interface placement: interfaces should be defined in the consumer package, not the implementor.
 - Apply the testing-philosophy lens: flag concrete dependencies that should use interfaces for DI, mock-heavy test setups indicating tight coupling, and tests making real calls to external services.
 - For each finding, search nearby code and project documentation for existing TODOs or notes.
-- Return findings using the **per-category findings** template with `ARCH-` prefixed IDs for design/SOLID findings and `DEP-` prefixed IDs for dependency/testability findings.
+- Return findings using the **per-category findings** template with `ARCH-` prefixed IDs for design/SOLID findings, `DEP-` prefixed IDs for dependency/testability findings, and `MIN-` prefixed IDs for over-engineering/minimalism findings.
 - Every finding must include specific file paths, line numbers or function names, a severity rating (CRITICAL / HIGH / MEDIUM / LOW), and tracking status.
 
 **Subagent B. Go Best Practices** (`subagent_type="generalPurpose"`, requires `.go` files)
@@ -197,6 +197,7 @@ The display text stays `path:line` so plain and linked tables look identical; on
 |---|---------|----------|---------|
 | ARCH1 | **Description.** Specific code reference (file:line). Explanation. | HIGH | — |
 | DEP1 | Description with code reference. | MEDIUM | TODO in file:line |
+| MIN1 | **Over-engineered.** Code reference (file:line). Cite the ladder rung it violates and the smaller form. | MEDIUM | — |
 | GO1 | Description with code reference. | HIGH | — |
 | PB1 | Description with code reference. | MEDIUM | — |
 | SA1 | Description with code reference. | LOW | — |

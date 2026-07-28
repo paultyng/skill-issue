@@ -148,6 +148,22 @@ What good looks like:
 - The cost of an abstraction is justified by concrete, current benefit
 - If something should change but wasn't requested, it's mentioned after completing the requested work, not silently included
 
+## Over-Engineering (implementation-minimalism)
+
+`Minimal-Changes Alignment` above is about *scope* (don't build what wasn't asked). This is about *weight* — for the code that IS in scope, was the least-code path taken? Grade against the `implementation-minimalism` ladder and cite the rung in the finding (`MIN-` IDs).
+
+What to flag:
+- **Rung 1 (YAGNI)**: speculative flexibility, a single-caller helper, unused parameters/return values.
+- **Rung 2 (reuse)**: reimplementing something the codebase already provides.
+- **Rung 3 (built-ins)**: a hand-rolled helper the standard library or platform already does (e.g. a manual `contains` loop over `slices.Contains`).
+- **Rung 4 (deps)**: a new dependency where an existing one or stdlib suffices — defer the call to `evaluate-dependency`, don't re-argue it here.
+- **Rung 5-6**: dense "clever" one-liners that read worse than the plain form (clear beats clever), or config/generics nobody requested.
+
+False-positive guard — do NOT flag as over-engineering:
+- The non-negotiables: input validation, error handling, security checks, accessibility. Reducing these is a bug, not minimalism.
+- A consumer-defined interface used for DI/mocking (per `go-defaults` / `testing-philosophy`) — the test fake is a genuine second implementation.
+- Duplication that hasn't earned an abstraction yet — a little copying is better than a premature abstraction (rule of three, weighted to drift risk).
+
 ## Testability Indicators
 
 Architecture decisions directly affect how testable the code is. These checks are informed by the testing philosophy: prefer real code and DI over static mocks.
