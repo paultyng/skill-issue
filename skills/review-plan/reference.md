@@ -38,7 +38,7 @@ Reference sources:
 
 ## Behavior delta
 
-An optional but recommended plan section stating *what changes about system behavior* before the *how* (tasks). Borrowed from spec-driven tools (OpenSpec); the format is ours — no `openspec/` tree, no CLI. It makes intent reviewable and gives the completeness/gap, scope, and risk checks something concrete to test against.
+A plan section stating *what changes about system behavior* before the *how* (tasks) — optional for small internal-only plans, **required on any plan crossing an API / user-visible boundary** (enforced by the plan-shape contract). Borrowed from spec-driven tools (OpenSpec); the format is ours — no `openspec/` tree, no CLI. It makes intent reviewable and gives the completeness/gap, scope, and risk checks something concrete to test against.
 
 Format:
 
@@ -69,7 +69,7 @@ Worked example:
 - REMOVED: the legacy `/v1/token` endpoint.
 ```
 
-When to include: optional for small, internal-only plans; expected for any plan changing public API or user-visible behavior. (The SKILL.md plan-shape contract will flag its absence on boundary-crossing plans once the review-plan enforcement update lands.)
+When to include: optional for small, internal-only plans; expected for any plan changing public API or user-visible behavior. The SKILL.md plan-shape contract flags its absence on boundary-crossing plans (NEEDS_REVISION).
 
 ## Open questions
 
@@ -128,7 +128,7 @@ Tasks that warrant explicit user confirmation before execution (not silent inclu
 - **Shared resource touch**: editing org-wide modules, modifying CI configs other teams depend on, changing API contracts consumed by other services.
 - **Secret material**: rotating keys, regenerating tokens, changing IAM bindings.
 - **Migrations on running systems**: schema changes that lock tables, large backfills.
-- **`MODIFIED` / `REMOVED` behavior deltas**: a changed or removed behavior is a blast-radius signal — existing callers may depend on it. Trace who relies on it; recommend `review-api-compat` when it touches a contract boundary.
+- **`MODIFIED` / `REMOVED` behavior deltas**: a changed or removed behavior is a blast-radius signal — existing callers may depend on it. Trace who relies on it. (Contract-boundary handling — the `review-api-compat` hook — is defined in the [Behavior delta](#behavior-delta) section.)
 
 Flag these `P0 / risk` even when the plan is otherwise sound. They don't block READY but they must be called out so the executor pauses for confirmation at the right moment.
 
