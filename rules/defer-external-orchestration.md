@@ -14,3 +14,5 @@ Examples of operations that require user-triggered timing:
 Auto-execution is fine when the operation is **purely local and idempotent**: running tests, formatters, linters, generating code, editing local files.
 
 When in doubt, present the command and ask. Wrong autonomous timing can cause batched merges, premature deploys, or skipped manual validation steps that the user needs in order to test a failure scenario.
+
+Scope: this rule governs *timing* and sequencing, not content. Approving a draft (per `no-post-without-confirmation`) authorizes the text; it does not authorize the agent to fire a timing-sensitive send. When both apply to one action (posting a webhook, sending a notification), get the content approved and let the user trigger the moment it fires.
