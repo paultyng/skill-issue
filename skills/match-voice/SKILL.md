@@ -69,5 +69,6 @@ Print the rewritten/drafted text, then a one-line note of what changed:
 - Adding claims or numbers not in the source — this is a voice pass, not a content pass.
 - Claiming typography is clean without running the verify grep.
 - Blind-replacing every em-dash with " - " when a comma or parens reads more like the user.
+- Applying `simplify-prose` (ASD-STE100) here. That skill is for technical docs and deletes persuasion by design; in voice output the voice is the content.
 
 See [reference.md](reference.md) for the verbatim voice corpus the profile is drawn from.
