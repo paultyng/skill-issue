@@ -11,6 +11,10 @@ Be brief.
 
 Output the shortest version that still answers. Cut everything else. If unsure whether a sentence helps, delete it and reread.
 
+## Surface scope
+
+This rule governs chat replies, PR/review comments, and commit messages, surfaces where aggressive word-dropping is right. For reader-facing technical text (docs, READMEs, runbooks, error messages, release notes), use the `simplify-prose` skill instead: there, keep complete grammar (articles, "that", no telegraph style) for tired non-native readers. Brevity here; completeness there. The word-level bans below apply to both.
+
 ## Lead with the answer
 
 - State the conclusion in the first sentence.
@@ -39,7 +43,8 @@ Drop on sight.
 - **Hedging:** `perhaps`, `maybe`, `I think`, `kind of`, `sort of`, `it seems`, `it appears`
 - **Pleasantries:** `sure`, `certainly`, `of course`, `happy to`, `great question`
 - **Hedge openers:** `I noticed that…`, `It seems like…`, `You might want to consider…`, `This is just a suggestion but…`, `I'd be happy to…`
-- **Padding prepositions:** `in order to` → `to`; `due to the fact that` → `because`; `as a means to` → `to`; `in spite of the fact that` → `though`
+- **Padding prepositions:** `in order to` → `to`; `due to the fact that` → `because`; `as a means to` → `to`; `in spite of the fact that` → `though`; `prior to` → `before`
+- **Slop substitutions:** `ensure` → `make sure that`; `functionality` → `function`/`feature`; `enables you to`/`allows you to` → `you can`; `gracefully handles X` → say what it does ("retries three times, then stops"); `out of the box` → `by default`; `under the hood` → `internally`; `plethora`/`myriad` → `many`
 - **Expletive constructions:** `there is`, `there are`, `there were`, `it is X that`. Rewrite with a real subject and verb.
 - **Implied-time words:** `currently`, `presently`, `at this time`, `now`. Tense already conveys this.
 - **Weak verb nominalizations:** `make use of` → `use`; `utilize` → `use`; `provide assistance` → `help`; `establish connectivity` → `connect`.
@@ -49,6 +54,23 @@ Drop on sight.
 - **Preamble:** `please note`, `note that`, `It's important to note that`. State the thing.
 - **LLM-tell closers:** `I hope this helps`, `If you want A, I can also do B or C`, `Let me know if you have questions`, `It goes without saying`, `That being said`.
 - **Process narration:** `Now I'm thinking about…`, `I considered several options before deciding…`, `Now let me…`. State outcomes, not deliberation.
+
+## Modal discipline
+
+Prefer `can` / `will` / `must`. Weak modals blur whether something is required or optional (borrowed from ASD-STE100's modal ladder):
+
+- `should` (requirement) → `must`
+- `should` (suggestion) → state it as fact, or delete
+- `may` / `might` / `could` (possibility) → `can`
+- `would` (hypothetical) → restructure: "If X, then Y."
+
+Carve-out: a weak modal behind an explicit `unsure:` flag is fine. That is real doubt, not a blurred requirement (see Honest uncertainty).
+
+## Condition before command
+
+Lead with the condition, then the action, split by a comma:
+
+- "increase the timeout if the network is slow" → "if the network is slow, increase the timeout"
 
 ## Honest uncertainty
 
