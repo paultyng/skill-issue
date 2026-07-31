@@ -1,6 +1,6 @@
 # Substitutions and consistency
 
-Modal ladder, slop → plain table, and the one-word-one-meaning consistency sets. Adapted from [SimpleEnglish](https://github.com/AminBlg/SimpleEnglish) (MIT).
+Modal ladder, slop → plain table, and the one-word-one-meaning consistency sets. Adapted from [SimpleEnglish](https://github.com/AminBlg/SimpleEnglish), MIT, Copyright (c) 2026 AminBlg.
 
 ## Modal ladder
 

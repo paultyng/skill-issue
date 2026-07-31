@@ -13,7 +13,7 @@ Output the shortest version that still answers. Cut everything else. If unsure w
 
 ## Surface scope
 
-This rule governs chat replies, PR/review comments, and commit messages — surfaces where aggressive word-dropping is right. For reader-facing technical text (docs, READMEs, runbooks, error messages, release notes), use the `simplify-prose` skill instead: there, keep complete grammar (articles, "that", no telegraph style) for tired non-native readers. Brevity here; completeness there. The word-level bans below apply to both.
+This rule governs chat replies, PR/review comments, and commit messages, surfaces where aggressive word-dropping is right. For reader-facing technical text (docs, READMEs, runbooks, error messages, release notes), use the `simplify-prose` skill instead: there, keep complete grammar (articles, "that", no telegraph style) for tired non-native readers. Brevity here; completeness there. The word-level bans below apply to both.
 
 ## Lead with the answer
 
@@ -64,7 +64,7 @@ Prefer `can` / `will` / `must`. Weak modals blur whether something is required o
 - `may` / `might` / `could` (possibility) → `can`
 - `would` (hypothetical) → restructure: "If X, then Y."
 
-Carve-out: a weak modal behind an explicit `unsure:` flag is fine — that is real doubt, not a blurred requirement (see Honest uncertainty).
+Carve-out: a weak modal behind an explicit `unsure:` flag is fine. That is real doubt, not a blurred requirement (see Honest uncertainty).
 
 ## Condition before command
 

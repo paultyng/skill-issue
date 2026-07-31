@@ -1,6 +1,6 @@
 # Verification checklist
 
-Run this pass on every draft before delivering. Ordered mechanical → judgment. Adapted from [SimpleEnglish](https://github.com/AminBlg/SimpleEnglish) (MIT).
+Run this pass on every draft before delivering. Ordered mechanical → judgment. Adapted from [SimpleEnglish](https://github.com/AminBlg/SimpleEnglish), MIT, Copyright (c) 2026 AminBlg.
 
 ## Mechanical checks (searchable)
 
@@ -21,7 +21,7 @@ Search the draft for each pattern. Every hit outside code blocks and quoted text
 
 ## Countable checks
 
-1. **Sentence length.** Procedural cap 20, descriptive cap 25, notes 25. Backticked commands, numbers with units, and identifiers count as one word each.
+1. **Sentence length.** Procedural cap 20, descriptive cap 25, notes 25. Backticked commands, quoted text, numbers with units, and identifiers count as one word each.
 2. **Paragraph size.** Maximum six sentences per paragraph.
 3. **Multi-word nouns.** Any noun chain over three words → break it with prepositions ("the timeout value for the connection pool", not "the connection pool timeout configuration value").
 4. **Instructions per sentence.** One, unless the actions are simultaneous.

@@ -17,7 +17,7 @@ Scope-split with the `terse-output` rule:
 - **`terse-output`** owns chat replies, PR/review comments, commit messages, where aggressive word-dropping is right.
 - **`match-voice`** owns marketing, brand, and personal-voice writing. Do not apply this skill there; STE deletes persuasion by design (see Limit).
 
-The word-level bans (modal ladder, slop substitutions) are shared with `terse-output`. The completeness rules (keep articles, keep "that", no contractions) are this skill's alone.
+The modal ladder, slop substitutions, and condition-before-command are shared with `terse-output`. The completeness rules (keep articles, keep "that", no contractions) are this skill's alone.
 
 ## Workflow
 
@@ -110,4 +110,4 @@ This skill is an unofficial aid. It is not affiliated with or endorsed by ASD or
 
 ## Sources
 
-Rules and examples adapted from the [SimpleEnglish](https://github.com/AminBlg/SimpleEnglish) skill by AminBlg, used under the [MIT License](https://github.com/AminBlg/SimpleEnglish/blob/main/LICENSE). SimpleEnglish paraphrases ASD-STE100 Issue 9; the official standard (with the ~900-word approved dictionary, not reproduced here) is a free download at asd-ste100.org.
+Rules and examples adapted from the [SimpleEnglish](https://github.com/AminBlg/SimpleEnglish) skill by AminBlg, used under the [MIT License](https://github.com/AminBlg/SimpleEnglish/blob/main/LICENSE) (Copyright (c) 2026 AminBlg). SimpleEnglish paraphrases ASD-STE100 Issue 9; the official standard (with the ~900-word approved dictionary, not reproduced here) is a free download at asd-ste100.org.
