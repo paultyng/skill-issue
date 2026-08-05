@@ -36,6 +36,8 @@ Do **not** read the entire codebase. Read only what the plan references plus eno
 
 The plan must satisfy these structural rules. Any violation contributes to `NEEDS_REVISION` or `BLOCKED` per the verdict rules.
 
+Where a task states a requirement level, it SHOULD use RFC 2119 key words (`MUST` / `SHOULD` / `MAY`) so mandatory and optional steps are unambiguous (see the `normative-language` rule).
+
 | Rule | Severity if violated |
 |---|---|
 | Tasks are `- [ ]` checkboxes | BLOCKED — no machine-readable progress |

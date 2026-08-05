@@ -48,7 +48,7 @@ Do not mix the two in one passage. A "Getting started" section is procedural. An
 
 **Active voice.** Passive is legal only in descriptive text when the agent is genuinely unknown.
 
-**Modal ladder.** Approved: `can`, `will`, `must`. Replace `should`/`would`/`may`/`might`/`could` — see `references/substitutions.md`.
+**Modal ladder.** Approved: `can`, `will`, `must`. Replace `should`/`would`/`may`/`might`/`could` — see `references/substitutions.md`. UPPERCASE RFC 2119 key words (`MUST`/`SHOULD`/`MAY`) are exempt: they are deliberate normative terms, not hedges (see the `normative-language` rule).
 
 **Condition before command.** Lead with the condition, comma, then the action: "increase the timeout if the network is slow" → "if the network is slow, increase the timeout."
 

@@ -15,7 +15,7 @@ Climb from the top. Stop at the first rung that solves the problem; descend only
 5. **Can it be smaller?** Prefer the smallest *clear* expression over a helper, wrapper, or abstraction. Fewest moving parts, not fewest characters — **clear beats clever**. If a one-liner reads worse than three plain lines, write the three.
 6. **Otherwise, minimal patterns.** Fewest moving parts. No premature abstraction, no speculative interfaces, no configuration nobody asked for.
 
-## Non-negotiables — YOU MUST NOT cut these
+## Non-negotiables — MUST NOT cut these
 
 Minimalism reduces *volume*, never *rigor*. These stay in full no matter how small the diff:
 
