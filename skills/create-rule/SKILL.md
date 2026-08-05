@@ -63,7 +63,7 @@ See [references/rule-patterns.md](references/rule-patterns.md) for glob pattern 
 - **Under 200 lines**. Longer files reduce adherence; split if growing large
 - **Markdown structure**: use headers and bullets, not dense paragraphs
 - **No contradictions** across rule files; audit when adding new ones
-- **IMPORTANT** / **YOU MUST** emphasis for rules that are frequently violated
+- Use RFC 2119 key words for requirement levels (`MUST` / `SHOULD` / `MAY`), sparingly and only for genuine requirements. See the `normative-language` rule. For a requirement that is also frequently violated, add a short "Frequently missed:" lead-in.
 
 ## Workflow
 

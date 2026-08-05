@@ -6,6 +6,8 @@ Modal ladder, slop → plain table, and the one-word-one-meaning consistency set
 
 Approved modals: `can`, `will`, `must`. Weak modals blur whether something is required or optional — models read "should" as optional.
 
+Exempt: UPPERCASE RFC 2119 key words (`MUST`/`SHOULD`/`MAY`) in normative text are deliberate. Do not downcase or replace them (see the `normative-language` rule).
+
 | You wrote | Write instead |
 |---|---|
 | should (requirement) | must |

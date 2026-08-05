@@ -111,7 +111,7 @@ Implement the following task and return DONE when it is complete, verified by yo
 - Follow project conventions visible in the file excerpts (naming, error handling, imports).
 - No new dependencies unless the task explicitly adds one.
 - No refactoring outside the task scope (per minimal-changes rule).
-- Write the least code that fully works (per `implementation-minimalism`): reuse what exists, prefer built-ins over new code, smallest clear expression, no speculative abstraction. YOU MUST NOT cut the non-negotiables (input validation, error handling, security, accessibility) for fewer lines.
+- Write the least code that fully works (per `implementation-minimalism`): reuse what exists, prefer built-ins over new code, smallest clear expression, no speculative abstraction. MUST NOT cut the non-negotiables (input validation, error handling, security, accessibility) for fewer lines.
 - Do not run `git commit` — the parent will commit.
 
 # Self-review before reporting DONE

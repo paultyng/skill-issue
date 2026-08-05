@@ -64,6 +64,8 @@ Prefer `can` / `will` / `must`. Weak modals blur whether something is required o
 - `may` / `might` / `could` (possibility) → `can`
 - `would` (hypothetical) → restructure: "If X, then Y."
 
+Exempt: UPPERCASE RFC 2119 key words (`MUST` / `SHOULD` / `MAY`) are deliberate normative terms, not weak modals — see `normative-language`.
+
 Carve-out: a weak modal behind an explicit `unsure:` flag is fine. That is real doubt, not a blurred requirement (see Honest uncertainty).
 
 ## Condition before command

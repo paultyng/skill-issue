@@ -70,6 +70,8 @@ skill-name/
 
 ## Authoring Principles
 
+Express requirement levels in skill instructions with RFC 2119 key words (`MUST` / `SHOULD` / `MAY`), sparingly and only where the level matters. See the `normative-language` rule.
+
 ### Conciseness
 
 The context window is shared. Only add what the agent doesn't already know. Challenge each paragraph: "Does this justify its token cost?"
