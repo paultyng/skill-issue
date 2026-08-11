@@ -33,9 +33,7 @@ Universal Go conventions (not project-specific):
 - When using `log/slog`, prefer typed attribute funcs (`slog.String()`, `slog.Int()`) over raw variadic key-value pairs.
 
 ## Testing
-- Use `t.Parallel()` for independent tests.
-- Use `testing/synctest` for time-dependent tests (Go 1.25+).
-- Prefer table-driven tests.
+- Prefer table-driven tests. See `testing-philosophy` for parallelism and timing (`t.Parallel()`, `testing/synctest`).
 
 ## Other
 - Generate UUID random defaults in Go code, not via database defaults (e.g., `DEFAULT (UUID())`).
