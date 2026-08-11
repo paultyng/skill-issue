@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "Read(/Users/paul.tyng/.claude/projects/**)",
       "Bash(curl -sL 'https://aws.amazon.com/aup/')",
       "Bash(task *)",
       "WebFetch(domain:aws.amazon.com)",
