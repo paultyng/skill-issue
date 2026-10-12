@@ -43,6 +43,7 @@ Orchestrate all domain-specific review skills as parallel subagents, then consol
   - **review-infrastructure**: applicable if `has_iac`
   - **review-ci**: applicable if `has_ci`
   - **review-observability**: applicable if `has_code` (observability gaps are code-level; configs alone aren't enough)
+  - **invariant-adversary**: applicable if `has_code`. Not a separate skill — an in-line reviewer defined in [reference-invariant-adversary.md](reference-invariant-adversary.md).
   - **review-api-compat**: applicable if `has_api_specs` AND `has_changes` (it's a diff-aware review; no diff baseline = nothing to compare)
   - **review-performance**: applicable ONLY if `include_performance` is true. Never auto-launched.
   - **evaluate-dependency**: applicable if `has_manifest` AND `has_changes`. Diff the manifest to find added or version-bumped dependencies (`git diff <base>...HEAD -- <manifest>`); run it in **review mode** once per added/bumped dependency. Skip when the only manifest change is a removal or a checksum-only lockfile churn.
@@ -252,6 +253,8 @@ For each subagent, include in its prompt:
   ```
   This is the **sole injection point** for the open-context block. The system overview from step 2 is **not** modified to carry it — keep step 2 focused on architecture, step 3's per-subagent prompt focused on reviewer-facing context.
 
+**Exception — the `Invariant adversary` subagent.** It receives only the resolved file list, the base ref, and the diff. Withhold the system overview, the PR title and body, `REVIEW.md` sections, the `Open work context` block, and every other subagent's findings. Those are narratives of what the change is meant to do; a reviewer handed one checks the code against it and inherits its blind spots. Launch it with `model: opus` per `subagent-model-routing` (adversarial enumeration, not rubric application). Its full prompt body and output template are in [reference-invariant-adversary.md](reference-invariant-adversary.md).
+
 **Review subagents to launch:**
 
 | Subagent | Skill | Condition |
@@ -265,6 +268,7 @@ For each subagent, include in its prompt:
 | Infrastructure | review-infrastructure | `has_iac` |
 | CI | review-ci | `has_ci` |
 | Observability | review-observability | `has_code` |
+| Invariant adversary | [reference-invariant-adversary.md](reference-invariant-adversary.md) | `has_code` — `model: opus`, starved inputs (see above) |
 | API compatibility | review-api-compat | `has_api_specs` and `has_changes` |
 | Performance | review-performance | `include_performance` is true (opt-in only) |
 | Dependency eval | evaluate-dependency | `has_manifest` and `has_changes` — one review-mode run per added/bumped dependency |
@@ -286,6 +290,7 @@ Prompt it to:
    - reliability ↔ observability (e.g. missing error spans on hot paths)
    - reliability ↔ infrastructure (e.g. k8s probes vs. shutdown contract — `review-infrastructure` covers probe presence, `review-reliability` covers shutdown semantics)
    - code ↔ api-compat (e.g. a proto change flagged for design AND for wire compat)
+   - invariant-adversary ↔ code / reliability / database (it reaches the same defect from the invariant side; keep its evidence, which cites dependency source, and drop the weaker duplicate)
 2. **Cross-reference** each deduplicated finding to its source review and IDs.
 3. **Compute unified tracking** for each deduplicated finding. Populate `tracking: {status, sources, possibly_overlaps}` per [reference-tracking.md](reference-tracking.md). Combines in-repo signals (TODO / FIXME etc., always evaluated) with open-work signals (tier-1 path mention / tier-2 symbol mention / tier-3 keyword match against the step-1d set). Tier-1 and tier-2 promote to `tracked`; tier-3 stays `untracked` with a `possibly_overlaps` annotation. Terminal-state items (closed / merged PRs, closed issues, `statusCategory = Done` Jira) never produce a source entry.
 4. **Prioritize and lay out** per [reference-tracking.md § Findings layout in SUMMARY.md](reference-tracking.md#findings-layout-in-summarymd): two flat tables (untracked above the fold; tracked collapsed in a `<details>` block), severity desc then category alpha, `tracking` rendered inline per [reference-tracking.md § Badge rendering](reference-tracking.md#badge-rendering).
