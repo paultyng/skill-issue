@@ -1,6 +1,6 @@
 ---
 name: review-database
-description: Review database usage for migration safety, query performance, connection/transaction management, and schema design. Covers PostgreSQL and MySQL. Runs squawk for PostgreSQL migration linting if available. Use when the user asks for a database review, SQL review, migration review, or schema review.
+description: Use when the user asks for a database review, SQL review, migration review, migration safety check, schema review, schema design review, query performance review, index review, connection pool review, transaction management review, "is this migration safe", "will this lock the table", or a squawk run. Applies to PostgreSQL and MySQL. Also use when another skill dispatches a database review.
 ---
 
 # Database & SQL Review

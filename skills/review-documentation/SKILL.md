@@ -1,6 +1,6 @@
 ---
 name: review-documentation
-description: Review documentation quality and sync with implementation across Go doc comments, proto comments, OpenAPI specs, markdown files, and example tests. Use when the user asks for a documentation review, doc audit, or wants to check that docs are in sync with code.
+description: Use when the user asks for a documentation review, doc audit, doc comment review, godoc review, proto comment review, OpenAPI or Swagger spec review, README review, example test review, "are the docs in sync with the code", "do the docs still match", "are these comments accurate", or "check the examples". Also use when another skill dispatches a documentation review.
 ---
 
 # Documentation Review

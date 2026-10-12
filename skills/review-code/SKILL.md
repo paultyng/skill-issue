@@ -1,6 +1,6 @@
 ---
 name: review-code
-description: Review code architecture (SOLID, design patterns, package design, coupling, testability), Go best practices, and protobuf/API design using manual analysis and static analysis tools (gocyclo, staticcheck, buf). Use when the user asks for a code review, architecture review, Go review, protobuf review, SOLID review, or design pattern review.
+description: Use when the user asks for a code review, architecture review, Go review, Go best practices review, protobuf review, proto or API design review, SOLID review, design pattern review, package design review, coupling or cohesion review, testability review, "review this code", "is this well designed", "is this idiomatic Go", a gocyclo or staticcheck pass, or a buf lint run. Also use when another skill dispatches a code review.
 ---
 
 # Code Review

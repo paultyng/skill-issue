@@ -1,6 +1,6 @@
 ---
 name: review-security
-description: Perform a security review using STRIDE threat modeling, OWASP Top 10 analysis, and automated scanning (gosec, govulncheck). Use when the user asks for a security review, threat model, OWASP analysis, or security audit.
+description: Use when the user asks for a security review, security audit, threat model, STRIDE analysis, OWASP review, OWASP Top 10 analysis, vulnerability review, authn or authz review, injection or input validation review, secrets handling review, dependency vulnerability check, "is this secure", "can this be exploited", or a gosec or govulncheck run. Also use when another skill dispatches a security review.
 ---
 
 # Security Review
