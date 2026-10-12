@@ -44,7 +44,9 @@ Launch a single investigation subagent (`subagent_type="generalPurpose"`, `model
 
 Prompt it to:
 - Read all in-scope source files.
-- Analyze against all reliability categories: graceful shutdown contract, gRPC production patterns, stability patterns, and stability anti-patterns (see [reference.md](reference.md)).
+- Analyze against all reliability categories: graceful shutdown contract, gRPC production patterns, stability patterns, resource and context ownership, and stability anti-patterns (see [reference.md](reference.md)).
+- **Timeout budget**: for each route in scope, tabulate the outer deadline, every nested timeout, and retry counts, then check the sum fits. Report the table even when it balances (see Timeouts in [reference.md](reference.md)).
+- **Resource ownership**: for each resource acquired on a request path, determine who owns its lifetime after the caller's context is cancelled. Read the dependency's source to answer this and cite `path:line`; do not infer it from the library's public signature (see Resource and Context Ownership in [reference.md](reference.md)).
 - **Goroutine leak test coverage**: search test files for `goleak.VerifyNone` or `goleak.VerifyTestMain` usage. Search source files for goroutine-spawning patterns (`go func`, `go ` keyword launching goroutines). Flag packages that spawn goroutines but have no goleak checks in their tests (see Steady State in [reference.md](reference.md)).
 - For each finding, search nearby code and project documentation (README, doc comments, TODO/FIXME/HACK/XXX comments, issue references) for existing tracking.
 - Return findings using the **reliability findings** template.

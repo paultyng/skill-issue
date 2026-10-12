@@ -61,6 +61,9 @@ Patterns to check for presence in the codebase:
 - Every outbound call (DB query, HTTP request, gRPC dial, gRPC call) has an explicit timeout or context deadline
 - No unbounded blocking operations (`select` without `ctx.Done()`, channel receives without timeout)
 - Timeouts are set at each layer, not just at the top-level handler
+- Each layer's budget fits inside its caller's remaining time: a child deadline is shorter than the parent's, and the sum of sequential inner calls plus their retries fits the outer handler deadline
+- First-call work is counted, not just the steady-state path: lazy key or metadata fetches, connection warm-up, schema introspection. A deadline sized for the warm path can be too short on the first request through it
+- The budget is written down per route (outer deadline, each inner timeout, retry count). An untabulated budget has not been checked
 
 **Circuit Breaker:**
 - Calls to remote dependencies that can fail are wrapped in a circuit breaker
@@ -90,6 +93,22 @@ Patterns to check for presence in the codebase:
 - `goleak.VerifyTestMain(m)` in `TestMain` provides package-wide leak detection
 - `goleak.VerifyNone(t)` in individual tests provides per-test leak detection
 - Flag packages that spawn goroutines but have no goleak usage in `*_test.go` files. This is a strong proxy for whether goroutine leaks are being tested for
+
+## Resource and Context Ownership
+
+Who owns a resource after the caller gives up. Answering this requires reading the dependency's source, not its documentation.
+
+- For each resource acquired on a request path (connection, goroutine, file handle, subscription, timer), the review names the owner of its lifetime after the caller's context is cancelled
+- Passing a `context` to a library's public API does not mean the library governs internal work with it. A pool that dials on its own long-lived context holds the slot past the caller's deadline. Verify by reading the dependency source and cite `path:line`
+- Cancellation releases the *caller*, not necessarily the resource. A cancelled request that leaves a connect in flight still occupies capacity
+- Acquisition that can block has its own timeout, separate from the work it guards
+- Error and early-return paths release everything the success path releases
+- Findings about release behavior cite the dependency's source. "The API takes a context" is not evidence that the context is honored
+
+**Verify on the production construction path:**
+- Behavior confirmed against a test harness stand-in (a bare driver handle instead of the project's pool constructor) says nothing about production
+- Behavior confirmed against a substitute backend (one SQL engine standing in for another, recorded fixtures standing in for a live service) says nothing about the real one. Engine-specific statements, privileges, and system objects differ
+- When only a stand-in is available, say so in the finding and name the check that would settle it. Per `probe-not-assume`
 
 ## Stability Anti-Patterns (Release It!)
 
