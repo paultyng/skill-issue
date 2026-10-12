@@ -123,6 +123,8 @@ The subagent returns one of: `DONE` / `DONE_WITH_CONCERNS` / `BLOCKED` / `NEEDS_
 
 Implementer must probe before claiming DONE — run the verification command, grep for the expected change, do not paraphrase "should work" as evidence. Per `~/.claude/rules/probe-not-assume.md`.
 
+Before editing, the implementer enumerates the invariants of the code in scope and the input equivalence classes of its inputs, then derives test cases from both, including pairwise interactions. Per `~/.claude/rules/derive-tests-from-invariants.md`. Tests that only prove reverting this change breaks something are not coverage; they are a wiring check.
+
 #### (b) Verify in parent
 
 Run the `verify-when-complete` skill in the parent process (fmt → lint → build → test). This is not delegated — completion claims require fresh, parent-visible evidence (per Superpowers' verification-before-completion rule).
@@ -217,7 +219,7 @@ Silence between these is fine. Don't narrate deliberation.
 - Post-implementation gate: `verify-when-complete`
 - Reviewer dispatch: `review-code`, `review-infrastructure`, `review-ci`, `review-database`, `review-security`, `review-observability`, `review-api-compat`
 - End-of-plan: `review-all`
-- Rules consulted: `subagent-prompt-contract`, `subagent-model-routing`, `parallelize-subagents`, `commit-per-phase`, `escalation`, `defer-external-orchestration`, `minimal-changes`, `implementation-minimalism`, `confirm-before-implementing`, `git-no-amend`, `terse-output`, `auto-verify-after-rebase` (applies to the chained-PR case if a rebase is needed mid-loop), `probe-not-assume`
+- Rules consulted: `subagent-prompt-contract`, `subagent-model-routing`, `parallelize-subagents`, `commit-per-phase`, `escalation`, `defer-external-orchestration`, `minimal-changes`, `implementation-minimalism`, `confirm-before-implementing`, `git-no-amend`, `terse-output`, `auto-verify-after-rebase` (applies to the chained-PR case if a rebase is needed mid-loop), `probe-not-assume`, `derive-tests-from-invariants`
 
 For detailed subagent prompt templates, the reviewer dispatch table, and the red-flag rationalization table, see [reference.md](reference.md).
 
