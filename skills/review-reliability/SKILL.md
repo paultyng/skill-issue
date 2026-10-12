@@ -1,6 +1,6 @@
 ---
 name: review-reliability
-description: Perform a reliability review covering graceful shutdown, gRPC production patterns, stability patterns (timeouts, circuit breakers, bulkheads), and stability anti-patterns. Use when the user asks for a reliability review, production readiness assessment, stability analysis, or graceful shutdown audit.
+description: Use when the user asks for a reliability review, production readiness assessment, stability analysis, graceful shutdown audit, drain or rollout review, timeout review, timeout budget check, deadline propagation review, circuit breaker or bulkhead review, retry and backoff review, goroutine leak or resource leak review, context cancellation review, cascading failure review, gRPC production readiness check, "is this production ready", "will this survive a restart", or "review reliability". Also use when another skill dispatches a reliability review.
 ---
 
 # Reliability Review
