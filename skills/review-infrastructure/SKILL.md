@@ -22,7 +22,7 @@ Structured infrastructure-as-code review producing actionable, prioritized findi
   - **Explicit paths/modules:** The user may specify directories (e.g. `terraform/`, `deploy/k8s/`) or individual files. Include all infra files under it.
   - **Full codebase:** No filtering. Walk the repo for infra files (default).
 - **If invoked from review-all**: receive `file_list`, `has_changes`, `base_ref`, `REVIEW_DIR`, and `pr_url` from the orchestrator. Skip your own scope confirmation and use the provided values directly.
-- **Pass the resolved scope** (file list) to all exploration and investigation subagents so they only read and analyze scoped files.
+- **Pass the resolved scope** (file list) to all exploration and investigation subagents so findings stay scoped to those files. Reading is **not** scoped: follow callees, callers, and third-party source wherever a finding depends on their behavior. Report bugs in code the scope touches or calls even when they predate the diff, prefixed `pre-existing:`.
 
 **File classification.** Detect by extension and content sniff:
 - **Terraform / OpenTofu**: `*.tf`, `*.tofu`, `*.tfvars`. Inspect `provider`, `backend`, `terraform { required_*_version }` blocks.

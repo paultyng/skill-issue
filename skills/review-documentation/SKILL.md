@@ -1,6 +1,6 @@
 ---
 name: review-documentation
-description: Review documentation quality and sync with implementation across Go doc comments, proto comments, OpenAPI specs, markdown files, and example tests. Use when the user asks for a documentation review, doc audit, or wants to check that docs are in sync with code.
+description: Use when the user asks for a documentation review, doc audit, doc comment review, godoc review, proto comment review, OpenAPI or Swagger spec review, README review, example test review, "are the docs in sync with the code", "do the docs still match", "are these comments accurate", or "check the examples". Also use when another skill dispatches a documentation review.
 ---
 
 # Documentation Review
@@ -16,7 +16,7 @@ Structured documentation review producing actionable, prioritized findings with 
   - **Changed files (PR or branch):** Run `git diff --name-only --diff-filter=d <base>...HEAD` to get changed files (default `<base>` is `main`). If the user references a PR number, use `gh pr diff <number> --name-only` instead. Filter to relevant file types (`.go`, `.proto`, `.md`, OpenAPI specs). Derive affected Go packages from the file paths (unique parent directories containing `.go` files).
   - **Explicit paths/packages:** The user may specify directories (e.g. `internal/auth/`), Go package patterns (e.g. `./internal/auth/...`), or individual files. When given a directory or package pattern, include all files under it. Derive Go package paths for `go doc` invocations.
   - **Full codebase:** No filtering; explore everything (default).
-- **Pass the resolved scope** (file list and derived package paths) to all exploration and investigation subagents so they only read and analyze scoped files.
+- **Pass the resolved scope** (file list and derived package paths) to all exploration and investigation subagents so findings stay scoped to those files. Reading is **not** scoped: follow callees, callers, and third-party source wherever a finding depends on their behavior. Report bugs in code the scope touches or calls even when they predate the diff, prefixed `pre-existing:`.
 - Detect which documentation surfaces exist within the resolved scope:
   - `.go` files → `go doc` analysis, `doc.go` files, `Example*` tests
   - `.proto` files → service/method/message/field comments

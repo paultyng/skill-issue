@@ -1,6 +1,6 @@
 ---
 name: review-security
-description: Perform a security review using STRIDE threat modeling, OWASP Top 10 analysis, and automated scanning (gosec, govulncheck). Use when the user asks for a security review, threat model, OWASP analysis, or security audit.
+description: Use when the user asks for a security review, security audit, threat model, STRIDE analysis, OWASP review, OWASP Top 10 analysis, vulnerability review, authn or authz review, injection or input validation review, secrets handling review, dependency vulnerability check, "is this secure", "can this be exploited", or a gosec or govulncheck run. Also use when another skill dispatches a security review.
 ---
 
 # Security Review
@@ -16,7 +16,7 @@ Structured security review producing actionable, prioritized findings with code-
   - **Changed files (PR or branch):** Run `git diff --name-only --diff-filter=d <base>...HEAD` to get changed files (default `<base>` is `main`). If the user references a PR number, use `gh pr diff <number> --name-only` instead. Filter to relevant file types (`.go`, config files). Derive affected Go packages from the file paths (unique parent directories containing `.go` files).
   - **Explicit paths/packages:** The user may specify directories (e.g. `internal/auth/`), Go package patterns (e.g. `./internal/auth/...`), or individual files. When given a directory or package pattern, include all files under it. Derive Go package paths for static analysis tool invocations.
   - **Full codebase:** No filtering. Explore everything (default).
-- **Pass the resolved scope** (file list and derived package paths) to all exploration and investigation subagents so they only read and analyze scoped files. Static analysis tools receive package paths; manual review subagents receive the file list.
+- **Pass the resolved scope** (file list and derived package paths) to all exploration and investigation subagents so findings stay scoped to those files. Reading is **not** scoped: follow callees, callers, and third-party source wherever a finding depends on their behavior. Report bugs in code the scope touches or calls even when they predate the diff, prefixed `pre-existing:`. Static analysis tools receive package paths; manual review subagents receive the file list.
 - Explore the scoped code using parallel subagents (`subagent_type="explore"`). Read all relevant source files, configs, and dependency manifests.
 
 ### 2. System overview

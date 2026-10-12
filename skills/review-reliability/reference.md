@@ -1,6 +1,13 @@
 # Reliability Review: Framework Reference
 
-Detailed checklists for reliability analysis. The SKILL.md workflow references this file.
+Checklists for reliability analysis. The SKILL.md workflow reads this file.
+
+## Contents
+- Graceful Shutdown Contract
+- gRPC Production Patterns
+- Stability Patterns
+- Resource and Context Ownership
+- Stability Anti-Patterns
 
 Reference sources:
 - [Release It!](https://pragprog.com/titles/mnee2/release-it-second-edition/), Michael Nygard (stability patterns and anti-patterns)
@@ -12,116 +19,137 @@ Reference sources:
 
 Four invariants for zero-downtime rollouts on Kubernetes:
 
-1. **Stop routing new traffic first**: readiness probe returns not-ready before the process begins draining, so Kubernetes removes the pod from endpoints before shutdown logic runs
-2. **Stop accepting new work inside the process**: server stops accepting new RPCs/connections (e.g. `grpcServer.GracefulStop()`)
-3. **Finish in-flight work within a bounded time**: all in-progress requests complete or are cancelled before the deadline; use a context with timeout wrapping `GracefulStop`
-4. **Exit before SIGKILL**: the total drain time (preStop hook + drain + safety margin) must fit within `terminationGracePeriodSeconds`
+1. **Stop routing new traffic first**: the readiness probe returns not-ready before the process drains. Kubernetes then removes the pod from endpoints before the shutdown logic runs.
+2. **Stop accepting new work inside the process**: the server stops new RPCs and connections, for example with `grpcServer.GracefulStop()`.
+3. **Finish in-flight work within a bounded time**: every in-progress request completes or is cancelled before the deadline. Wrap `GracefulStop` in a context with a timeout.
+4. **Exit before SIGKILL**: the total drain time (preStop hook, drain, safety margin) must fit inside `terminationGracePeriodSeconds`.
 
-What to check in code:
-- SIGTERM signal handler is registered and triggers the shutdown sequence
-- `preStop` hook or readiness probe flip gives Kubernetes time to propagate endpoint removal
-- `GracefulStop()` is called with a bounded deadline, falling back to `Stop()` on timeout
-- Background goroutines and workers have cancellation paths (context or done channel)
-- Database connections, file handles, and other resources are closed in the shutdown path
+Check in code that:
+
+- A SIGTERM handler is registered and starts the shutdown sequence
+- A `preStop` hook or a readiness-probe flip gives Kubernetes time to propagate endpoint removal
+- `GracefulStop()` runs with a bounded deadline and falls back to `Stop()` on timeout
+- Background goroutines and workers have a cancellation path (context or done channel)
+- The shutdown path closes database connections, file handles, and other resources
 
 ## gRPC Production Patterns
 
 **Health checking:**
-- Service implements `grpc.health.v1.Health` (not HTTP health endpoints for gRPC services)
-- Per-service health status is registered, not just a global check
-- Health status reflects actual readiness (e.g. DB connectivity), not just "process is alive"
-- Kubernetes probes use `grpc` probe type (available since K8s 1.24), not `exec` with `grpc_health_probe`
+- The service implements `grpc.health.v1.Health`. A gRPC service does not use an HTTP health endpoint
+- Per-service health status is registered, not only a global check
+- Health status reflects real readiness, such as database connectivity. "The process is alive" is not readiness
+- Kubernetes probes use the `grpc` probe type (K8s 1.24 and later), not `exec` with `grpc_health_probe`
 
 **Deadline and context propagation:**
-- Every outbound RPC sets a deadline via `context.WithTimeout` or `context.WithDeadline`
-- Incoming request context is propagated through the entire call chain (DB queries, downstream RPCs, etc.)
+- Every outbound RPC sets a deadline with `context.WithTimeout` or `context.WithDeadline`
+- The incoming request context propagates through the whole call chain, including database queries and downstream RPCs
 - Long operations check `ctx.Done()` and return early on cancellation
-- Server-side handlers respect the client's deadline rather than running unbounded
+- Server-side handlers respect the client deadline and do not run unbounded
 
 **Load balancing and connection management:**
-- `MaxConnectionAge` / `MaxConnectionAgeGrace` keepalive settings are configured to force periodic reconnection for load distribution across pods
-- Client-side load balancing or headless services are used (standard `ClusterIP` does not distribute gRPC traffic effectively due to HTTP/2 persistent connections)
+- `MaxConnectionAge` and `MaxConnectionAgeGrace` force periodic reconnection, which distributes load across pods
+- The client uses client-side load balancing or a headless service. A standard `ClusterIP` distributes gRPC traffic poorly, because HTTP/2 connections persist
 - Keepalive parameters (`Time`, `Timeout`, `PermitWithoutStream`) are set on both client and server
 
 **Status codes and error handling:**
-- RPCs return appropriate `codes.*` status codes (`InvalidArgument`, `NotFound`, `Unavailable`, `DeadlineExceeded`, etc.) rather than generic `Unknown` or `Internal` for all errors
-- Errors from downstream dependencies are translated to appropriate gRPC status codes, not passed through raw
-- `codes.Unavailable` is returned for transient failures (signals clients to retry)
+- RPCs return specific `codes.*` values (`InvalidArgument`, `NotFound`, `Unavailable`, `DeadlineExceeded`), not `Unknown` or `Internal` for every error
+- Errors from downstream dependencies are translated to gRPC status codes, not passed through raw
+- `codes.Unavailable` marks a transient failure, which tells the client to retry
 
 **Interceptors:**
-- Recovery interceptor (`grpc_recovery`) catches panics and returns `Internal` instead of crashing the process
-- Logging/metrics interceptors capture per-method latency, status code, and request metadata
-- Auth interceptor validates credentials before handler execution
+- A recovery interceptor (`grpc_recovery`) catches panics and returns `Internal`. The process does not crash
+- Logging and metrics interceptors capture per-method latency, status code, and request metadata
+- An auth interceptor validates credentials before the handler runs
 
 ## Stability Patterns (Release It!)
 
-Patterns to check for presence in the codebase:
+Check that these patterns are present:
 
 **Timeouts:**
-- Every outbound call (DB query, HTTP request, gRPC dial, gRPC call) has an explicit timeout or context deadline
-- No unbounded blocking operations (`select` without `ctx.Done()`, channel receives without timeout)
-- Timeouts are set at each layer, not just at the top-level handler
+- Every outbound call (database query, HTTP request, gRPC dial, gRPC call) has an explicit timeout or context deadline
+- No operation blocks without bound. Watch for `select` without `ctx.Done()`, and for channel receives without a timeout
+- Every layer sets a timeout, not only the top-level handler
+- Each layer's budget fits inside the caller's remaining time. A child deadline is shorter than its parent's
+- The sum of sequential inner calls, plus their retries, fits the outer handler deadline
+- The budget counts first-call work, not only the warm path: lazy key or metadata fetches, connection warm-up, schema introspection. A deadline sized for the warm path can be too short on the first request
+- Each route has a written budget: outer deadline, each inner timeout, retry count. An untabulated budget is an unchecked budget
 
 **Circuit Breaker:**
-- Calls to remote dependencies that can fail are wrapped in a circuit breaker
-- The breaker trips after a threshold of failures and fails fast during the open state
-- Half-open state allows probe requests to test recovery
+- A circuit breaker wraps every call to a remote dependency that can fail
+- The breaker trips after a threshold of failures, and fails fast while it is open
+- A half-open state sends probe requests to test recovery
 
 **Bulkheads:**
-- Independent failure domains use separate resources (e.g. separate DB connection pools for critical vs. background work)
-- Worker pools / semaphores bound concurrent access to shared resources
-- A failure in one subsystem does not exhaust resources needed by another
+- Independent failure domains use separate resources, for example separate database connection pools for critical and background work
+- Worker pools or semaphores bound concurrent access to shared resources
+- A failure in one subsystem does not exhaust the resources another subsystem needs
 
 **Fail Fast:**
-- Requests that cannot succeed are rejected immediately (e.g. missing required fields, invalid auth) rather than queued or partially processed
-- Resource exhaustion (full queue, pool exhausted) returns an error rather than blocking indefinitely
+- A request that cannot succeed is rejected at once, not queued or partly processed. Examples: a missing required field, invalid auth
+- Resource exhaustion (full queue, exhausted pool) returns an error and does not block
 
 **Handshaking:**
-- Health checks verify actual dependency connectivity, not just that the process started
-- Startup validation confirms DB reachability, config correctness, and required services before marking ready
+- Health checks test real dependency connectivity, not only that the process started
+- Startup validation checks database reachability, config correctness, and required services before the process marks itself ready
 
 **Steady State:**
-- Nothing grows without bound: logs rotate, caches evict, connection pools have max sizes
-- Goroutine counts are bounded; leaked goroutines are detectable
-- Temporary files, buffers, and queues have size limits and cleanup
+- Nothing grows without bound. Logs rotate, caches evict, connection pools have a maximum size
+- Goroutine counts are bounded. Leaked goroutines are detectable
+- Temporary files, buffers, and queues have size limits and a cleanup path
 
 **Goroutine leak test coverage** ([goleak](https://github.com/uber-go/goleak)):
-- Packages that spawn goroutines (look for `go func` and `go ` keyword patterns in source) should have goroutine leak checks in their tests
-- `goleak.VerifyTestMain(m)` in `TestMain` provides package-wide leak detection
-- `goleak.VerifyNone(t)` in individual tests provides per-test leak detection
-- Flag packages that spawn goroutines but have no goleak usage in `*_test.go` files. This is a strong proxy for whether goroutine leaks are being tested for
+- A package that spawns goroutines must have a goroutine leak check in its tests. Look for `go func` and for the `go ` keyword
+- `goleak.VerifyTestMain(m)` in `TestMain` gives package-wide leak detection
+- `goleak.VerifyNone(t)` in a single test gives per-test leak detection
+- Report a package that spawns goroutines and has no goleak usage in its `*_test.go` files. This is a strong proxy for whether anyone tests for goroutine leaks
+
+## Resource and Context Ownership
+
+Who owns a resource after the caller gives up. To answer this, read the dependency's source, not its documentation.
+
+- Name the owner of each resource acquired on a request path, after the caller's context is cancelled. This covers connections, goroutines, file handles, subscriptions, and timers
+- A `context` on a library's public API does not mean the library governs its internal work with that context. A pool that dials on its own long-lived context holds the slot past the caller's deadline. Read the dependency source and cite `path:line`
+- Cancellation releases the *caller*, not always the resource. A cancelled request can leave a connect in flight, and that connect still occupies capacity
+- An acquisition that can block has its own timeout, separate from the work it guards
+- Error paths and early-return paths release everything the success path releases
+- A finding about release behavior cites the dependency's source. "The API takes a context" is not evidence that the library honors the context
+
+**Check on the production construction path:**
+- Behavior checked against a test harness stand-in says nothing about production. Example: a bare driver handle instead of the project's pool constructor
+- Behavior checked against a substitute backend says nothing about the real one. One SQL engine can stand in for another, or recorded fixtures can stand in for a live service. Engine-specific statements, privileges, and system objects differ
+- If only a stand-in is available, say so in the finding and name the check that settles it. Per `probe-not-assume`
 
 ## Stability Anti-Patterns (Release It!)
 
-Anti-patterns to detect and flag:
+Report these anti-patterns:
 
 **Integration Points:**
-- Outbound calls without timeout, retry, or error handling; each is a cascading failure vector
-- Direct coupling to a dependency's internal behavior (e.g. parsing raw error strings instead of using status codes)
+- An outbound call with no timeout, no retry policy, or no error handling. Each one is a cascading failure vector
+- Direct coupling to a dependency's internal behavior. Example: the code parses raw error strings instead of reading status codes
 
 **Cascading Failures:**
-- A failing downstream dependency causes the caller to fail in the same way (e.g. returning `Internal` because a cache is down, when the service could operate without cache)
-- Readiness probe checks downstream health, causing the entire upstream chain to go not-ready when one leaf fails
+- A failing downstream dependency makes the caller fail the same way. Example: the service returns `Internal` because a cache is down, when it can run without that cache
+- A readiness probe that checks downstream health. One failing leaf then takes the whole upstream chain not-ready
 
 **Blocked Threads:**
-- Goroutines waiting indefinitely on channel receives, mutex locks, or I/O without context cancellation
-- `sync.WaitGroup` waits without timeout or cancellation path
-- Blocking calls inside a mutex-held critical section
+- A goroutine that waits without bound on a channel receive, a mutex lock, or I/O, with no context cancellation
+- A `sync.WaitGroup` wait with no timeout and no cancellation path
+- A blocking call inside a mutex-held critical section
 
 **Unbounded Result Sets:**
-- Database queries without `LIMIT` or pagination
-- List RPCs without `page_size` / `page_token` enforcement
-- In-memory collection of results from streaming RPCs without size bounds
+- A database query without `LIMIT` or pagination
+- A list RPC that does not enforce `page_size` and `page_token`
+- In-memory collection of streaming RPC results with no size bound
 
 **Slow Responses:**
-- Missing deadlines on outbound calls, allowing slow dependencies to tie up handler goroutines
-- No server-side timeout on incoming RPCs (a misbehaving client can hold a connection indefinitely)
-- Synchronous calls to non-critical dependencies in the hot path without timeout
+- A missing deadline on an outbound call. A slow dependency then ties up handler goroutines
+- No server-side timeout on incoming RPCs. A misbehaving client can then hold a connection without bound
+- A synchronous call to a non-critical dependency in the hot path, with no timeout
 
 **SLA Inversion:**
-- Critical path depends synchronously on a less-reliable service with no fallback, timeout, or degraded mode
-- No circuit breaker or fallback for dependencies that have weaker availability guarantees
+- The critical path depends synchronously on a less reliable service, with no fallback, timeout, or degraded mode
+- No circuit breaker and no fallback for a dependency with weaker availability guarantees
 
 **Unbalanced Capacities:**
-- Streaming RPCs without flow control or backpressure
-- Producer can enqueue work faster than consumer can process, with no admission control or shedding
+- A streaming RPC with no flow control and no backpressure
+- A producer that enqueues work faster than the consumer processes it, with no admission control and no shedding

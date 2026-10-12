@@ -1,30 +1,30 @@
 ---
 name: review-reliability
-description: Perform a reliability review covering graceful shutdown, gRPC production patterns, stability patterns (timeouts, circuit breakers, bulkheads), and stability anti-patterns. Use when the user asks for a reliability review, production readiness assessment, stability analysis, or graceful shutdown audit.
+description: Use when the user asks for a reliability review, production readiness assessment, stability analysis, graceful shutdown audit, drain or rollout review, timeout review, timeout budget check, deadline propagation review, circuit breaker or bulkhead review, retry and backoff review, goroutine leak or resource leak review, context cancellation review, cascading failure review, gRPC production readiness check, "is this production ready", "will this survive a restart", or "review reliability". Also use when another skill dispatches a reliability review.
 ---
 
 # Reliability Review
 
-Structured reliability review producing actionable, prioritized findings with code-level references.
+A reliability review that produces prioritized findings with code-level references.
 
 ## Workflow
 
 ### 1. Scope and explore
 
-- Confirm scope with the user: full codebase, specific packages/directories, changed files only (PR or branch diff), or specific concern.
-- **Resolve scope to a file/package list.** Based on what the user requested:
-  - **Changed files (PR or branch):** Run `git diff --name-only --diff-filter=d <base>...HEAD` to get changed files (default `<base>` is `main`). If the user references a PR number, use `gh pr diff <number> --name-only` instead. Filter to relevant file types (`.go`, config files, Kubernetes manifests). Derive affected Go packages from the file paths (unique parent directories containing `.go` files).
-  - **Explicit paths/packages:** The user may specify directories (e.g. `internal/auth/`), Go package patterns (e.g. `./internal/auth/...`), or individual files. When given a directory or package pattern, include all files under it.
-  - **Full codebase:** No filtering; explore everything (default).
-- **Pass the resolved scope** (file list) to all exploration and investigation subagents so they only read and analyze scoped files.
-- Explore the scoped code using parallel subagents (`subagent_type="explore"`). Read all relevant source files, configs, Kubernetes manifests, and deployment definitions.
+- Confirm the scope with the user: full codebase, named packages or directories, changed files only (PR or branch diff), or one named concern.
+- **Resolve the scope to a file and package list:**
+  - **Changed files (PR or branch):** run `git diff --name-only --diff-filter=d <base>...HEAD`. The default `<base>` is `main`. If the user names a PR number, run `gh pr diff <number> --name-only` instead. Keep `.go` files, config files, and Kubernetes manifests. Derive the affected Go packages from the file paths, which are the unique parent directories that contain `.go` files.
+  - **Explicit paths or packages:** the user can name directories (`internal/auth/`), Go package patterns (`./internal/auth/...`), or single files. For a directory or a package pattern, include every file under it.
+  - **Full codebase:** no filter. Explore everything. This is the default.
+- **Pass the resolved scope** (the file list) to every exploration and investigation subagent, so that findings stay scoped to those files. Reading is **not** scoped. Follow callees, callers, and third-party source wherever a finding depends on their behavior. Report a bug in code the scope touches or calls even when the bug predates the diff, and prefix it `pre-existing:`.
+- Explore the scoped code with parallel subagents (`subagent_type="explore"`). Read the source files, configs, Kubernetes manifests, and deployment definitions.
 
 ### 2. System overview
 
-Produce a brief architecture summary covering:
-- Services, ports, and transport (gRPC, HTTP, etc.)
+Produce a short architecture summary of:
+- Services, ports, and transport (gRPC, HTTP)
 - Data stores and external dependencies
-- Deployment model (if discernible)
+- Deployment model, if you can determine it
 
 Map the critical hot paths:
 
@@ -36,23 +36,24 @@ Client → Transport
   → response
 ```
 
-Annotate each step: local vs. I/O, serial vs. parallel, cached vs. uncached.
+Annotate each step: local or I/O, serial or parallel, cached or uncached.
 
 ### 3. Launch investigation subagent
 
-Launch a single investigation subagent (`subagent_type="generalPurpose"`, `model: sonnet` per `subagent-model-routing`) with the system overview, flow mapping, and in-scope file list.
+Launch one investigation subagent (`subagent_type="generalPurpose"`, `model: sonnet` per `subagent-model-routing`) with the system overview, the flow mapping, and the in-scope file list.
 
 Prompt it to:
-- Read all in-scope source files.
-- Analyze against all reliability categories: graceful shutdown contract, gRPC production patterns, stability patterns, and stability anti-patterns (see [reference.md](reference.md)).
-- **Goroutine leak test coverage**: search test files for `goleak.VerifyNone` or `goleak.VerifyTestMain` usage. Search source files for goroutine-spawning patterns (`go func`, `go ` keyword launching goroutines). Flag packages that spawn goroutines but have no goleak checks in their tests (see Steady State in [reference.md](reference.md)).
-- For each finding, search nearby code and project documentation (README, doc comments, TODO/FIXME/HACK/XXX comments, issue references) for existing tracking.
-- Return findings using the **reliability findings** template.
-- Every finding must include specific file paths, line numbers or function names, priority (P0–Pn), impact, effort estimate, and tracking status.
+- Check the code against every reliability category: graceful shutdown contract, gRPC production patterns, stability patterns, resource and context ownership, and stability anti-patterns. See [reference.md](reference.md).
+- **Timeout budget**: for each route in scope, tabulate the outer deadline, every nested timeout, and the retry counts. Check that the sum fits. Report the table even when the budget balances. See Timeouts in [reference.md](reference.md).
+- **Resource ownership**: for each resource acquired on a request path, name the owner of its lifetime after the caller's context is cancelled. Read the dependency's source to answer this, and cite `path:line`. Do not infer the answer from the library's public signature. See Resource and Context Ownership in [reference.md](reference.md).
+- **Goroutine leak test coverage**: search the test files for `goleak.VerifyNone` and `goleak.VerifyTestMain`. Search the source files for `go func` and for the `go ` keyword. Report a package that spawns goroutines and has no goleak check in its tests. See Steady State in [reference.md](reference.md).
+- For each finding, search nearby code and project documentation for existing tracking. Look in the README, doc comments, TODO/FIXME/HACK/XXX comments, and issue references.
+- Return the findings in the **reliability findings** template.
+- Give every finding a file path, a line number or function name, a priority (P0–Pn), an impact, an effort estimate, and a tracking status.
 
 ### 4. Present results
 
-Resolve the review output directory (skip if `REVIEW_DIR` was provided by the review-all orchestrator):
+If the review-all orchestrator supplied `REVIEW_DIR`, skip this snippet. Otherwise resolve the review output directory:
 
 ```sh
 REVIEW_DATE=$(date +%Y-%m-%d)
@@ -62,9 +63,9 @@ if [ -d "$REVIEW_DIR" ]; then REVIEW_DIR=".reviews/${REVIEW_DATE}-$(date +%H%M)"
 mkdir -p "$REVIEW_DIR"
 ```
 
-Capture run metadata (see [Run metadata header](#run-metadata-header) below) and prepend the rendered block to `${REVIEW_DIR}/RELIABILITY-REVIEW.md`.
+Capture the run metadata. See [Run metadata header](#run-metadata-header) below.
 
-Write the output to `${REVIEW_DIR}/RELIABILITY-REVIEW.md`, structured as:
+Write `${REVIEW_DIR}/RELIABILITY-REVIEW.md` in this order:
 1. Run metadata header
 2. System overview and flow mapping
 3. Reliability findings table
@@ -76,7 +77,7 @@ Present the report to the user.
 
 ## Run metadata header
 
-Capture once near `REVIEW_DIR` resolution and prepend the rendered block to the output document:
+Capture this once, near the point where you resolve `REVIEW_DIR`. Prepend the rendered block to the output document.
 
 ```sh
 RUN_DATETIME=$(date -u +"%Y-%m-%d %H:%M UTC")
@@ -87,7 +88,7 @@ GIT_SUBJECT=$(git log -1 --pretty=%s)
 # When scope is diff-based, also: BASE_REF=<base>; BASE_COMMIT=$(git rev-parse --short "$BASE_REF")
 ```
 
-Header template (placed at the top of the output `.md`, before the H1 title):
+Header template. It goes at the top of the output `.md`, before the H1 title.
 
 ```markdown
 > **Run:** {RUN_DATETIME}
@@ -101,7 +102,7 @@ Header template (placed at the top of the output `.md`, before the H1 title):
 
 ## Finding link wrapping (PR mode)
 
-When the review is scoped to a GitHub PR (`pr_url` is provided by the caller, or, when run standalone, `gh pr view --json url -q .url 2>/dev/null` returns one), wrap every `path:line` reference inside the finding tables below as a Markdown link:
+If the review is scoped to a GitHub PR, wrap every `path:line` reference in the finding tables as a Markdown link. The caller supplies `pr_url`. In a standalone run, read it with `gh pr view --json url -q .url 2>/dev/null`.
 
 ```sh
 ~/.claude/scripts/pr-deeplink.sh "$pr_url" <path> <line>
@@ -109,7 +110,12 @@ When the review is scoped to a GitHub PR (`pr_url` is provided by the caller, or
 # pr_url empty → path:line   (plain text, unchanged)
 ```
 
-The display text stays `path:line` so plain and linked tables look identical; only the URL goes in the link target. Pass `L` as the fourth argument for findings about removed code (default is `R`). Omit `<line>` for file-level findings to get a file-anchor link. Apply the same wrapping to `path:line` references inside the Tracked column (e.g. `TODO in foo.go:42`). Findings themselves follow `terse-comments`: concrete fix, optional `bug:`/`risk:`/`nit:`/`unsure:` prefix, no praise or restating the diff.
+The display text stays `path:line`, so a plain table and a linked table look identical. Only the URL goes in the link target.
+
+- For a finding about removed code, pass `L` as the fourth argument. The default is `R`.
+- For a file-level finding, omit `<line>` to get a file-anchor link.
+- Wrap `path:line` references inside the Tracked column the same way, for example `TODO in foo.go:42`.
+- Findings follow `terse-comments`: a concrete fix, an optional `bug:`/`risk:`/`nit:`/`unsure:` prefix, no praise, no restating of the diff.
 
 ---
 
@@ -124,7 +130,7 @@ The display text stays `path:line` so plain and linked tables look identical; on
 | P1 | Description with code references | Impact description | Effort estimate | FIXME in file:line |
 ```
 
-**Tracked column values:** Use `—` for new findings. For already-captured findings: `TODO in file:line`, `FIXME in file:line`, `README`, `#123` (issue reference), etc.
+**Tracked column values:** use `—` for a new finding. For a finding that is already captured, use `TODO in file:line`, `FIXME in file:line`, `README`, or an issue reference such as `#123`.
 
 ### Re-evaluation table (for follow-up reviews)
 
@@ -139,9 +145,9 @@ The display text stays `path:line` so plain and linked tables look identical; on
 
 ## Guidelines
 
-- Search the organization's codebase (Sourcegraph, GitHub) for existing patterns before recommending new approaches.
-- Include effort estimates to help prioritize implementation.
-- When the user asks for a follow-up review, find the most recent review directory (`ls -d reviews/*/ 2>/dev/null | sort | tail -1`) containing `RELIABILITY-REVIEW.md`, re-evaluate all prior findings, and update with the re-evaluation table appended.
-- For detailed framework categories, see [reference.md](reference.md).
-- **REVIEW.md integration**: If a `REVIEW.md` context section was provided by the review-all orchestrator (or exists at the repository root when running standalone), treat its rules as additional review criteria. "Always check" items are HIGH severity; domain-specific items (Reliability section) are MEDIUM severity. "Skip" patterns exclude matching files from review scope.
-- Findings must cite probed evidence (`path:line`, grep output, command result), not pattern-matched suspicion. Per `~/.claude/rules/probe-not-assume.md`.
+- Search the organization's codebase (Sourcegraph, GitHub) for existing patterns before you recommend a new approach.
+- Give every finding an effort estimate, so the user can prioritize the work.
+- For a follow-up review, find the most recent review directory that contains `RELIABILITY-REVIEW.md` with `ls -d reviews/*/ 2>/dev/null | sort | tail -1`. Check every prior finding against the current code. Append the re-evaluation table.
+- For the detailed framework categories, see [reference.md](reference.md).
+- **REVIEW.md integration**: treat the rules in `REVIEW.md` as extra review criteria. The review-all orchestrator supplies this section. In a standalone run, read `REVIEW.md` from the repository root. "Always check" items are HIGH severity. Items in the Reliability section are MEDIUM severity. "Skip" patterns exclude matching files from the review scope.
+- Every finding must cite probed evidence: `path:line`, grep output, or a command result. Pattern-matched suspicion is not evidence. Per `~/.claude/rules/probe-not-assume.md`.
