@@ -48,7 +48,7 @@ Produce a brief pipeline summary covering:
 Launch a single investigation subagent (`subagent_type="generalPurpose"`, `model: sonnet` per `subagent-model-routing`) with the system overview and in-scope file list.
 
 Prompt it to:
-- Read only the in-scope files.
+- Findings must concern the in-scope files. Read beyond them (callees, callers, third-party source) wherever a finding depends on that behavior.
 - Apply the GitHub Actions checklist in [reference.md](reference.md); for non-GHA platforms, apply the **cross-platform** subset.
 - Run the static analyzers below when available.
 - For each finding, search nearby files (workflow comments, `README.md`, in-repo runbooks) for existing tracking.

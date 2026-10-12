@@ -16,7 +16,7 @@ Structured database review producing actionable, prioritized findings with code-
   - **Changed files (PR or branch):** Run `git diff --name-only --diff-filter=d <base>...HEAD` to get changed files (default `<base>` is `main`). If the user references a PR number, use `gh pr diff <number> --name-only` instead. Filter to relevant file types (`.go`, `.sql`). Derive affected Go packages from the file paths (unique parent directories containing `.go` files).
   - **Explicit paths/packages:** The user may specify directories (e.g. `internal/store/`), Go package patterns (e.g. `./internal/store/...`), individual files, or specific migration files. When given a directory or package pattern, include all files under it.
   - **Full codebase:** No filtering. Explore everything (default).
-- **Pass the resolved scope** (file list) to all exploration and investigation subagents so they only read and analyze scoped files.
+- **Pass the resolved scope** (file list) to all exploration and investigation subagents so findings stay scoped to those files. Reading is **not** scoped: follow callees, callers, and third-party source wherever a finding depends on their behavior. Report bugs in code the scope touches or calls even when they predate the diff, prefixed `pre-existing:`.
 - Explore the scoped code using parallel subagents (`subagent_type="explore"`). Read all in-scope `.sql` files, schema definitions, and source files that interact with the database (queries, connection setup, transaction handling).
 
 ### 2. Launch investigation subagent
