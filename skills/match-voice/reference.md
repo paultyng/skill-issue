@@ -43,7 +43,7 @@ Observed in AI-generated sections on the user's own pages — the register to av
 - Enthusiasm openers ("Excited to announce...", "This PR adds exciting...").
 - Hedge pileups ("I think this might possibly be a concern").
 - Performed sincerity: "honest" / "honestly" / "to be honest" / "I'll be honest" / "frankly" / "let's be real". The user labels doubt ("unsure", "open question") instead of announcing candor.
-- AI tells: "It's worth noting", "That said" / "That being said", "Here's the thing", "not just X, but Y", "deep dive", "delve", "unpack", "landscape", "realm", "crucial", "vital".
+- Common AI filler: "It's worth noting", "That said" / "That being said", "Here's the thing", "not just X, but Y", "deep dive", "delve", "unpack", "landscape", "realm", "crucial", "vital".
 - Closing pleasantries ("Let me know if you have questions!").
 - Generic headers (Overview, Background, Introduction).
 - Em-dashes, smart quotes, unicode arrows/bullets — the user types none of these.

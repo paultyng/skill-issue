@@ -36,7 +36,7 @@ Cut on sight:
 - **Closing pleasantries** — "Let me know if you have questions!", "Hope this helps".
 - **AI recap verbs** — emphasized, highlighted, stressed, "The team discussed".
 - **Performed sincerity** — "honest", "honestly", "to be honest", "I'll be honest", "frankly", "truthfully", "let's be real". The voice flags doubt with "unsure" and then says the thing; it never advertises candor first.
-- **AI tells** — "It's worth noting", "That said" / "That being said", "Here's the thing", "not just X, but Y", "It's not about X, it's about Y", deep dive, delve, unpack, landscape, realm, crucial, vital.
+- **Common AI filler** — "It's worth noting", "That said" / "That being said", "Here's the thing", "not just X, but Y", "It's not about X, it's about Y", deep dive, delve, unpack, landscape, realm, crucial, vital.
 - **Generic headers** — Overview, Background, Introduction. Name the section for what it says.
 
 ## Normalize typography to keyboard ASCII
