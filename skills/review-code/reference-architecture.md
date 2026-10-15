@@ -173,7 +173,7 @@ What to flag:
 False-positive guard — do NOT flag as over-engineering:
 - The non-negotiables: input validation, error handling, security checks, accessibility. Reducing these is a bug, not minimalism.
 - A consumer-defined interface used for DI/mocking (per `go-defaults` / `testing-philosophy`) — the test fake is a genuine second implementation.
-- Duplication that hasn't earned an abstraction yet — a little copying is better than a premature abstraction (rule of three, weighted to drift risk).
+- Duplication that hasn't earned an abstraction yet — a little copying is better than a premature abstraction (rule of three, weighted to drift risk). When the copies reach the rule-of-three count, the question stops being a code-review finding and becomes a trajectory call: hand it to `review-trajectory`, which weighs the count against co-change coupling.
 
 ## Testability Indicators
 
