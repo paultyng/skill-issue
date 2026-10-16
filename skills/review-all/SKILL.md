@@ -255,6 +255,8 @@ For each subagent, include in its prompt:
 
 **Exception — the `Invariant adversary` subagent.** It receives only the resolved file list, the base ref, and the diff. Withhold the system overview, the PR title and body, `REVIEW.md` sections, the `Open work context` block, and every other subagent's findings. Those are narratives of what the change is meant to do; a reviewer handed one checks the code against it and inherits its blind spots. Launch it with `model: opus` per `subagent-model-routing` (adversarial enumeration, not rubric application). Its full prompt body and output template are in [reference-invariant-adversary.md](reference-invariant-adversary.md).
 
+**Exception — the `Trajectory` subagent.** Its findings concern the whole repository, not the resolved file list. Pass the base ref and the diff, and state that it reads members the diff never touches. A third entrypoint is invisible to a reviewer scoped to changed files. Its output is advisory and MUST NOT request a change to the diff.
+
 **Review subagents to launch:**
 
 | Subagent | Skill | Condition |
@@ -269,6 +271,7 @@ For each subagent, include in its prompt:
 | CI | review-ci | `has_ci` |
 | Observability | review-observability | `has_code` |
 | Invariant adversary | [reference-invariant-adversary.md](reference-invariant-adversary.md) | `has_code` — `model: opus`, starved inputs (see above) |
+| Trajectory | review-trajectory | `has_code` and `has_changes` — anti-scoped (see above) |
 | API compatibility | review-api-compat | `has_api_specs` and `has_changes` |
 | Performance | review-performance | `include_performance` is true (opt-in only) |
 | Dependency eval | evaluate-dependency | `has_manifest` and `has_changes` — one review-mode run per added/bumped dependency |
@@ -319,6 +322,7 @@ Write the summarization output to `${REVIEW_DIR}/SUMMARY.md`, structured as:
 5. **Findings — untracked** (one flat table; see [reference-tracking.md § Findings layout in SUMMARY.md](reference-tracking.md#findings-layout-in-summarymd))
 6. **Findings — tracked** (collapsed `<details>` block, one flat table; omit when empty)
 7. Recommended fix order (untracked first; tracked items only if they're high-severity blockers despite an owner)
+8. **Trajectory** (advisory; from the Trajectory subagent. Omit when no axis tips. Never merged into the findings tables — it reports no defects.)
 
 Render both findings sections per [reference-tracking.md § Findings layout in SUMMARY.md](reference-tracking.md#findings-layout-in-summarymd) — flat tables (categories are a column, not a header), severity desc then category alpha, empty-group rules defined there. Per-domain Output Templates below describe what each subagent emits; the summarization subagent compresses them into the unified shape. Present the report to the user.
 
