@@ -3,6 +3,7 @@
 ## Contents
 
 - [Axis table](#axis-table)
+- [Enumeration commands](#enumeration-commands)
 - [Threshold rules](#threshold-rules)
 - [Recipe: repository maturity](#recipe-repository-maturity)
 - [Recipe: co-change ratio](#recipe-co-change-ratio)
@@ -19,16 +20,40 @@ the pattern categories. It does not enumerate structural members, so the
 Enumeration commands are starting points. Adapt them to the repository's
 language and layout, and report what you actually ran.
 
-| Axis | Code | Unit counted | Enumerate | Threshold |
-|---|---|---|---|---|
-| Entrypoints | STRUCT | A process start point: a `main` package, a `cmd/` subdirectory, a serverless handler | `find . -name main.go -not -path '*/vendor/*'`; `ls -d cmd/*/` | 3 |
-| Transport surfaces | XPORT | A served protocol stack: HTTP mux, gRPC server, CLI root, queue consumer | `grep -rln 'ListenAndServe\|grpc.NewServer\|cobra.Command{'` | 3 |
-| Config sources | CFG | A distinct mechanism that reads configuration | `grep -rln 'viper\.\|envconfig\.\|flag.Parse\|os.Getenv'` | 3 |
-| DI / composition roots | DI | A function that assembles the dependency graph | `grep -rln 'wire.Build\|func newApp\|func wire'` | 3 |
-| Test harnesses | TEST | A fixture or server builder used by many tests | `grep -rln 'func newTest\|func setupTest\|func testServer'` | 3 |
-| Retry implementations | STRUCT | A distinct retry or backoff helper | `grep -rln 'backoff\.\|func retry\|MaxRetries'` | 2 |
-| Error taxonomies | ERR | A distinct error hierarchy or sentinel family | `grep -rln 'errors.New(\|func (e \*.*) Error()'` | 2 |
-| Observability init | OBS | A tracer, meter, or logger construction site | `grep -rln 'otel.SetTracerProvider\|slog.New\|zap.New'` | 2 |
+| Axis | Code | Unit counted | Threshold |
+|---|---|---|---|
+| Entrypoints | STRUCT | A process start point: a `main` package, a `cmd/` subdirectory, a serverless handler | 3 |
+| Transport surfaces | XPORT | A served protocol stack: HTTP mux, gRPC server, CLI root, queue consumer | 3 |
+| Config sources | CFG | A distinct mechanism that reads configuration | 3 |
+| DI / composition roots | DI | A function that assembles the dependency graph | 3 |
+| Test harnesses | TEST | A fixture or server builder used by many tests | 3 |
+| Retry implementations | STRUCT | A distinct retry or backoff helper | 2 |
+| Error taxonomies | ERR | A distinct error hierarchy or sentinel family | 2 |
+| Observability init | OBS | A tracer, meter, or logger construction site | 2 |
+
+### Enumeration commands
+
+Starting points. Adapt them to the repository's language and layout, and
+report the command you actually ran.
+
+```sh
+# Entrypoints
+find . -name main.go -not -path '*/vendor/*'; ls -d cmd/*/ 2>/dev/null
+# Transport surfaces
+grep -rlnE 'ListenAndServe|grpc.NewServer|cobra.Command\{' .
+# Config sources
+grep -rlnE 'viper\.|envconfig\.|flag.Parse|os.Getenv' .
+# DI / composition roots
+grep -rlnE 'wire.Build|func newApp|func wire' .
+# Test harnesses
+grep -rlnE 'func newTest|func setupTest|func testServer' .
+# Retry implementations
+grep -rlnE 'backoff\.|func retry|MaxRetries' .
+# Error taxonomies
+grep -rlnE 'errors.New\(|func \(e \*.*\) Error\(\)' .
+# Observability init
+grep -rlnE 'otel.SetTracerProvider|slog.New|zap.New' .
+```
 
 ## Threshold rules
 
