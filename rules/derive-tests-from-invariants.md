@@ -25,7 +25,7 @@ For every input to the code being changed, enumerate the *classes*, not the exam
 - empty collection, one element, many elements
 - duplicate elements, and elements equal under the comparison the code uses
 - pointer vs. value receiver, or reference vs. copy
-- boundaries and the values immediately on either side
+- boundaries and the values immediately on either side, including the extremes validation accepts, under real precision, latency, and clock skew
 
 Then ask whether each invariant still holds for each class.
 
