@@ -66,6 +66,12 @@ Reference sources:
 - CLI flags, env vars, and config keys mentioned in docs exist in code.
 - No stale version numbers or references to removed features.
 
+## Rationale Claims
+
+- Every causal claim in in-scope docs and comments (`because`, `so that`, `since`, `while`, `to avoid`) is a statement about code. Find the code that produces the claimed condition and cite `path:line`. Follow calls, error mappings, and status-code translation across packages.
+- A claim the producing code contradicts is HIGH. A claim with no producing code found is MEDIUM and marked `unverified`.
+- In diff scope, check every claim that describes changed code, including claims whose text did not change. Comparing old prose with new prose is not verification.
+
 ## Documentation Gaps
 
 Large gaps to flag explicitly:
