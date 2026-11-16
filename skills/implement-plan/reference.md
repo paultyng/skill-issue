@@ -155,28 +155,42 @@ Pick reviewers based on which file extensions / patterns changed in the task. Mu
 
 ## Reviewer prompt template
 
+Reviewers run at `model: fable`. Give the reviewer the goal, the evidence standard, and the invariants its output must hold. It decides how to look; do not hand it a step list.
+
 ```
-You are reviewing the diff produced by ONE plan task. Apply the <reviewer-skill-name> checklist.
+You are the independent reviewer for ONE task of an approved plan. The implementer (a different model) reported DONE. Decide whether that is true.
+
+# Goal
+Decide whether the diff below correctly and completely implements the task as the task and plan describe it, through the <reviewer-skill-name> lens. Report every defect that would change that verdict, and anything that would cost the next reader something.
 
 # Context
 - Plan: <plan-path>
-- Task <i>/<N>: <task subject>
+- Plan goal (one paragraph): <plan-goal>
+- Task <i>/<N>: <verbatim task text>
 - Files changed in this task: <list>
 - Diff: <inline git diff for this task's commit-in-progress>
 
-# Constraints
-- Review only the diff above. Do not expand scope.
-- Cite findings as `path:line` (or `path:line-L` for removed code).
-- Use severity per your skill's convention (P0/P1/P2/P3, or HIGH/MEDIUM/LOW, or bug/risk/nit).
-- Follow the terse-comments convention: concrete fix, no praise, no restating the diff.
-- Be honest. Do not rubber-stamp. If something is wrong, say so.
-- Findings must cite probed evidence (`path:line` + grep output + command result), not pattern-matched suspicion. Per `~/.claude/rules/probe-not-assume.md`.
+# Stance
+Do not trust the report. DONE is a claim to test, not a finding to confirm. Read the diff against the task text, then probe what reading cannot settle: run the test, grep the call sites, inspect the schema. Judge the diff's effect, not only its text; a changed function is wrong if its callers now are.
+
+Implementers most often miss: the test the task asked for, the part of the task text the diff does not cover, additions the task did not ask for, a new input boundary without validation, a swallowed error.
+
+# What a finding is
+A defect in correctness, completeness, scope, or your skill's domain, backed by evidence you produced: `path:line` (or `path:line-L` for removed code) plus the command output, grep hit, or reproduction that shows it. Suspicion you could not probe is reported with an `unsure:` prefix and a note on what would settle it.
+
+# Invariants
+- Scope is this task's diff and its direct effects. Pre-existing problems outside it are one line of notes, not findings.
+- Every finding carries a severity the parent can triage: P0/P1/P2/P3, or a `bug:`/`risk:`/`nit:` prefix. P0, P1, `bug`, `risk` block the task; P2, P3, `nit` go to the nits file. Choose by consequence, not by confidence.
+- Every finding names the concrete fix. No praise, no restating the diff (per `terse-comments`).
+- A clean verdict states what you probed to reach it. "Looks fine" without evidence is not a verdict.
+- MUST NOT edit files or commit. Read and run only.
 
 # Return format
 First line: DONE | DONE_WITH_CONCERNS | BLOCKED
 Followed by:
 - Findings table per your skill's template
 - Tracked column: `—` for new findings, existing tracking if you found it
+- Probed: <what you ran or checked, one line each>
 ```
 
 ## Red flags
@@ -205,7 +219,7 @@ When pressured to break a rule, this is what the agent will tell itself, and the
 | "The plan is short, review-plan is overkill" | Short plans hide as many bugs as long ones; review-plan is 30 seconds |
 | "BLOCKED is too strict; I can just figure it out" | If you could, the plan would not have been BLOCKED |
 | "We're 90% done; let me skip verify on the last task" | The last task is where regressions hide; verify everything |
-| "The reviewer is the same model family, the review is theater" | Opus-reviewing-Sonnet is the partial fix; don't make it worse by skipping |
+| "The reviewer is the same model family, the review is theater" | Fable reviewing a Sonnet implementer is the fix: different model, deeper judgment. Skipping it removes the only independent check |
 | "I'll batch all the commits at the end for a cleaner history" | Bisect needs per-phase commits; clean history is a side-effect, not the goal |
 | "Tasks 3 and 4 are independent, I'll parallelize" | "Independent" is a guess until merge; sequential makes it certain |
 | "The user said 'do it' — they want fast" | "Do it" doesn't mean "skip the gates"; it means "start" |
