@@ -45,7 +45,7 @@ Plan files in `.plans/` are gitignored by design; they do not need to be committ
 
 ### 2. Pre-flight gate: review-plan
 
-Invoke the `review-plan` skill as a subagent. Pass the resolved plan path. Branch on the returned verdict:
+Invoke the `review-plan` skill as a subagent at `model: fable` (per `subagent-model-routing`). Pass the resolved plan path. Branch on the returned verdict:
 
 | Verdict | Action |
 |---|---|
@@ -137,7 +137,7 @@ Determine which reviewers apply based on what changed in this task. Use the tabl
 
 Run reviewers **serially**, not parallel — they all comment on the same diff and parallel runs produce duplicated findings.
 
-Use `model: opus` for reviewers. Deeper judgment than the implementer, and the model-mismatch partially defeats self-agreement bias when implementer and reviewer are otherwise the same family.
+Use `model: fable` for reviewers. Deeper judgment than the implementer, and a reviewer on a different model from both the Sonnet implementer and the parent weakens self-agreement.
 
 #### (d) Triage findings
 

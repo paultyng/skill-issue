@@ -41,7 +41,7 @@ Launch applicable investigation subagents concurrently using the Task tool. Each
 
 Every investigation subagent must check each finding against existing documentation: TODO comments, README notes, FIXME/HACK/XXX comments, and issue tracker references. Report tracked findings but mark them accordingly.
 
-**Subagent A — STRIDE Threat Model** (`subagent_type="generalPurpose"`, `model: opus` per `subagent-model-routing` — always on; threat modeling requires design-level reasoning, requires code or infra files)
+**Subagent A — STRIDE Threat Model** (`subagent_type="generalPurpose"`, `model: fable` per `subagent-model-routing` — always on; threat modeling requires design-level reasoning, requires code or infra files)
 
 Prompt the subagent to:
 - Read all in-scope source files.

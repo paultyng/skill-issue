@@ -253,9 +253,9 @@ For each subagent, include in its prompt:
   ```
   This is the **sole injection point** for the open-context block. The system overview from step 2 is **not** modified to carry it — keep step 2 focused on architecture, step 3's per-subagent prompt focused on reviewer-facing context.
 
-**Exception — the `Invariant adversary` subagent.** It receives only the resolved file list, the base ref, and the diff. Withhold the system overview, the PR title and body, `REVIEW.md` sections, the `Open work context` block, and every other subagent's findings. Those are narratives of what the change is meant to do; a reviewer handed one checks the code against it and inherits its blind spots. Launch it with `model: opus` per `subagent-model-routing` (adversarial enumeration, not rubric application). Its full prompt body and output template are in [reference-invariant-adversary.md](reference-invariant-adversary.md).
+**Exception — the `Invariant adversary` subagent.** It receives only the resolved file list, the base ref, and the diff. Withhold the system overview, the PR title and body, `REVIEW.md` sections, the `Open work context` block, and every other subagent's findings. Those are narratives of what the change is meant to do; a reviewer handed one checks the code against it and inherits its blind spots. Launch it with `model: fable` per `subagent-model-routing` (adversarial enumeration where a miss is costly; a model different from the parent also weakens self-agreement). Its full prompt body and output template are in [reference-invariant-adversary.md](reference-invariant-adversary.md).
 
-**Exception — the `Trajectory` subagent.** Its findings concern the whole repository, not the resolved file list. Pass the base ref and the diff, and state that it reads members the diff never touches. A third entrypoint is invisible to a reviewer scoped to changed files. Its output is advisory and MUST NOT request a change to the diff.
+**Exception — the `Trajectory` subagent.** Launch it with `model: fable` per `subagent-model-routing` (a tipping-point call with no rubric). Its findings concern the whole repository, not the resolved file list. Pass the base ref and the diff, and state that it reads members the diff never touches. A third entrypoint is invisible to a reviewer scoped to changed files. Its output is advisory and MUST NOT request a change to the diff.
 
 **Review subagents to launch:**
 
@@ -270,8 +270,8 @@ For each subagent, include in its prompt:
 | Infrastructure | review-infrastructure | `has_iac` |
 | CI | review-ci | `has_ci` |
 | Observability | review-observability | `has_code` |
-| Invariant adversary | [reference-invariant-adversary.md](reference-invariant-adversary.md) | `has_code` — `model: opus`, starved inputs (see above) |
-| Trajectory | review-trajectory | `has_code` and `has_changes` — anti-scoped (see above) |
+| Invariant adversary | [reference-invariant-adversary.md](reference-invariant-adversary.md) | `has_code` — `model: fable`, starved inputs (see above) |
+| Trajectory | review-trajectory | `has_code` and `has_changes` — `model: fable`, anti-scoped (see above) |
 | API compatibility | review-api-compat | `has_api_specs` and `has_changes` |
 | Performance | review-performance | `include_performance` is true (opt-in only) |
 | Dependency eval | evaluate-dependency | `has_manifest` and `has_changes` — one review-mode run per added/bumped dependency |
