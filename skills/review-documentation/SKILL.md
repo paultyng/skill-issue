@@ -43,6 +43,7 @@ Prompt the subagent to:
 - Check for `Example*` test functions in `*_test.go` files. Flag key exported APIs that lack examples.
 - If `go doc` fails (e.g. build errors), fall back to reading `doc.go` and source files directly.
 - Include a **Tool Availability** section noting whether `go doc` ran successfully.
+- Trace rationale claims in doc comments to the code that produces them. See Rationale Claims in [reference.md](reference.md).
 - Return findings with `DOC-` prefixed IDs.
 
 **Subagent B: Proto and OpenAPI documentation** (`subagent_type="generalPurpose"`, requires `.proto` files)
@@ -57,6 +58,7 @@ Prompt the subagent to:
   - Proto comments should appear as `description` fields in the OpenAPI spec.
   - Flag drift: OpenAPI description empty despite proto comment existing, or content diverging.
   - Flag missing `description` on endpoints, request/response schemas, and parameters.
+- Trace rationale claims in proto comments and OpenAPI descriptions to the code that produces them. See Rationale Claims in [reference.md](reference.md).
 - Return findings with `DOC-` prefixed IDs.
 
 **Subagent C: Markdown and general docs** (`subagent_type="generalPurpose"`)
@@ -69,6 +71,7 @@ Prompt the subagent to:
   - References to CLI flags, env vars, or config keys; spot-check a sample against actual code.
   - Code examples; spot-check function/type names against actual exports.
 - Flag large documentation gaps: no README, no CONTRIBUTING guide (for OSS projects), no architectural overview for multi-service repos.
+- Trace rationale claims in markdown to the code that produces them. See Rationale Claims in [reference.md](reference.md).
 - Return findings with `DOC-` prefixed IDs.
 
 ### 3. Summarize
