@@ -43,12 +43,9 @@ Every investigation subagent must check each finding against existing documentat
 
 **Subagent A — STRIDE Threat Model** (`subagent_type="generalPurpose"`, `model: fable` per `subagent-model-routing` — always on; threat modeling requires design-level reasoning, requires code or infra files)
 
-Prompt the subagent to:
-- Read all in-scope source files.
-- Analyze against all 6 STRIDE categories (see [reference.md](reference.md)).
-- For each finding, search nearby code and project documentation for existing TODOs or notes.
-- Return findings using the **per-category findings** template with S/T/R/I/D/E prefixes.
-- Every finding must include specific file paths, line numbers or function names, a severity rating (CRITICAL / HIGH / MEDIUM / LOW), and tracking status.
+Goal: find realistic ways an attacker crosses a trust boundary that the in-scope code defines or touches. The prompt body (goal, what a finding is, evidence rules, output invariants) is [reference.md § STRIDE Threat Model](reference.md#stride-threat-model); pass it whole. STRIDE letters classify what the subagent found. They are not a checklist to walk.
+
+The subagent returns the **per-category findings** template with S/T/R/I/D/E prefixes. Every finding MUST carry `path:line` or a function name, a severity (CRITICAL / HIGH / MEDIUM / LOW), and tracking status; the summarizer parses these.
 
 **Subagent B — OWASP Top 10 Analysis** (`subagent_type="generalPurpose"`, `model: opus` per `subagent-model-routing` — always on; threat modeling requires design-level reasoning, requires code or infra files)
 
