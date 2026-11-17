@@ -1,50 +1,63 @@
 # Security Review — Framework Reference
 
-Detailed checklists for each security analysis framework. The SKILL.md workflow references this file.
+Prompt bodies for each security analysis framework. The SKILL.md workflow references this file.
+
+## Contents
+- [STRIDE Threat Model](#stride-threat-model)
+- [OWASP Top 10](#owasp-top-10)
+- [Automated Security Scanning](#automated-security-scanning)
 
 ## STRIDE Threat Model
 
-### S — Spoofing Identity
+The prompt body for Subagent A in [SKILL.md § 3](SKILL.md). This is a threat model, not a checklist: the reviewer decides where to look, and STRIDE supplies the vocabulary for what it found.
 
-- Authentication mechanisms: are all endpoints that require auth properly gated?
-- Token/credential validation: issuer, audience, expiration, signature verification
-- Identity propagation: is identity passed securely between services?
-- Credential storage: secrets in env vars vs. hardcoded, rotation capability
+### Goal
 
-### T — Tampering with Data
+Find realistic ways an attacker crosses a trust boundary that the in-scope code defines or touches. Start from the boundaries, not the categories. Where does data or control move between principals, services, tenants, processes, or privilege levels? For each boundary, name what it protects and who is on the hostile side, then trace how the code enforces it, following callees and third-party source wherever enforcement depends on them.
 
-- Input validation: are all external inputs validated and sanitized?
-- Data integrity: are stored values signed or integrity-checked where needed?
-- API mutation endpoints: can unauthenticated or unauthorized callers modify data?
-- Transport security: TLS enforcement, certificate validation
+A boundary the code relies on but does not define (middleware it sits behind, a token another service minted) is in scope. State the assumption and whether the code checks it.
 
-### R — Repudiation
+### What a good finding is
 
-- Audit logging: are security-relevant actions logged with actor, action, and target?
-- Structured logging: request tracing, correlation IDs
-- Log integrity: are logs protected from tampering?
-- Non-repudiation controls: signed receipts, immutable audit trails
+- **Attacker**: who they are and what they already hold (anonymous caller, authenticated user of another tenant, operator with log access).
+- **Entry point**: the request, message, file, or config value they control, at `path:line`.
+- **Asset**: what they reach: data, identity, capability, or availability.
+- **Impact**: what they can do that the boundary was meant to prevent.
+- **Path**: the code path from entry to impact, cited `path:line` at each hop that matters, including the check that is missing or bypassed.
 
-### I — Information Disclosure
+A finding with no attacker who can reach the entry point is a code-quality note, not a threat. A finding with no traced path is a hypothesis: prefix it `unsure:` and say what would settle it.
 
-- Error messages: do error responses leak implementation details (stack traces, DB errors, internal paths)?
-- Enumeration: can external callers enumerate internal IDs or resources?
-- Token/credential exposure: are secrets logged, returned in responses, or exposed in URLs?
-- Data classification: is sensitive data encrypted at rest and in transit?
+### Evidence
 
-### D — Denial of Service
+- A traced path through the actual code is the minimum. Probe where possible: craft the input, run the handler, grep for the check that should exist. Command output beats reading (`probe-not-assume`).
+- When no probe is possible, mark the finding `unverified` and name the gap.
+- Report bugs in code the scope touches or calls even when they predate the diff, prefixed `pre-existing:`.
+- Check each finding against TODO/FIXME/HACK/XXX comments, README notes, and issue references. Fill the Tracked column from what you find.
 
-- Rate limiting: are public or expensive endpoints rate-limited?
-- Resource limits: connection pool sizes, request body size limits, timeouts
+### Classification
 
-For operational stability patterns (circuit breakers, bulkheads, graceful shutdown), see **review-reliability**.
+Label each finding with the one STRIDE letter naming the property it violates: **S** authentication (the caller is not who the code believes), **T** integrity, **R** accountability (no reliable record of who did what), **I** confidentiality, **D** availability, **E** authorization (the caller acts as a more privileged principal). Classify after finding, not before.
 
-### E — Elevation of Privilege
+A **D** finding needs an attacker who triggers the exhaustion. Operational stability (circuit breakers, bulkheads, graceful shutdown) belongs to **review-reliability**.
 
-- Authorization checks: are admin/privileged operations gated by authorization?
-- Tenant isolation: can one tenant access another's data?
-- Ownership verification: do mutation operations verify the caller owns the resource?
-- Default-deny: is the authorization model default-deny or default-allow?
+### Known misses
+
+Boundaries past reviews skipped. Check each one is covered before returning.
+
+- Token validation that verifies the signature but not issuer, audience, or expiry; identity trusted from a header another service was supposed to set.
+- Authorization on the route but not on the object: a caller past the auth gate reads or mutates a resource another tenant or user owns.
+- Default-allow: a new route, role, or resource is open until someone adds a rule.
+- Fail-open when an auth backend, policy service, or cache is unavailable.
+- Secrets or tokens in logs, error responses, URLs, or crash output; errors that reveal internal structure or let a caller enumerate resources.
+- Security-relevant actions with no record of actor, action, and target, or a record the actor can alter.
+
+### Output invariants
+
+- Return the **per-category findings** template (SKILL.md § Output Templates) with `S`/`T`/`R`/`I`/`D`/`E` prefixes numbered per letter (`S1`, `S2`, `T1`). The summarizer parses these.
+- Every finding MUST carry `path:line` or a function name, a severity (CRITICAL / HIGH / MEDIUM / LOW), and a Tracked value (`—` or the tracking reference).
+- Severity follows impact and reachability by the stated attacker, not code smell.
+- A letter with nothing found gets its heading and "No findings". An empty category and a skipped category are different results.
+- MUST NOT report a finding whose entry point the stated attacker cannot reach, and MUST NOT pad a category to look thorough.
 
 ---
 

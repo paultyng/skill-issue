@@ -12,12 +12,13 @@ When delegating to a subagent (per `parallelize-subagents`), pick a model tier m
 | Investigation: multi-file pattern survey, "where is X" | Haiku or Sonnet | Haiku for "find and list"; Sonnet for "interpret what we found" |
 | Analysis: code review with structured findings, log interpretation, multi-file integration where intent matters | Sonnet | Default tier; moderate reasoning |
 | Synthesis: dedup + prioritize across many sources, semantic conflict resolution, PR-body authoring from a non-trivial diff | Sonnet | Combining pieces requires real reasoning |
-| Design: architecture review, ambiguous trade-offs, novel debugging, multi-step refactors, threat modeling | Opus | Reserve for actually-hard problems |
+| Design: architecture review, ambiguous trade-offs, novel debugging, multi-step refactors | Opus | Reserve for actually-hard problems |
+| Adversarial or open-ended judgment where a miss is costly: invariant adversary, threat modeling, refactor tipping points, plan gates, per-task plan review | Fable | Most capable tier at 2.5x Opus cost. Give it goals and invariants, not checklists. A model different from the parent weakens self-agreement |
 | Unsure | Sonnet | Default; don't pick Opus "to be safe", it overpays on bounded tasks |
 
 ## How to specify
 
-The Task tool accepts a `model` parameter (`haiku` / `sonnet` / `opus` / a full model ID / `inherit`). Set it explicitly when invoking from a skill:
+The Task tool accepts a `model` parameter (`haiku` / `sonnet` / `opus` / `fable` / a full model ID / `inherit`). Set it explicitly when invoking from a skill:
 
 ```
 Task(subagent_type="general-purpose", model="haiku", prompt="...")
