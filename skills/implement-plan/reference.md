@@ -167,6 +167,7 @@ Decide whether the diff below correctly and completely implements the task as th
 - Plan: <plan-path>
 - Plan goal (one paragraph): <plan-goal>
 - Task <i>/<N>: <verbatim task text>
+- Implementer report: <its status line and summary, verbatim>
 - Files changed in this task: <list>
 - Diff: <inline git diff for this task's commit-in-progress>
 

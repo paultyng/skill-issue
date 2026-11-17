@@ -61,13 +61,14 @@ recommendation.
   the review from fighting `minimal-changes` and `implementation-minimalism`.
 - **Every verdict MUST cite** member paths, count, threshold, co-change
   numerator and denominator, and commit range.
-- **MUST NOT recommend consolidation when the ratio is under 0.2.**
+- **MUST NOT recommend consolidation when a measured ratio is under 0.2.**
 - **Report at most 2 axes**, ranked by count multiplied by ratio. A wall of
   refactor proposals gets ignored in full.
 - **Greenfield (under 90 days of elapsed history): lower every threshold by 1,
   floored at 2, and label coupling `UNPROVEN`.** Do not compute a ratio from a
   handful of commits, and do not skip the review. Report the count, the lowered
-  threshold, and the cheapness argument. Commit volume is not maturity; 400
+  threshold, and the cheapness argument. The ratio conditions in the verdict
+  table do not apply: assign `TIPPING` or `OVERDUE` on count alone. Commit volume is not maturity; 400
   commits in three weeks is still greenfield.
 - **Fewer than 2 commits: stop.** There is no history to read.
 - **No axis tips: say so in one line and stop.** The orchestrator omits the
