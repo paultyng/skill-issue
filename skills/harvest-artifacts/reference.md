@@ -20,8 +20,8 @@ a producer changes its output format, update this file.
 
 | Artifact | Producer | Harvest from | Lifecycle |
 |---|---|---|---|
-| `.plans/*.md` | User or plan mode. Read by `implement-plan`, `review-plan` | `## Behavior delta` entries with `Acceptance:` lines (`review-plan/reference.md`); decisions in Problem or Design sections; `- [ ]` tasks still unchecked | Ticked in place by implement-plan; nothing deletes them |
-| `.plans/nits.md` | `implement-plan` (format in its `reference.md`) | `## Task <i>` entries, ``- `path:line` — finding. fix. Source: <skill>``. P2/P3 only | Appended per task; end-of-plan asks address, defer, or discard |
+| `.plans/*.md` | User or plan mode. Read by `implement-plan`, `review-plan` | `## Behavior delta` entries with `Acceptance:` lines (`review-plan/reference.md`); decisions in Problem or Design sections; `- [ ]` tasks still unchecked. Branch: `Branch:` under `## Branch policy`, else `impl/<filename stem>` | Ticked in place by implement-plan; nothing deletes them |
+| `.plans/nits.md` | `implement-plan` (format in its `reference.md`) | `## Task <i>` entries, ``- `path:line` — finding. fix. Source: <skill>``. P2, P3, or `nit:` only | Appended per task; end-of-plan asks address, defer, or discard |
 | `<review dir>/SUMMARY.md` | `review-all` | `## Findings — untracked` (columns include `Class`, `Tracked`); tracked findings in a `<details>` block (`review-all/reference-tracking.md`); recommended fix order; a Trajectory section | Never deleted; a follow-up review appends a re-evaluation table to the newest one |
 | `<review dir>/<DOMAIN>-REVIEW.md` | Each `review-*` skill run on its own (CODE, SECURITY, RELIABILITY, DATABASE, DOCUMENTATION, COVERAGE, INFRASTRUCTURE, CI, OBSERVABILITY, PERFORMANCE, API-COMPAT) | Findings tables, P0–P3 | None. Not written when the skill runs under review-all |
 | `<review dir>/TRAJECTORY.md` | `review-trajectory` | `## Trajectory`, one `**<Axis> — <VERDICT>**` block per axis, `**Proposed follow-up:**` (`review-trajectory/reference-census-axes.md`) | None |

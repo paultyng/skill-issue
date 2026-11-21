@@ -1,6 +1,6 @@
 ---
 name: harvest-artifacts
-description: Use when the user asks to harvest, distill, sweep, or clean up old plans or reviews, asks what from `.plans/` or `.reviews/` belongs in AGENTS.md, CLAUDE.md, README, REVIEW.md, rules, or memory, asks to "clean up the review files" or "sweep old plans", or when stale plans and review directories have accumulated. Also /harvest-artifacts with an optional path or age.
+description: Use when the user asks to harvest, distill, sweep, or clean up old plans or reviews, asks what from `.plans/` or `.reviews/` belongs in AGENTS.md, CLAUDE.md, README, REVIEW.md, rules, or memory, asks to "clean up the review files" or "sweep old plans". Also /harvest-artifacts with an optional path or age.
 ---
 
 # Harvest Artifacts
@@ -14,6 +14,10 @@ work, not a post-merge step.
 
 What each producing skill writes, and where its harvestable content sits:
 [reference.md](reference.md).
+
+Extract with one `model: sonnet` subagent per artifact, in parallel, each
+returning candidates with `path:line`. The parent probes, dedups, routes, and
+owns every prompt and write.
 
 ## Arguments
 
@@ -61,7 +65,8 @@ Harvest the *constraint* a fix revealed, if there is one, not the fix.
   - One prompt per file that does not exist yet. Creating AGENTS.md,
     REVIEW.md, or a rule is a bigger step than editing one.
   - Approval of edits never implies approval of deletions.
-  - Repo file edits land on a branch as one commit. The user triggers any PR
+  - Approved repo file edits land as one commit, on a new `harvest/<date>`
+    branch when the current branch is the default. The user triggers any PR
     (`defer-external-orchestration`).
 - **MUST prompt for the deletion list separately, and MUST NOT delete
   unapproved artifacts.** `.plans/` and `.reviews/` are gitignored, so a
@@ -76,11 +81,16 @@ Harvest the *constraint* a fix revealed, if there is one, not the fix.
 List every artifact older than retention, each marked:
 
 - **safe**, with the reason:
-  - plan: every task is `- [x]` and its branch is merged into the default
-    branch (`git branch --merged <default>`), or the user said it is abandoned
-  - review directory: the metadata SHA is reachable from the default branch
-    (`git merge-base --is-ancestor <sha> <default>`), and every finding in it
-    is routed or dropped
+  - plan: every task is `- [x]` and its branch is merged, or the user said it
+    is abandoned. The plan's branch is `Branch:` under `## Branch policy`, else
+    `impl/<plan filename stem>`.
+  - review directory: the branch on its metadata `> **Branch:**` line is
+    merged, and every finding in it is routed or dropped
+
+  A branch is merged when `git branch --merged <default>` lists it, or its
+  metadata SHA passes `git merge-base --is-ancestor <sha> <default>`. Squash
+  and rebase merges defeat both, so also accept a merged pull request for the
+  branch (`gh pr list --state merged --head <branch>` when `gh` is available).
   - `nits.md`: every entry is routed or dropped
 - **not safe**, with what is still open (unchecked task, unmerged branch, SHA
   not on the default branch, no metadata SHA). The user can delete it anyway.
