@@ -36,20 +36,20 @@ AGE_DAYS=$(( ( $(date +%s) - FIRST_COMMIT_EPOCH ) / 86400 ))
 ## Co-change ratio
 
 Of the commits that touched at least one member, the fraction that touched two
-or more. `--name-only` with a pathspec lists only the matching paths, so the
-per-commit line count is the member count directly.
+or more. One `git log` per member counts members, not files, so a directory
+member (a `cmd/` subdirectory) counts once per commit. `--no-renames` keeps a
+rename between two members visible to both; `--no-merges` skips merges, which
+change no files of their own.
 
 ```sh
-git log --format='%x00%H' --name-only -- <member1> <member2> <memberN> \
- | awk -v RS='\0' 'NR>1 {
-     n=0; split($0, L, "\n")
-     for (i=2; i<=length(L); i++) if (L[i] != "") n++
-     if (n > 0) tot++
-     if (n > 1) multi++
-   } END {
-     if (tot == 0) { print "0/0 = n/a"; exit }
-     printf "%d/%d = %.2f\n", multi, tot, multi/tot
-   }'
+for m in <member1> <member2> <memberN>; do
+  git log --no-merges --no-renames --format=%H -- "$m" | sort -u
+done | sort | uniq -c | awk '
+  { tot++; if ($1 > 1) multi++ }
+  END {
+    if (tot == 0) { print "0/0 = n/a"; exit }
+    printf "%d/%d = %.2f\n", multi, tot, multi/tot
+  }'
 ```
 
 ## Introduction position
