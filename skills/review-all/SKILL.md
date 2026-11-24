@@ -13,11 +13,11 @@ Orchestrate all domain-specific review skills as parallel subagents, then consol
 
 - Confirm scope with the user: full codebase, specific packages/directories, changed files only (PR or branch diff), or specific concern.
 - **Resolve scope to a file/package list.** Based on what the user requested:
-  - **Changed files (PR or branch):** Run `git diff --name-only --diff-filter=d "$BASE_REF"...HEAD` to get changed files. Default `BASE_REF` is `origin/<default branch>`, from `git symbolic-ref --short refs/remotes/origin/HEAD`. If the user references a PR number, first require `git rev-parse HEAD` to equal `gh pr view <number> --json headRefOid -q .headRefOid`; if they differ, stop and ask the user to check out the PR head. Then use `gh pr diff <number> --name-only` and set `BASE_REF=origin/$(gh pr view <number> --json baseRefName -q .baseRefName)`. Derive affected Go packages from the file paths (unique parent directories containing `.go` files).
+  - **Changed files (PR or branch):** Run `git diff --name-only --diff-filter=d "$BASE_REF"...HEAD` to get changed files. Default `BASE_REF` is `origin/<default branch>`, from `git symbolic-ref --short refs/remotes/origin/HEAD`. If the user references a PR number, first require `git rev-parse HEAD` to equal `gh pr view <number> --json headRefOid -q .headRefOid`; if they differ, stop and ask the user to check out the PR head. Then set `BASE_REF=origin/$(gh pr view <number> --json baseRefName -q .baseRefName)` and build the list with the same `git diff` command, so deleted paths stay filtered. Fetch that base first; a stale `origin/<base>` widens the diff. Derive affected Go packages from the file paths (unique parent directories containing `.go` files).
   - **Committed changes only.** Diff scope reviews commits, not the working tree. If `git status --porcelain` is non-empty, record "uncommitted changes not reviewed" under **Not checked**.
-  - **Explicit paths/packages:** The user may specify directories (e.g. `internal/auth/`), Go package patterns (e.g. `./internal/auth/...`), or individual files. When given a directory or package pattern, include all files under it. Derive Go package paths for static analysis tool invocations.
+  - **Explicit paths/packages:** The user may specify directories (e.g. `internal/auth/`), Go package patterns (e.g. `./internal/auth/...`), or individual files. When given a directory or package pattern, include all files under it. Derive Go package paths for static analysis tool invocations. For coverage gaps, the headline, and lens dispatch, treat explicit paths as diff scope, with the resolved list in place of changed files.
   - **Full codebase:** No filtering. Explore everything (default).
-- **Resolve the base once.** For diff scope, record `BASE_REF` and `BASE_COMMIT=$(git merge-base "$BASE_REF" HEAD)` here and pass both to every subagent. A subagent MUST NOT recompute the base; two reviewers on different bases review different diffs.
+- **Resolve the base once.** For diff scope, and for explicit paths whenever `has_changes` is evaluated, record `BASE_REF` and `BASE_COMMIT=$(git merge-base "$BASE_REF" HEAD)` here and pass both to every subagent. A subagent MUST NOT recompute the base; two reviewers on different bases review different diffs.
 - **Empty diff stops the run.** Decide emptiness with `git diff --name-only "$BASE_REF"...HEAD` (no `--diff-filter`). If it lists nothing, report "No changes to review" and stop. A deletion-only change proceeds: list deleted paths in the dispatch table and under **Not checked**; they get no `COVERAGE` rows.
 - **Pass the resolved scope** (file list, derived package paths, and file-type flags below) to each review subagent in step 3 so they skip their own scope confirmation and use the provided scope directly.
 - **Resolve `pr_url` for deep-linking** (display-only, used in the final consolidated report). Run `gh pr view --json url -q .url 2>/dev/null` to capture the PR URL for the current branch (or for the PR number the user supplied via `gh pr view <num> --json url -q .url`). Empty string if no PR exists. Pass `pr_url` to each subagent in step 3 and to the summarization subagent in step 4. Subagents wrap finding `path:line` references using `~/.claude/scripts/pr-deeplink.sh "$pr_url" <path> <line>`. See [Finding link wrapping](#finding-link-wrapping) below.
@@ -52,10 +52,11 @@ Orchestrate all domain-specific review skills as parallel subagents, then consol
   - **review-api-compat**: applicable if `has_api_specs` AND `has_changes` (it's a diff-aware review; no diff baseline = nothing to compare)
   - **review-authoring**: applicable if `has_authoring`
   - **review-accessibility**: applicable if `has_ui`
+  - **review-trajectory**: applicable if `has_code` and `has_changes`
   - **Repo lenses**: one per REVIEW.md `## Lens:` whose globs match a changed file, or any tracked file in full-codebase scope (step 1b)
   - **review-performance**: applicable ONLY if `include_performance` is true. Never auto-launched.
-- **Domain scope** = the resolved files matching that domain's applicability flags above. Documentation's scope = the `has_docs` files plus the source files whose doc comments it reviews.
   - **evaluate-dependency**: applicable if `has_manifest` AND `has_changes`. Diff the manifest to find added or version-bumped dependencies (`git diff "$BASE_REF"...HEAD -- <manifest>`); run it in **review mode** once per added/bumped dependency. A version change in a lockfile alone dispatches it. Skip when the only change is a removal or checksum-only lockfile churn.
+- **Domain scope** = the resolved files matching that domain's applicability flags above. Documentation's scope = the `has_docs` files plus the source files whose doc comments it reviews. A model-added domain's scope = the files named in its dispatch-table reason.
 
 ### 1a. Detect conformance mode
 
@@ -162,7 +163,7 @@ Then launch a `/discover-patterns` subagent (`subagent_type="generalPurpose"`, `
 
 ### 3. Launch review subagents in parallel
 
-**Print the dispatch table first**: one row per domain, marked `flag` (selected by a step 1 flag), `lens` (a REVIEW.md lens whose globs matched), or `model-added` (no flag selected it, and you add it with a stated reason, e.g. a deleted auth file whose content no flag can scan), with the files that triggered it. You MAY add domains; you MUST NOT drop a flag-selected one.
+**Print the dispatch table first**: one row per domain, marked `flag` (selected by any step 1 condition, including the DB import scan), `lens` (a REVIEW.md lens whose globs matched), or `model-added` (no flag selected it, and you add it with a stated reason, e.g. a deleted auth file whose content no flag can scan), with the files that triggered it. You MAY add domains; you MUST NOT drop a flag-selected one.
 
 Launch every applicable light review in one message using the Task tool; the harness limits overall concurrency. **Heavy reviews** build or run the project: `review-coverage` (test suite with coverage), and `review-security` when `include_deep_security` is set (CodeQL database build, capslock). Run at most 2 heavy reviews at a time and queue the rest, logging `heavy: start <name>` and `heavy: done <name>`. A failed heavy review also logs `heavy: done <name>` so its slot frees; record it under **Not checked**. Each subagent is `subagent_type="generalPurpose"`, `model: sonnet` (per `subagent-model-routing` — structured analysis with code-level findings).
 
@@ -177,6 +178,7 @@ For each subagent, include in its prompt:
 - The `include_deep_security` flag from step 1 (for review-security only)
 - If `REVIEW.md` was loaded in step 1b: the "Always check" rules (for all subagents) and the relevant domain-specific section for that subagent (e.g. Security section → review-security, Database section → review-database). Instruct the subagent to treat "Always check" rules as HIGH severity and domain-specific rules as MEDIUM severity, in addition to its own reference checklist.
 - Instructions to follow the corresponding skill's workflow (read the SKILL.md for reference on what each skill does)
+- The subagent MUST NOT write a report file or resolve its own `REVIEW_DIR`; a passed `REVIEW_DIR` is read-only input. It returns findings to this orchestrator.
 - Request that it return the full findings output (including tracking annotations and tool availability sections)
 - **If the `Open work context` block from step 1d is non-empty**, include it in the subagent prompt under a dedicated heading:
   ```
@@ -187,9 +189,9 @@ For each subagent, include in its prompt:
   ```
   This is the **sole injection point** for the open-context block. The system overview from step 2 is **not** modified to carry it — keep step 2 focused on architecture, step 3's per-subagent prompt focused on reviewer-facing context.
 
-**Exception — the `Invariant adversary` subagent.** It receives only the resolved file list, the base ref, the diff, and the finding contract (a format, not a narrative). Withhold the system overview, the PR title and body, `REVIEW.md` sections, the `Open work context` block, and every other subagent's findings. Those are narratives of what the change is meant to do; a reviewer handed one checks the code against it and inherits its blind spots. Launch it with `model: fable` per `subagent-model-routing` (adversarial enumeration where a miss is costly; a model different from the parent also weakens self-agreement). Its full prompt body and output template are in [reference-invariant-adversary.md](reference-invariant-adversary.md).
+**Exception — the `Invariant adversary` subagent.** It receives only the resolved file list, `BASE_REF` and `BASE_COMMIT`, the diff, and the finding contract (a format, not a narrative). Withhold the system overview, the PR title and body, `REVIEW.md` sections, the `Open work context` block, and every other subagent's findings. Those are narratives of what the change is meant to do; a reviewer handed one checks the code against it and inherits its blind spots. Launch it with `model: fable` per `subagent-model-routing` (adversarial enumeration where a miss is costly; a model different from the parent also weakens self-agreement). Its full prompt body and output template are in [reference-invariant-adversary.md](reference-invariant-adversary.md).
 
-**Exception — the `Trajectory` subagent.** Launch it with `model: fable` per `subagent-model-routing` (a tipping-point call with no rubric). Its findings concern the whole repository, not the resolved file list. Pass the base ref and the diff, and state that it reads members the diff never touches. A third entrypoint is invisible to a reviewer scoped to changed files. Its output is advisory and MUST NOT request a change to the diff.
+**Exception — the `Trajectory` subagent.** Launch it with `model: fable` per `subagent-model-routing` (a tipping-point call with no rubric). Its findings concern the whole repository, not the resolved file list. Pass `BASE_REF`, `BASE_COMMIT`, and the diff, and state that it reads members the diff never touches. A third entrypoint is invisible to a reviewer scoped to changed files. Its output is advisory and MUST NOT request a change to the diff.
 
 **Review subagents to launch:**
 
@@ -219,14 +221,14 @@ Each subagent should NOT write its own output file; it returns findings to this 
 
 **Pre-merge (orchestrator, before the summarizer):**
 
-1. Parse every `FINDING` and `COVERAGE` line. A `FINDING` line missing a required field, or with a value outside its vocabulary (`sev` P0–P3, `blocking` y/n, `conf` high/med/low), is kept as raw text and recorded under **Not checked** as "unparseable finding from <reviewer>".
-2. A reviewer with a non-empty domain scope that returned no `COVERAGE` rows goes under **Not checked** with its name. A reviewer with an empty domain scope emits no rows and is not listed. Trajectory is exempt: it is advisory, repo-wide, and emits neither.
+1. Parse every `FINDING` and `COVERAGE` line. A `FINDING` line missing a required field, or with a value outside its vocabulary (`sev` P0–P3, `blocking` y/n, `conf` high/med/low), is kept as raw text and recorded under **Not checked** as "unparseable finding from <reviewer>". Per reviewer, compare its finding rows to its `FINDING` lines; record a mismatch under **Not checked** as "finding without header from <reviewer>".
+2. A reviewer with a non-empty domain scope that returned no `COVERAGE` rows goes under **Not checked** with its name. A reviewer with an empty domain scope emits no rows and is not listed. Trajectory is exempt: it is advisory, repo-wide, and emits neither. Independent of scope, every dispatch-table row whose subagent errored or returned nothing goes under **Not checked**, Trajectory included.
 3. **Demote first.** Each `conf=low` finding with `blocking=y` becomes `blocking=n`, tagged "(low-confidence)".
-4. **Merge** findings with identical `dkey`, including two from one reviewer. Nothing else merges here.
-5. A merged finding keeps the highest `sev`, the OR of the (already-demoted) `blocking` flags, the highest `conf`, and the union of domains.
-6. **Coverage gaps** (diff scope only) = resolved files no reviewer marked `read-fully`. In full-codebase scope, render "Not computed in full-codebase scope".
+4. **Merge** findings from different reviewers with identical `dkey`. A file-level `dkey` (`line` 0) never merges. Nothing else merges here.
+5. A merged finding keeps the highest `sev`, the OR of the (already-demoted) `blocking` flags, the highest `conf`, and the union of domains. It keeps the "(low-confidence)" tag when its highest `sev` came from a `conf=low` source.
+6. **Coverage gaps** (diff or explicit-path scope) = resolved files no reviewer marked `read-fully`. In full-codebase scope, render "Not computed in full-codebase scope".
 
-Hand the summarizer the merged set, the coverage gaps, the raw reviewer output, and the Not-checked list: reviewers without `COVERAGE` rows, unparseable findings, deleted paths, uncommitted changes, lens validation failures from 1b, step 1d skipped (empty keywords) or failed lookups, failed tools, and any queued heavy review that never started or failed. Severity, Blocking, and Conf come from the merged set; the raw output supplies finding text only and MUST NOT override demotion. The summarizer's semantic dedupe below is the fallback for overlapping findings with different `dkey`s.
+Hand the summarizer the merged set, the coverage gaps, the raw reviewer output, and the Not-checked list: reviewers without `COVERAGE` rows, failed or empty subagents, unparseable or headerless findings, deleted paths, uncommitted changes, lens validation failures from 1b, step 1d skipped (empty keywords) or failed lookups, failed tools, and any queued heavy review that never started or failed. Severity, Blocking, and Conf come from the merged set; the raw output supplies finding text only and MUST NOT override demotion. The summarizer's semantic dedupe below is the fallback for overlapping findings with different `dkey`s; it combines them per item 5 and lists both `dkey`s.
 
 After all review subagents complete, launch a single summarization subagent (`subagent_type="generalPurpose"`, `model: opus` per `subagent-model-routing` — cross-cutting dedup and prioritization across all review domains) with the full findings from each review subagent. Pass `pr_url` so it can preserve and apply the [Finding link wrapping](#finding-link-wrapping) convention when rewriting tables.
 
@@ -239,14 +241,14 @@ Prompt it to:
    - reliability ↔ observability (e.g. missing error spans on hot paths)
    - reliability ↔ infrastructure (e.g. k8s probes vs. shutdown contract — `review-infrastructure` covers probe presence, `review-reliability` covers shutdown semantics)
    - code ↔ api-compat (e.g. a proto change flagged for design AND for wire compat)
-   - invariant-adversary ↔ code / reliability / database (it reaches the same defect from the invariant side; keep its evidence, which cites dependency source, and drop the weaker duplicate)
+   - invariant-adversary ↔ code / reliability / database (it reaches the same defect from the invariant side; keep its evidence, which cites dependency source, and combine the duplicates per pre-merge item 5)
 2. **Cross-reference** each deduplicated finding to its source review and IDs.
 3. **Compute unified tracking** for each deduplicated finding. Populate `tracking: {status, sources, possibly_overlaps}` per [reference-tracking.md](reference-tracking.md). Combines in-repo signals (TODO / FIXME etc., always evaluated) with open-work signals (tier-1 path mention / tier-2 symbol mention / tier-3 keyword match against the step-1d set). Tier-1 and tier-2 promote to `tracked`; tier-3 stays `untracked` with a `possibly_overlaps` annotation. Terminal-state items (closed / merged PRs, closed issues, `statusCategory = Done` Jira) never produce a source entry.
 4. **Prioritize and lay out** per [reference-tracking.md § Findings layout in SUMMARY.md](reference-tracking.md#findings-layout-in-summarymd): two flat tables (untracked above the fold; tracked collapsed in a `<details>` block), severity desc then category alpha, `tracking` rendered inline per [reference-tracking.md § Badge rendering](reference-tracking.md#badge-rendering).
 5. **Recommend fix order**, considering dependencies between findings and effort estimates. Tracked findings (tier-1 or tier-2 source) may be deprioritized when the source indicates an active plan. A `possibly_overlaps` annotation (tier-3 only) does not affect ordering.
 6. **Tool Availability summary**. Consolidate from all reviews into a summary listing which automated tools ran successfully, which were skipped, and why.
 7. **Not checked**: every item in the Not-checked list above, plus any failed tool, missing input, or skipped or failed domain found in the raw output. Never present these as a pass.
-8. **Headline**, verbatim shape: `**<B> blocking · <N> non-blocking · <G> coverage gaps** — If you change only one thing: <finding and one-line fix>`. In full-codebase scope, replace `<G> coverage gaps` with `coverage gaps not computed (full scope)`.
+8. **Headline**, verbatim shape: `**<B> blocking · <N> non-blocking · <G> coverage gaps** — If you change only one thing: <finding and one-line fix>`. In full-codebase scope, replace `<G> coverage gaps` with `coverage gaps not computed (full scope)`. Counts cover both findings tables. With zero findings, render the bold counts alone.
 
 ### 5. Present results
 
@@ -281,7 +283,7 @@ Render both findings sections per [reference-tracking.md § Findings layout in S
 
 ## Run metadata header
 
-The metadata-capture snippet and header template live in [reference-metadata.md](reference-metadata.md). Capture once near `REVIEW_DIR` resolution and prepend to every output document this skill writes (subagents that write their own files do the same).
+The metadata-capture snippet and header template live in [reference-metadata.md](reference-metadata.md). Capture once near `REVIEW_DIR` resolution and prepend to every output document this skill writes.
 
 ---
 

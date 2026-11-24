@@ -38,11 +38,11 @@ Also in scope: any script a hook, skill, or command invokes (follow the path fro
 - **Full repo:** walk for the globs above (default).
 - **If invoked from review-all:** receive `file_list`, `has_changes`, `base_ref`, `REVIEW_DIR`, and `pr_url`. Skip scope confirmation.
 
-The resolved list is the scope. Every in-scope file gets reviewed and a `COVERAGE` row, including files the user did not name.
+The resolved list is the scope. Every in-scope file gets reviewed and a `COVERAGE` row, including files the user did not name. When dispatched by review-all, rows for invoked scripts are optional; glob-matched files still need one.
 
 ### 2. Inventory
 
-Classify each file by type (hook config, subagent, command, skill, rule, settings, MCP, plugin manifest, instruction file). Note the trust context: project-shared (committed, runs for every contributor) vs. user-local (`settings.local.json`, `~/.claude/`). Severity comes from each check's class in the [severity table](#severity); trust context does not raise it.
+Classify each file by type (hook config, subagent, command, skill, rule, settings, MCP, plugin manifest, instruction file). Note the trust context: project-shared (committed, runs for every contributor) vs. user-local (`settings.local.json`, `~/.claude/`). Severity is the `(P0)`–`(P3)` class after each check's `rule_id` in reference.md, defined in the [severity table](#severity); trust context does not raise it.
 
 ### 3. Review
 
@@ -111,7 +111,7 @@ In PR mode (`pr_url` set), wrap each `path:line` with `~/.claude/scripts/pr-deep
 | Sev | Meaning | Examples |
 |---|---|---|
 | P0 | Code execution, secret exposure, or permission bypass reachable without further mistakes | Literal token in `.mcp.json`; `curl … \| sh` in a SessionStart hook; unquoted tool input in a hook command; `defaultMode: bypassPermissions` in committed settings |
-| P1 | Excessive agency or a guard that silently does not guard | Side-effecting skill without `disable-model-invocation: true`; subagent with omitted `tools` (inherits all); blocking hook that exits 1 instead of 2; untrusted content treated as instructions; unpinned `npx -y` MCP server |
+| P1 | Excessive agency, a guard that silently does not guard, or exposed PII | Side-effecting skill without `disable-model-invocation: true`; subagent with omitted `tools` (inherits all); blocking hook that exits 1 instead of 2; untrusted content treated as instructions; unpinned `npx -y` MCP server |
 | P2 | Missing validation or hygiene that raises risk | Hook that does not validate stdin JSON; invalid matcher that never fires on a non-guard hook; plugin component path that does not exist |
 | P3 | Cost or clarity | Model unset where cost matters; style violation of the target repo's authoring rule |
 

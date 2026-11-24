@@ -1,6 +1,6 @@
 # Review-all: run metadata header
 
-Capture once near `REVIEW_DIR` resolution and prepend to every output document this skill writes (and require subagents that write their own files to do the same):
+Capture once near `REVIEW_DIR` resolution and prepend to every output document this skill writes:
 
 ```sh
 RUN_DATETIME=$(date -u +"%Y-%m-%d %H:%M UTC")

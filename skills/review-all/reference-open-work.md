@@ -28,7 +28,7 @@ gh pr list --state open --limit 50 \
 
 Post-filter the JSON result: keep entries where `title || headRefName || labels[*].name` contains ≥1 keyword (case-insensitive substring). Sort by `updatedAt` desc, cap at 10.
 
-**Fail-soft**: if `gh` errors (no auth, no remote, command not found), record one line `PR lookup unavailable: <reason>` in the run metadata and continue with the remaining sources.
+**Fail-soft**: if `gh` errors (no auth, no remote, command not found), record one line `PR lookup unavailable: <reason>` under **Not checked** and continue with the remaining sources.
 
 **Source: open GitHub issues**
 
@@ -44,7 +44,7 @@ Post-filter: keep entries where `title || labels[*].name` contains ≥1 keyword.
 
 **Label boost**: when a hit carries any of `bug`, `regression`, `flaky`, `security`, prefix the rendered row with `★` (visual emphasis only — ordering is unchanged).
 
-**Fail-soft**: same as the PR source — record `Issue lookup unavailable: <reason>` and continue.
+**Fail-soft**: same as the PR source — record `Issue lookup unavailable: <reason>` under **Not checked** and continue.
 
 **Source: open Jira tickets (opt-in)**
 
@@ -58,7 +58,7 @@ project = <KEY> AND statusCategory != Done AND updated >= -<RECENCY>d
 
 Post-filter: keep entries where `summary || description` contains ≥1 keyword (case-insensitive substring). Sort by `updated` desc, cap at 10. Render each as `<KEY>-<NUM>: <summary>` with status.
 
-**Fail-soft**: if the MCP is unavailable or returns an auth error, record `Jira lookup unavailable: <reason>` and continue.
+**Fail-soft**: if the MCP is unavailable or returns an auth error, record `Jira lookup unavailable: <reason>` under **Not checked** and continue.
 
 **Rendered block** — `Open work context`:
 

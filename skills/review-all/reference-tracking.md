@@ -19,7 +19,7 @@ COVERAGE | file=<path> | status=<read-fully|skimmed|not-read>
 | `blocking` | Fix before merge. Default `y` for P0–P1, `n` for P2–P3; an override needs a one-clause reason |
 | `conf` | `high`: traced to `file:line` and read. `med`: pattern match read in context. `low`: line read, but the defect depends on runtime behavior or context not visible statically |
 | `rule_id` | A CWE when one applies, else a kebab defect class (`stale-epoch-commit`). Fixed ids: logged secret `CWE-532`, hardcoded secret `CWE-798`, SQL injection `CWE-89`, missing authorization `CWE-862` |
-| `dkey` | `<path>:<line>:<rule_id>`, where `line` is the defect's first line |
+| `dkey` | `<path>:<line>:<rule_id>`, where `line` is the defect's first line, or `0` for a file-level finding |
 
 A missing or unparseable header, or missing coverage rows for a non-empty domain scope, is a reviewer defect: record it under **Not checked** per SKILL.md step 4, never as a clean result.
 
