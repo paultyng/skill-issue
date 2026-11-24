@@ -2,7 +2,26 @@
 
 How `/review-all` decides whether a consolidated finding is `tracked` and how the result renders. The summarization step (step 4 of the workflow) reads this file.
 
-**Contents:** [Schema](#schema) · [Signal classes](#signal-classes) · [Badge rendering](#badge-rendering) · [Findings layout in SUMMARY.md](#findings-layout-in-summarymd)
+**Contents:** [Finding header](#finding-header) · [Schema](#schema) · [Signal classes](#signal-classes) · [Badge rendering](#badge-rendering) · [Findings layout in SUMMARY.md](#findings-layout-in-summarymd)
+
+## Finding header
+
+Every reviewer prefixes each finding with one line, and lists one coverage row per in-scope file after its findings:
+
+```
+FINDING | rule_id=<id> | sev=<P0-P3> | blocking=<y|n> | conf=<high|med|low> | dkey=<path>:<line>:<rule_id>
+COVERAGE | file=<path> | status=<read-fully|skimmed|not-read>
+```
+
+| Field | Meaning |
+|---|---|
+| `sev` | The P0–P3 scale every review-* skill uses. Maps to CRITICAL / HIGH / MEDIUM / LOW in SUMMARY.md |
+| `blocking` | Fix before merge. Default `y` for P0–P1, `n` for P2–P3; an override needs a one-clause reason |
+| `conf` | `high`: traced to `file:line` and read. `med`: pattern match read in context. `low`: inferred, line not read |
+| `rule_id` | A CWE when one applies, else a kebab defect class (`stale-epoch-commit`). Fixed ids: logged secret `CWE-532`, hardcoded secret `CWE-798`, SQL injection `CWE-89`, missing authorization `CWE-862` |
+| `dkey` | `<path>:<line>:<rule_id>`, where `line` is the defect's first line |
+
+A missing header or coverage row is a reviewer defect: record it under **Not checked**, never as a clean result.
 
 ## Schema
 
@@ -73,21 +92,21 @@ Rules:
 
 ## Findings layout in SUMMARY.md
 
-Both findings sections in `SUMMARY.md` render as a single **flat** table — categories are a column, not a section header. Per-domain Output Templates in SKILL.md describe what each subagent emits; the summarization subagent compresses them into this unified shape.
+Both findings sections in `SUMMARY.md` render as a single **flat** table — categories are a column, not a section header. Per-domain templates in [reference-output.md](reference-output.md) describe what each subagent emits; the summarization subagent compresses them into this unified shape.
 
 ```markdown
 ## Findings — untracked
 
-| Category | Severity | Finding | Class | Tracked |
-|----------|----------|---------|-------|---------|
-| security | HIGH     | <description with file:line> | S1, A01 | — |
-| code     | MEDIUM   | <description with file:line> | GO1, SA3 | [→ possibly overlaps: PR #4] |
+| Category | Severity | Blocking | Conf | Finding | Class | Tracked |
+|----------|----------|----------|------|---------|-------|---------|
+| security | HIGH     | y        | high | <description with file:line> | S1, A01 | — |
+| code     | MEDIUM   | n (low-confidence) | low | <description with file:line> | GO1, SA3 | [→ possibly overlaps: PR #4] |
 
 <details><summary>Findings — tracked (N)</summary>
 
-| Category | Severity | Finding | Class | Tracked |
-|----------|----------|---------|-------|---------|
-| security | HIGH     | <description with file:line> | T2 | [tracked: ISSUE #5] |
+| Category | Severity | Blocking | Conf | Finding | Class | Tracked |
+|----------|----------|----------|------|---------|-------|---------|
+| security | HIGH     | y        | med  | <description with file:line> | T2 | [tracked: ISSUE #5] |
 
 </details>
 ```
@@ -96,6 +115,7 @@ Rules:
 
 - **Class column** holds category-specific tags compressed from the per-domain templates: STRIDE/OWASP for security; `Impact / Effort` joined with `/` for reliability / infra / ci / observability / performance; source IDs (ARCH1, GO1, etc.) for code / documentation / coverage; change-class for api-compatibility. Empty when not applicable.
 - **Severity scale** is unified to `CRITICAL / HIGH / MEDIUM / LOW`. Per-domain `P0 / P1 / P2 / P3` map to `CRITICAL / HIGH / MEDIUM / LOW`.
+- **Blocking / Conf columns** carry the merged `blocking` and `conf` from the finding header. A demoted finding renders `n (low-confidence)`. A merged finding's `Category` lists every domain that raised it (`security, observability`).
 - **Sort order:** severity desc, then category alpha.
 - **Tracked column** renders per [Badge rendering](#badge-rendering) above.
 - **Empty groups:**
