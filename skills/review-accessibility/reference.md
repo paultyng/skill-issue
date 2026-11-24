@@ -71,8 +71,8 @@ One line per check: defect → fix (SC, level). Severity: A → P1, AA → P2, A
 
 ## Robust
 
-- Duplicate `id` within a page or rendered list (hard-coded `id` in a repeated component) → make it unique (`useId()` or a prefix) (4.1.1, A).
-- `aria-labelledby` / `aria-describedby` / `for` pointing at a missing `id` → fix the reference (4.1.1, A; 4.1.2, A).
+- Duplicate `id` within a page or rendered list (hard-coded `id` in a repeated component) that breaks a `for` / `aria-labelledby` / `aria-describedby` reference → make it unique (`useId()` or a prefix) (4.1.2, A). A duplicate that breaks no reference is not a WCAG failure; do not raise it.
+- `aria-labelledby` / `aria-describedby` / `for` pointing at a missing `id` → fix the reference (4.1.2, A; 1.3.1, A).
 - Interactive element nested in another (`<button>` in `<a>`, `<a>` in `<button>`, input in a clickable row) → un-nest; one control per target (4.1.2, A).
 - Custom control missing role, name, or state (`aria-expanded`, `aria-checked`, `aria-selected`, `aria-pressed`) → add per pattern below (4.1.2, A).
 - `role` that overrides a native element's semantics (`<button role="link">`, `<h2 role="button">`) → use the right element (4.1.2, A).

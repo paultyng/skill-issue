@@ -6,7 +6,7 @@ Per-file-type checks for `review-authoring`. Each line: defect → fix, with the
 
 - [Hooks](#hooks) (`hooks` key in `settings*.json`, `hooks.json`, `hooks/hooks.json`)
 - [Settings](#settings) (`.claude/settings*.json`)
-- [Subagents and commands](#subagents-and-commands) (`agents/`, `commands/`)
+- [Subagents and commands](#subagents-and-commands) (`agents/`, `commands/` under `.claude/` or a plugin root)
 - [Skills](#skills) (`SKILL.md` and bundled scripts)
 - [MCP config](#mcp-config) (`.mcp.json`, `mcpServers` in plugin manifests)
 - [Plugin manifests](#plugin-manifests) (`plugin.json`, `marketplace.json`)
@@ -20,13 +20,13 @@ Semantics to check against (Claude Code hooks reference):
 - Events: `PreToolUse`, `PostToolUse`, `PermissionRequest`, `UserPromptSubmit`, `Notification`, `Stop`, `SubagentStop`, `PreCompact`, `SessionStart`, `SessionEnd`. Names are case-sensitive; an unknown event never fires. Confirm newer event names against the current docs before flagging them.
 - `matcher` applies to tool events (tool name, regex, e.g. `Edit|Write`, `mcp__server__.*`), `SessionStart` (`startup|resume|clear|compact`), and `PreCompact` (`manual|auto`). Empty or `*` matches all.
 - Exit 0: success; stdout becomes context only for `UserPromptSubmit` and `SessionStart`. Exit 2: blocks (tool call, prompt, or stop) and stderr goes to the model. Any other non-zero: non-blocking error, stderr shown to the user, execution continues.
-- JSON stdout (`decision`, `hookSpecificOutput.permissionDecision`: `allow` / `deny` / `ask`) overrides exit-code handling; `allow` skips the permission prompt.
+- JSON stdout (`decision`, `hookSpecificOutput.permissionDecision`: `allow` / `deny` / `ask`) overrides exit-code handling. Exit 2 or a JSON deny (`permissionDecision: deny` / `decision: block`) blocks; `allow` skips the permission prompt.
 - Hooks run with the user's full shell privileges, input arrives as JSON on stdin.
 
 Checks:
 - Event name misspelled or nonexistent → correct the name; a guard hook that never fires is P1. `hook-invalid-event`
 - Matcher does not match the intended tool (`bash` vs `Bash`, `Write` missing `Edit`/`MultiEdit`) → fix the regex; test it against real tool names. `hook-matcher-miss`
-- Guard hook signals failure with `exit 1` or prints the reason to stdout → `exit 2` with the reason on stderr, or emit `permissionDecision: deny`. `hook-exit-code`
+- Guard hook signals failure with `exit 1` or prints the reason to stdout → `exit 2` with the reason on stderr, or emit a JSON deny (`permissionDecision: deny` / `decision: block`). `hook-exit-code`
 - Hook returns `permissionDecision: allow` or `decision: approve` broadly → narrow the condition; auto-approve only exact, validated inputs. `hook-auto-approve`
 - stdin JSON used without parsing or validation (grep/sed on raw stdin, missing-field paths unhandled) → parse with `jq -e`, exit non-zero on parse failure or missing field. `hook-unvalidated-input`
 - Tool input (`tool_input.command`, `file_path`, prompt text) interpolated into a shell command unquoted or via `eval` / `sh -c` → quote every expansion, pass as argv, never `eval`. `CWE-78`

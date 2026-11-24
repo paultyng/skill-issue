@@ -4,7 +4,7 @@ The prompt body and output template for the `Invariant adversary` subagent launc
 
 ## Input contract
 
-This subagent is **input-starved by design**. The orchestrator passes exactly the resolved file list, the base ref, the diff, and repository read access. It withholds the system overview, the PR title and body, `REVIEW.md` sections, the `Open work context` block, and other subagents' findings. Each of those is a narrative of what the change is meant to do; a reviewer handed one checks the code against it and inherits its blind spots. The withholding is enforced by what step 3 puts in the prompt, not by an instruction to ignore context already given.
+This subagent is **input-starved by design**. The orchestrator passes exactly the resolved file list, the base ref, the diff, the finding contract ([reference-tracking.md § Finding header](reference-tracking.md#finding-header); a format, not a narrative), and repository read access. It withholds the system overview, the PR title and body, `REVIEW.md` sections, the `Open work context` block, and other subagents' findings. Each of those is a narrative of what the change is meant to do; a reviewer handed one checks the code against it and inherits its blind spots. The withholding is enforced by what step 3 puts in the prompt, not by an instruction to ignore context already given.
 
 ## Goal
 
@@ -41,7 +41,7 @@ Each line below is a class of bug this reviewer has failed to find before. Treat
 
 ## Output template
 
-```markdown
+````markdown
 ### Invariants enumerated
 
 | # | Invariant | Holds? | Evidence |
@@ -67,6 +67,17 @@ Each line below is a class of bug this reviewer has failed to find before. Treat
 |----------|---------|-------|----------|---------|
 | P0 | Description with concrete fix | invariant / equivalence / interaction / ownership / budget | `path:line` | — |
 | P1 | pre-existing: description | equivalence | `path:line` | — |
+
+```
+FINDING | rule_id=<id> | sev=P0 | blocking=y | conf=high | dkey=<path>:<line>:<rule_id>
+FINDING | rule_id=<id> | sev=P1 | blocking=y | conf=high | dkey=<path>:<line>:<rule_id>
 ```
 
-The `Tracked` column renders the badge from [reference-tracking.md § Badge rendering](reference-tracking.md#badge-rendering). `path:line` cells wrap per [SKILL.md § Finding link wrapping](SKILL.md#finding-link-wrapping).
+### Coverage
+
+```
+COVERAGE | file=<path> | status=<read-fully|skimmed|not-read>
+```
+````
+
+One `FINDING` line per Findings row, in row order, in the fenced block after the table; one `COVERAGE` row per resolved file. The `Tracked` column renders the badge from [reference-tracking.md § Badge rendering](reference-tracking.md#badge-rendering). `path:line` cells wrap per [SKILL.md § Finding link wrapping](SKILL.md#finding-link-wrapping).

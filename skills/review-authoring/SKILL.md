@@ -18,12 +18,14 @@ Safety review of files that configure or instruct a coding agent: skills, subage
 ```
 **/SKILL.md                     **/.claude/settings*.json
 **/.claude/agents/**            **/hooks.json   **/hooks/hooks.json
-**/agents/*.md                  **/.mcp.json
+<plugin-root>/agents/*.md       **/.mcp.json
 **/.claude/rules/**             **/.claude-plugin/plugin.json
-**/rules/*.md                   **/.claude-plugin/marketplace.json
+<plugin-root>/rules/*.md        **/.claude-plugin/marketplace.json
 **/.claude/commands/**          **/AGENTS.md
-**/commands/*.md                **/CLAUDE.md
+<plugin-root>/commands/*.md     **/CLAUDE.md
 ```
+
+`<plugin-root>` is any directory containing `.claude-plugin/`. Exclude `node_modules/`, `vendor/`, and `.git/`.
 
 Also in scope: any script a hook, skill, or command invokes (follow the path from the config), since the config's safety depends on it.
 
@@ -40,16 +42,16 @@ The resolved list is the scope. Every in-scope file gets reviewed and a `COVERAG
 
 ### 2. Inventory
 
-Classify each file by type (hook config, subagent, command, skill, rule, settings, MCP, plugin manifest, instruction file). Note the trust context: project-shared (committed, runs for every contributor) vs. user-local (`settings.local.json`, `~/.claude/`). Project-shared defects are one severity higher.
+Classify each file by type (hook config, subagent, command, skill, rule, settings, MCP, plugin manifest, instruction file). Note the trust context: project-shared (committed, runs for every contributor) vs. user-local (`settings.local.json`, `~/.claude/`). Severity comes from each check's class in the [severity table](#severity); trust context does not raise it.
 
 ### 3. Review
 
-With more than ~10 in-scope files, launch one investigation subagent (`subagent_type="generalPurpose"`, `model: sonnet` per `subagent-model-routing`) with the file list, inventory, and [reference.md](reference.md). Otherwise review inline.
+With more than ~10 in-scope files, launch one investigation subagent (`subagent_type="generalPurpose"`, `model: sonnet` per `subagent-model-routing`) with the file list, inventory, and [reference.md](reference.md). Otherwise, or when already running as a subagent, review inline.
 
 For each file:
 - Apply **every** check for its type in [reference.md](reference.md), plus the **All files** checks. The per-type checks are mandatory, not a menu.
 - Follow referenced scripts and paths. A hook entry that runs `./scripts/guard.sh` is reviewed together with `guard.sh`.
-- Read each cited line before raising a finding; drop what you cannot verify.
+- Read each cited line before raising a finding. Drop what the code shows is not a defect; mark `conf=low` what you cannot confirm statically.
 
 Run validators when available; record each one's result under **Tool availability**:
 
@@ -64,7 +66,7 @@ If `gitleaks` is unavailable, grep in-scope files for token shapes (`AKIA`, `ghp
 
 ### 4. Present results
 
-Resolve the output directory (skip if `REVIEW_DIR` was provided):
+When dispatched by review-all, return findings to the orchestrator and do not write a report file. Standalone, resolve the output directory:
 
 ```sh
 REVIEW_DATE=$(date +%Y-%m-%d)
@@ -120,7 +122,7 @@ In PR mode (`pr_url` set), wrap each `path:line` with `~/.claude/scripts/pr-deep
 | "The other files are outside the files the user asked about." | Scope is every in-scope glob in the resolved file list. Named files set the focus, not the boundary. Unreviewed files get `not-read` coverage rows and a **Not checked** entry. |
 | "I caught the obvious defects, so the review is done." | The per-type checks in reference.md are mandatory. Hook exit-code semantics, `disable-model-invocation`, and the secrets sweep are the ones most often skipped. |
 | "CLAUDE.md and AGENTS.md are prose, not config." | They load into every session. Secrets, internal URLs, and injected instructions there reach the model on every run. Sweep them. |
-| "The hook exits non-zero on failure, so it blocks." | Only exit code 2 blocks, and only its stderr reaches the model. Exit 1 is a non-blocking error; the tool call proceeds. |
+| "The hook exits non-zero on failure, so it blocks." | Only exit code 2 or a JSON deny (`permissionDecision: deny` / `decision: block`) blocks. Exit 1 is a non-blocking error; the tool call proceeds. |
 | "`tools` is not set, so the agent gets defaults." | Omitted `tools` inherits every tool, including MCP tools. That is the broadest grant, not a safe default. |
 | "The skill only runs when the user asks." | Without `disable-model-invocation: true` the model can invoke it on its own when the description matches. |
 | "It's a well-known MCP package." | `npx -y pkg` fetches whatever is latest at session start. Known name, unknown code. |

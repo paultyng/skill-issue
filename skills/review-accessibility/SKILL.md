@@ -30,7 +30,7 @@ Severity comes from the SC's level, not from how bad the defect looks. Missing `
 ## Rules
 
 - **Cite the SC** by number and name in every finding: `1.1.1 Non-text Content`. A finding without one is not a finding.
-- **`rule_id`** is the SC in kebab form: `wcag-1.1.1`, `wcag-2.1.1`, `wcag-4.1.2`.
+- **`rule_id`** is the SC in kebab form: `wcag-1.1.1`, `wcag-2.1.1`, `wcag-4.1.2`. When a check cites several SCs, use the first listed.
 - **Contrast you cannot compute statically is `manual testing needed`.** Colors from theme tokens, CSS variables, `currentColor`, props, or runtime state (hover, disabled, dark mode) get no pass/fail verdict. Compute and report only when both foreground and background are literal values in scope (4.5:1 normal text, 3:1 large text and UI components).
 - **Check the component library before flagging.** A `<Dialog>`, `<Button>`, or `<Menu>` from Radix, Headless UI, React Aria, MUI, Chakra, Reach, Vuetify, or a local design system often supplies role, keyboard handling, focus trap, and ARIA. Read the wrapper source or its docs in `node_modules`. Flag only what the library leaves to the caller (an accessible name, a label, `alt`).
 - **First rule of ARIA:** recommend the native element (`<button>`, `<a href>`, `<input type="checkbox">`) before adding `role` and handlers to a `<div>`.
@@ -49,7 +49,7 @@ Severity comes from the SC's level, not from how bad the defect looks. Missing `
 
 ## Output
 
-Resolve `REVIEW_DIR` as the review-all orchestrator passes it, else `.reviews/$(date +%Y-%m-%d)` (append `-$(date +%H%M)` if it exists; run `~/.claude/scripts/ensure-gitignore.sh '.reviews/'`). Write `${REVIEW_DIR}/ACCESSIBILITY-REVIEW.md`, then present it.
+When dispatched by review-all, return findings to the orchestrator and do not write a report file. Standalone, resolve `REVIEW_DIR` as `.reviews/$(date +%Y-%m-%d)` (append `-$(date +%H%M)` if it exists; run `~/.claude/scripts/ensure-gitignore.sh '.reviews/'`), write `${REVIEW_DIR}/ACCESSIBILITY-REVIEW.md`, then present it.
 
 Prefix each finding with one header line, and list one coverage row per in-scope file after the findings:
 

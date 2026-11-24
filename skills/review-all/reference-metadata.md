@@ -8,8 +8,8 @@ GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 GIT_COMMIT=$(git rev-parse --short HEAD)
 GIT_COMMIT_FULL=$(git rev-parse HEAD)
 GIT_SUBJECT=$(git log -1 --pretty=%s)
-# When scope is diff-based, also capture:
-# BASE_REF=<base, e.g. main>; BASE_COMMIT=$(git rev-parse --short "$BASE_REF")
+# When scope is diff-based, reuse BASE_REF (default origin/<default branch>) and
+# BASE_COMMIT (git merge-base "$BASE_REF" HEAD) from step 1; do not recompute. Render BASE_COMMIT short.
 ```
 
 Header template (place at the very top of the output `.md`, before the H1 title):
@@ -18,6 +18,6 @@ Header template (place at the very top of the output `.md`, before the H1 title)
 > **Run:** {RUN_DATETIME}
 > **Branch:** {GIT_BRANCH} @ {GIT_COMMIT} (`{GIT_COMMIT_FULL}`)
 > **Subject:** {GIT_SUBJECT}
-> **Base:** {BASE_REF} @ {BASE_COMMIT}   <!-- omit when scope is not diff-based -->
+> **Base:** {BASE_REF} @ {BASE_COMMIT} (merge-base)   <!-- omit when scope is not diff-based -->
 > **Scope:** {scope description, e.g. "changed files (PR #42)" or "full codebase" or "./internal/auth/..."}
 ```
