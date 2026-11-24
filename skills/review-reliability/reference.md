@@ -7,6 +7,7 @@ Checklists for reliability analysis. The SKILL.md workflow reads this file.
 - gRPC Production Patterns
 - Stability Patterns
 - Resource and Context Ownership
+- State and fail direction
 - Stability Anti-Patterns
 
 Reference sources:
@@ -118,6 +119,18 @@ Who owns a resource after the caller gives up. To answer this, read the dependen
 - Behavior checked against a test harness stand-in says nothing about production. Example: a bare driver handle instead of the project's pool constructor
 - Behavior checked against a substitute backend says nothing about the real one. One SQL engine can stand in for another, or recorded fixtures can stand in for a live service. Engine-specific statements, privileges, and system objects differ
 - If only a stand-in is available, say so in the finding and name the check that settles it. Per `probe-not-assume`
+
+## State and fail direction
+
+- Fail in the direction the protected property needs: closed for authz and enforcement, open only for availability-only paths. Never report a property you did not establish
+- Results computed under an epoch, version, or lease that has since advanced are discarded, not committed
+- Unreadable or timed-out remote state is `Unknown`, never the last known or default-healthy value
+- Partial completion (some items, some replicas) is not reported as success
+- Irreversible destruction (delete, revoke, purge) runs only on a terminal signal, never on a transient error or timeout
+- A disabled feature flag makes its gated path unreachable, and the flag guards the path that actually changes behavior
+- Retried operations are idempotent: idempotency key, upsert, or dedupe on the receiver
+- Caches do not serve stale enforcement decisions (authz, revocation, quota) past their validity
+- Equivalent outcomes emit equivalent events and metrics regardless of code path
 
 ## Stability Anti-Patterns (Release It!)
 

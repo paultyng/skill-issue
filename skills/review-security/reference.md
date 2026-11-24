@@ -69,11 +69,16 @@ Boundaries past reviews skipped. Check each one is covered before returning.
 - Tenant isolation and data segregation
 - CORS and origin policies
 - Direct object reference protection
+- Secondary or delegated auth paths call the same eligibility check as the direct path; a check that only logs is a bypass
+- A scoped or derived credential is a distinct type, cannot reach its parent's root, and does not outlive its parent
+- A new deny rule preserves existing explicit exemptions
 
 ### A02 — Security Misconfiguration
 
 - Default credentials, debug endpoints, unnecessary features enabled
 - Secret handling: environment variables, config files, rotation
+- Raw credentials do not cross a serialization boundary (logs, errors, RPC payloads, caches) unredacted
+- Secrets are zeroed or released on success, failure, and cancellation paths
 - TLS configuration and certificate management
 - HTTP security headers (if applicable)
 
@@ -90,6 +95,8 @@ Boundaries past reviews skipped. Check each one is covered before returning.
 - Key management: entropy, rotation, storage
 - Token construction: sufficient entropy, secure random generation
 - Certificate validation and TLS version requirements
+- Secret and MAC comparisons are constant-time (`crypto/subtle.ConstantTimeCompare`, `hmac.Equal`)
+- Hardcoded IVs, nonces, or salts; `InsecureSkipVerify: true` or equivalent disabled TLS verification
 
 ### A05 — Injection
 
@@ -97,6 +104,7 @@ Boundaries past reviews skipped. Check each one is covered before returning.
 - Policy/expression evaluation: are user-controlled inputs compiled/evaluated safely?
 - Template rendering: is user input escaped in templates?
 - Command execution: no shell injection vectors
+- Insecure deserialization of untrusted input (gob, pickle, YAML with arbitrary types, polymorphic JSON)
 
 ### A06 — Insecure Design
 

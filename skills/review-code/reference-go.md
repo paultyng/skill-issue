@@ -6,6 +6,22 @@ Reference sources:
 - [Effective Go](https://go.dev/doc/effective_go)
 - [Go Test Comments](https://go.dev/wiki/TestComments)
 
+## Contents
+
+- [Error Handling](#error-handling)
+- [Naming and Style](#naming-and-style)
+- [Concurrency](#concurrency)
+- [Functions and Design](#functions-and-design)
+- [Testing](#testing)
+- [Imports and Dependencies](#imports-and-dependencies)
+- [Cyclomatic Complexity](#cyclomatic-complexity)
+- [Static Analysis](#static-analysis)
+- [Unchecked Errors](#unchecked-errors)
+- [Nil Safety](#nil-safety)
+- [Exhaustive Enum Checks](#exhaustive-enum-checks)
+- [Revive](#revive)
+- [Cross-references](#cross-references)
+
 ## Error Handling
 
 - Errors are values. Handle them, don't discard with `_`
@@ -29,6 +45,11 @@ Reference sources:
 - Channels orchestrate; mutexes serialize
 - Goroutine lifetimes: make it clear when they exit; document if not obvious
 - Prefer synchronous functions over async; callers can add concurrency
+- `context.Background()`/`TODO()` mid-chain instead of the caller's ctx; pass the ctx through
+- `wg.Add` inside the goroutine; call it before `go`
+- `defer` inside a loop; extract the body into a function
+- `rows.Next` loop without a `rows.Err()` check after it
+- `Lock` without a paired `Unlock` on every return path; prefer `defer`
 
 ## Functions and Design
 
