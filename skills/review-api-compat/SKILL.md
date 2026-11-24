@@ -23,7 +23,8 @@ Structured review of API contract evolution. Detects breaking changes in protobu
   - **Default**: `base_ref` is `main` (or the PR base). Compute changed files via `git diff --name-only --diff-filter=d <base>...HEAD`. Filter to API spec files (see below).
   - **PR**: use `gh pr view <num> --json baseRefName -q .baseRefName` for the base, `gh pr diff <num> --name-only` for changed files.
   - **Tag-vs-tag**: user supplies `<from-tag>...<to-tag>`; same diff machinery.
-- **If invoked from review-all**: receive `file_list`, `has_changes`, `base_ref`, `REVIEW_DIR`, and `pr_url`. If `has_changes` is false, exit early with status "no API spec changes in scope" — there is nothing to compare.
+- **Compare against the merge-base, not the base tip.** Set `BASE_COMMIT=$(git merge-base "$base_ref" HEAD)` once (tag-vs-tag: `BASE_COMMIT=<from-tag>`). Against the tip, changes that landed on the base after the branch point read as breaking changes in this diff.
+- **If invoked from review-all**: receive `file_list`, `has_changes`, `BASE_REF`, `BASE_COMMIT`, `REVIEW_DIR`, and `pr_url`. Use them; do not recompute the base. If `has_changes` is false, exit early with status "no API spec changes in scope" — there is nothing to compare.
 
 **File classification:**
 - **Protobuf**: `*.proto` files; presence of `buf.yaml` / `buf.gen.yaml` / `buf.lock` confirms a buf workspace.
@@ -42,8 +43,8 @@ Record the resolved policy. Findings are graded against it (a `WIRE` policy allo
 ### 3. Run the breaking-change tools
 
 ```sh
-# Protobuf — against the base ref (preferred, integrates with buf.yaml policy)
-command -v buf >/dev/null && buf breaking --against "$(git rev-parse $base_ref).git#format=git"
+# Protobuf — against the merge-base (preferred, integrates with buf.yaml policy)
+command -v buf >/dev/null && buf breaking --against ".git#ref=$BASE_COMMIT"
 
 # Protobuf — alternative when buf is not configured
 command -v protolock >/dev/null && protolock status --lockdir . --uptodate
@@ -56,7 +57,7 @@ command -v openapi-diff >/dev/null && openapi-diff <base-spec> <head-spec>
 command -v graphql-inspector >/dev/null && graphql-inspector diff <base-schema> <head-schema>
 ```
 
-To get the base version of a spec file: `git show $base_ref:<path>` into a temp file, then diff.
+To get the base version of a spec file: `git show "$BASE_COMMIT:<path>"` into a temp file, then diff.
 
 Tool output is **input** to the review; the subagent triages and contextualizes.
 
@@ -104,14 +105,14 @@ GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 GIT_COMMIT=$(git rev-parse --short HEAD)
 GIT_COMMIT_FULL=$(git rev-parse HEAD)
 GIT_SUBJECT=$(git log -1 --pretty=%s)
-BASE_REF=<base>; BASE_COMMIT=$(git rev-parse --short "$BASE_REF")
+BASE_REF=<base>; BASE_COMMIT_SHORT=$(git rev-parse --short "$BASE_COMMIT")
 ```
 
 ```markdown
 > **Run:** {RUN_DATETIME}
 > **Branch:** {GIT_BRANCH} @ {GIT_COMMIT} (`{GIT_COMMIT_FULL}`)
 > **Subject:** {GIT_SUBJECT}
-> **Base:** {BASE_REF} @ {BASE_COMMIT}
+> **Base:** {BASE_REF} @ {BASE_COMMIT_SHORT} (merge-base)
 > **Scope:** {scope description}
 > **Policy:** {resolved policy, e.g. buf FILE + WIRE}
 ```

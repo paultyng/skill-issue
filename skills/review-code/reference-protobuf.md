@@ -10,7 +10,7 @@ Reference sources:
 The following tools are run opportunistically if available on PATH:
 
 - **[buf lint](https://buf.build/docs/reference/cli/buf/lint/)**: 100+ built-in protobuf lint rules covering naming, package structure, and best practices. Configured via `buf.yaml`.
-- **[buf breaking](https://buf.build/docs/breaking/)**: Detects backwards-incompatible schema changes by comparing against a reference (e.g. `buf breaking --against .git#branch=main`). Categories: `WIRE`, `WIRE_JSON`, `PACKAGE`, `FILE` (default).
+- **[buf breaking](https://buf.build/docs/breaking/)**: Detects backwards-incompatible schema changes by comparing against a reference (e.g. `buf breaking --against ".git#ref=$(git merge-base main HEAD)"`; a branch tip such as `.git#branch=main` also flags changes made on the base after the branch point). Categories: `WIRE`, `WIRE_JSON`, `PACKAGE`, `FILE` (default).
 
 ## Message Design
 

@@ -19,7 +19,7 @@ Structured code review covering architecture, Go best practices, and protobuf/AP
 - **Pass the resolved scope** (file list and derived package paths) to all exploration and investigation subagents so findings stay scoped to those files. Reading is **not** scoped: follow callees, callers, and third-party source wherever a finding depends on their behavior. Report bugs in code the scope touches or calls even when they predate the diff, prefixed `pre-existing:`. Static analysis tools receive package paths; manual review subagents receive the file list.
 - Explore the scoped code using parallel subagents (`subagent_type="explore"`). Read all relevant source files, paying attention to package structure, type definitions, interfaces, import graphs, `.go` files, `.proto` files, and test files.
 - **Classify the scope** for change-aware subagents:
-  - `has_changes`: true when scope is "changed files (PR or branch)", **or** when scope is "explicit paths" and those paths have a diff against the base ref (run `git diff --name-only --diff-filter=d <base>...HEAD -- <paths>` to check; default base is `main`). False for full-codebase reviews with no diff baseline. When true, derive the **changed file list** (intersection of scoped files and files with diffs) and carry the **base ref** forward for subagents that need them.
+  - `has_changes`: true when scope is "changed files (PR or branch)", **or** when scope is "explicit paths" and those paths have a diff against the base ref (run `git diff --name-only --diff-filter=d <base>...HEAD -- <paths>` to check; default base is `main`). False for full-codebase reviews with no diff baseline. When true, derive the **changed file list** (intersection of scoped files and files with diffs) and carry `BASE_REF` and `BASE_COMMIT=$(git merge-base "$BASE_REF" HEAD)` forward for subagents that need them. When dispatched by review-all, use the `BASE_REF` and `BASE_COMMIT` it passes; do not recompute them.
 - Determine which subagents are applicable:
   - **Architecture and Design**: applicable if code files (`.go`, `.rs`, `.ts`, `.tsx`, `.js`, `.jsx`, `.swift`, `.kt`, `.kts`, `.py`, `.rb`) exist in scope
   - **Go Best Practices**: applicable if `.go` files exist in scope
@@ -87,7 +87,7 @@ Prompt the subagent to run the automated Go analysis tools below via **parallel 
 **Subagent E. Protobuf Linting** (`subagent_type="generalPurpose"`, requires `.proto` files)
 
 Prompt the subagent to run automated protobuf analysis tools via Shell and report findings with `PBL-` prefixed IDs:
-- Check if `buf` is on PATH (`which buf`). If available, run `buf lint` and `buf breaking --against .git#branch=main` via **parallel Shell calls**. When scope is narrowed, pass `--path <dir>` for each directory containing in-scope `.proto` files. Include diagnostics as findings. If `buf` is not available or the repo has no git history for the breaking check, note in Tool Availability and continue.
+- Check if `buf` is on PATH (`which buf`). If available, run `buf lint` and, when `has_changes` is true, `buf breaking --against ".git#ref=$BASE_COMMIT"` via **parallel Shell calls**. Never compare against a branch tip (`.git#branch=main`): changes that landed on the base after the branch point read as breaking changes in this diff. When scope is narrowed, pass `--path <dir>` for each directory containing in-scope `.proto` files. Include diagnostics as findings. If `buf` is not available or the repo has no git history for the breaking check, note in Tool Availability and continue.
 - Include a **Tool Availability** section listing each tool's status (ran / skipped + reason).
 - For each finding, search nearby code and project documentation for existing TODOs or notes.
 - Return findings using the **per-category findings** template with `PBL-` prefixed IDs.
@@ -169,7 +169,7 @@ GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 GIT_COMMIT=$(git rev-parse --short HEAD)
 GIT_COMMIT_FULL=$(git rev-parse HEAD)
 GIT_SUBJECT=$(git log -1 --pretty=%s)
-# When scope is diff-based, also: BASE_REF=<base>; BASE_COMMIT=$(git rev-parse --short "$BASE_REF")
+# When scope is diff-based, also: BASE_REF=<base>; BASE_COMMIT_SHORT=$(git rev-parse --short "$BASE_COMMIT")
 ```
 
 Header template (placed at the top of the output `.md`, before the H1 title):
@@ -178,7 +178,7 @@ Header template (placed at the top of the output `.md`, before the H1 title):
 > **Run:** {RUN_DATETIME}
 > **Branch:** {GIT_BRANCH} @ {GIT_COMMIT} (`{GIT_COMMIT_FULL}`)
 > **Subject:** {GIT_SUBJECT}
-> **Base:** {BASE_REF} @ {BASE_COMMIT}   <!-- omit when scope is not diff-based -->
+> **Base:** {BASE_REF} @ {BASE_COMMIT_SHORT} (merge-base)   <!-- omit when scope is not diff-based -->
 > **Scope:** {scope description}
 ```
 
