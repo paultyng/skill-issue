@@ -36,6 +36,8 @@ Severity comes from the SC's level, not from how bad the defect looks. Missing `
 - **First rule of ARIA:** recommend the native element (`<button>`, `<a href>`, `<input type="checkbox">`) before adding `role` and handlers to a `<div>`.
 - **Stay in the accessibility lane.** Type errors, state bugs, missing features, and styling preferences go nowhere in this report. Other review-* skills own them.
 - **Static review only.** Do not claim screen-reader or keyboard behavior you did not trace in code. When behavior depends on runtime (focus after route change, live-region timing), mark `conf=low` or list it under **Manual testing needed**.
+- **Low confidence never blocks.** A `conf=low` finding is `blocking=n`, whatever its level.
+- **Name vs. visible label.** `aria-label` or `aria-labelledby` satisfies 4.1.2; do not raise 4.1.2 or 1.3.1 for it. Raise 3.3.2 only when no visible label or instruction exists (placeholder-only, or `aria-label` with nothing on screen), and say which.
 
 ## Workflow
 

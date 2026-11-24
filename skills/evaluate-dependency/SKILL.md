@@ -70,7 +70,7 @@ Run through these. Cite specific data: no hand-waving, no `I think`.
 
 5. **Produce verdict**: GO / CAUTION / NO-GO. Always include the **coordinate to use** explicitly (so the user doesn't import the wrong major / wrong scope / wrong distribution).
 
-6. **Review mode**: output as a finding row suitable for `review-code` or `review-security` finding tables, wrapped per the existing `path:line` deep-link convention if `pr_url` is set. Severity prefix per `terse-comments`: `risk:` (CAUTION) or `bug:` (NO-GO).
+6. **Review mode**: output as a finding row suitable for `review-code` or `review-security` finding tables, wrapped per the existing `path:line` deep-link convention if `pr_url` is set. Severity prefix per `terse-comments`: `risk:` (CAUTION) or `bug:` (NO-GO). When dispatched by `review-all`, prefix each row with its `FINDING |` header and list `COVERAGE |` rows for the manifest and lockfile, in the exact shape of `review-all/reference-tracking.md` § Finding header (NO-GO → `sev=P1`, CAUTION → `sev=P2`; `rule_id` e.g. `dep-fork-replace`, `dep-pseudo-version`).
 
    Review-mode checks:
    - The lockfile is ground truth: a transitive bump with no manifest change still needs review.
