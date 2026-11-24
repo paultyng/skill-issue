@@ -43,7 +43,7 @@ Report the PR URL.
 Wait a few seconds for CI to pick up the push, then list runs for the current branch:
 
 ```bash
-gh run list --branch $(git branch --show-current) --limit 1
+gh run list --branch $(git branch --show-current) --limit 1 --json databaseId,status,name,url
 ```
 
 If no run appears after 30 seconds of polling, report and stop.
@@ -56,7 +56,7 @@ Use `gh run watch <run_id> --exit-status` to stream the run status until complet
 
 After the run completes, report:
 
-- **Status**: passed or failed
+- **Status**: passed or failed, with the run URL
 - **Jobs**: list each job with its status and duration
 - **Failures**: if any job failed, fetch its logs with `gh run view <run_id> --log-failed` and include the relevant error output (truncated to the last 50 lines per failed job)
 
