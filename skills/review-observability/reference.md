@@ -21,9 +21,12 @@ Reference sources:
 **Structure:**
 - Logs are structured (key-value or JSON), not freeform sprintf. Go: `slog`, `zap`, `zerolog`. JS/TS: `pino`, `winston` with `format.json`. Python: `structlog`, `python-json-logger`.
 - Log statements include a stable `msg` (constant string) and variable data as fields, not interpolated into the message. (`logger.Info("user signed in", "user_id", id)`, not `logger.Info(fmt.Sprintf("user %s signed in", id))`.)
+- Production default log level is not debug.
+- Logs are flushed on shutdown, and panics and unhandled rejections are logged before exit.
 - Levels are used appropriately: `DEBUG` for development noise, `INFO` for steady-state observations, `WARN` for recoverable abnormal conditions, `ERROR` for failures requiring attention. `FATAL`/`PANIC` exits the process — used only for unrecoverable startup failures.
 
 **Sufficiency:**
+- Confirm the framework or interceptor does not already auto-log before calling something a logging gap.
 - Every RPC handler entry / exit has at least one log entry capturing method, duration, and outcome — or these are emitted by an interceptor. Flag handlers without either.
 - Every error path logs the error with enough context to debug (operation name, input identifiers, downstream service if applicable). `log.Error(err)` alone is rarely enough.
 - Non-error decisions worth observing: rate limit applied, cache miss/hit ratio shift, retry attempts, feature flag changes affecting behavior.
@@ -36,6 +39,9 @@ Reference sources:
 **Sensitive data:**
 - Auth tokens, session cookies, passwords, PII (when not the business of this service) never appear in logs. Use redaction middleware or explicit field exclusion lists.
 - For Go: `error` types that wrap user input should not implement `LogValuer` to dump the input verbatim.
+- Whole-object or request dumps (`%+v` of requests or structs, `JSON.stringify(req)`) leak secrets and PII; log selected fields.
+- One log event must not cover outcomes with different security meaning (e.g. "auth failed" for both bad password and locked account when they need different responses).
+- Auth grant and deny decisions are logged with subject, resource, and decision.
 - This is the floor; deeper PII/security review is `review-security`.
 
 **Sink and shipping:**

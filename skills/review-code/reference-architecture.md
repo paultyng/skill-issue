@@ -17,6 +17,7 @@ Reference sources:
 - [Minimal-Changes Alignment (scope)](#minimal-changes-alignment-scope)
 - [Over-Engineering (implementation-minimalism)](#over-engineering-implementation-minimalism)
 - [Testability Indicators](#testability-indicators)
+- [Logic and Contract Boundaries](#logic-and-contract-boundaries)
 - [Dead Code Detection](#dead-code-detection)
 - [Cross-references](#cross-references)
 
@@ -199,6 +200,12 @@ Architecture decisions directly affect how testable the code is. These checks ar
 - Tests are self-contained; the only shared infrastructure is the database
 - External services (gRPC clients, HTTP APIs, third-party SDKs) are stubbed via interfaces, never called for real
 - Time-dependent tests use `testing/synctest` (Go 1.25+), not real sleeps
+
+## Logic and Contract Boundaries
+
+- Inverted conditions and De Morgan errors in negated compound predicates
+- Off-by-one on bounds and ranges (inclusive vs exclusive ends, `<` vs `<=`)
+- Units, time zones, and encodings at external contract boundaries are explicit and converted once
 
 ## Dead Code Detection
 

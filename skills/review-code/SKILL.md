@@ -131,6 +131,8 @@ Prompt the subagent to:
 
 ### 3. Summarize
 
+Before keeping a finding, drop it if: the caller handles the error, nil/bounds are guarded elsewhere on the path, it holds test code to production standards, or a documented decision covers it (ADR, comment, REVIEW.md).
+
 After all subagents complete, deduplicate overlapping findings, produce a consolidated table ordered by severity, and recommend fix order.
 
 ### 4. Present results
@@ -241,6 +243,8 @@ The display text stays `path:line` so plain and linked tables look identical; on
 
 ## Guidelines
 
+- Change intent: for a port or move, report regressions the move introduced, not faithfully copied legacy code.
+- Report a repeated pattern once, with representative locations.
 - Search the organization's codebase (Sourcegraph, GitHub) for existing patterns before recommending changes.
 - Include effort estimates to help prioritize implementation.
 - When the user asks for a follow-up review, find the most recent review directory (`ls -d reviews/*/ 2>/dev/null | sort | tail -1`) containing `CODE-REVIEW.md`, re-evaluate all prior findings, and update with the re-evaluation table appended.
