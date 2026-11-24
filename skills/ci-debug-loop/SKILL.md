@@ -12,7 +12,7 @@ Iteratively watch CI, diagnose failures, fix, and re-trigger until the run passe
 Find the latest run for the current branch:
 
 ```bash
-gh run list --branch $(git branch --show-current) --limit 1 --json databaseId,status,conclusion,name
+gh run list --branch $(git branch --show-current) --limit 1 --json databaseId,status,conclusion,name,url
 ```
 
 If a specific run ID or workflow is provided by the user, use that instead.
@@ -60,7 +60,7 @@ If the fix is **mechanical** (typo, missing flag, wrong version, import ordering
 - Push
 
 If the fix requires a **design decision** or is **ambiguous**:
-- Present the diagnosis and options to the user
+- Present the run URL, the diagnosis, and options to the user
 - Wait for direction before applying
 
 ## 5. Re-watch
@@ -68,7 +68,7 @@ If the fix requires a **design decision** or is **ambiguous**:
 After pushing the fix, wait for the new run to appear:
 
 ```bash
-gh run list --branch $(git branch --show-current) --limit 1
+gh run list --branch $(git branch --show-current) --limit 1 --json databaseId,status,conclusion,name,url
 ```
 
 Then watch it (back to step 2).
@@ -80,7 +80,7 @@ Then watch it (back to step 2).
 - The failure is in infrastructure outside the repo's control (runner issues, external service outages)
 - The fix would require changes to a different repository or CI configuration not in this repo
 
-Report what was tried, what failed, and what options remain.
+Report the run URL, what was tried, what failed, and what options remain.
 
 **Escalate to `bisect`** when log analysis can't pinpoint *which change* broke the job. Typical signs: failure looks unrelated to the recent diff, error message points at code untouched in the branch, or a previously-green test on the same branch is now red. Hand the failing test/command to `/bisect` as the reproducer; it isolates the offending commit.
 

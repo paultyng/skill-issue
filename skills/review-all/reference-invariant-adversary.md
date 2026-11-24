@@ -4,7 +4,9 @@ The prompt body and output template for the `Invariant adversary` subagent launc
 
 ## Input contract
 
-This subagent is **input-starved by design**. The orchestrator passes exactly the resolved file list, the base ref, the diff, the finding contract ([reference-tracking.md § Finding header](reference-tracking.md#finding-header); a format, not a narrative), and repository read access. It withholds the system overview, the PR title and body, `REVIEW.md` sections, the `Open work context` block, and other subagents' findings. Each of those is a narrative of what the change is meant to do; a reviewer handed one checks the code against it and inherits its blind spots. The withholding is enforced by what step 3 puts in the prompt, not by an instruction to ignore context already given.
+This subagent is **input-starved by design**. The orchestrator passes exactly the resolved file list, `BASE_REF` and `BASE_COMMIT`, the diff, the finding contract ([reference-tracking.md § Finding header](reference-tracking.md#finding-header); a format, not a narrative), and repository read access. It withholds the system overview, the PR title and body, `REVIEW.md` sections, the `Open work context` block, and other subagents' findings. Each of those is a narrative of what the change is meant to do; a reviewer handed one checks the code against it and inherits its blind spots. The withholding is enforced by what step 3 puts in the prompt, not by an instruction to ignore context already given.
+
+In full-codebase scope there is no base and no diff. The resolved file list is the scope, and the goal below applies to it unchanged.
 
 ## Goal
 
@@ -80,4 +82,4 @@ COVERAGE | file=<path> | status=<read-fully|skimmed|not-read>
 ```
 ````
 
-One `FINDING` line per Findings row, in row order, in the fenced block after the table; one `COVERAGE` row per resolved file. The `Tracked` column renders the badge from [reference-tracking.md § Badge rendering](reference-tracking.md#badge-rendering). `path:line` cells wrap per [SKILL.md § Finding link wrapping](SKILL.md#finding-link-wrapping).
+One `FINDING` line per Findings row, in row order, in the fenced block after the table; one `COVERAGE` row per resolved file in diff scope, or per file opened in full-codebase scope ([reference-tracking.md § Finding header](reference-tracking.md#finding-header)). The `Tracked` column renders the badge from [reference-tracking.md § Badge rendering](reference-tracking.md#badge-rendering). `path:line` cells wrap per [SKILL.md § Finding link wrapping](SKILL.md#finding-link-wrapping).

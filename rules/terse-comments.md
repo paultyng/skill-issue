@@ -7,6 +7,8 @@ Comments (in source code, in PR review comments, anywhere prose is attached *to*
 - **Default to writing no comments.** Only add one when the *why* is non-obvious: a hidden constraint, a subtle invariant, a workaround for a specific bug, behavior that would surprise a reader. If removing the comment wouldn't confuse a future reader, don't write it.
 - **Don't explain *what* the code does.** Well-named identifiers already do that. If a comment is needed to explain what, the names are wrong.
 - **Don't reference the current task / fix / PR / callers.** "Used by FooBar", "added for #123", "see commit X", since those rot as the codebase evolves and belong in the PR description, not in the source.
+- **Doc comments MUST NOT carry change or migration history** unless asked: "reproduces X (removed upstream)", "inlined so this no longer depends on the deprecated pkg". Why the change happened goes in the commit message. Why the code works this way goes in the comment.
+- **Do explain divergences** from the common pattern a reader expects: "no TLS here; the socket is local-only and fails closed" earns its line.
 - **One short line max** for inline comments. No multi-paragraph block comments. Public-API docstrings are the only exception, and even those should lead with one short line.
 
 ## PR review comments
