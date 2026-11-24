@@ -217,7 +217,7 @@ Each subagent should NOT write its own output file; it returns findings to this 
 
 **Pre-merge (orchestrator, before the summarizer):**
 
-1. Parse every `FINDING` and `COVERAGE` line. A reviewer that returned none goes under **Not checked** with its name.
+1. Parse every `FINDING` and `COVERAGE` line. A reviewer that returned no `COVERAGE` rows goes under **Not checked** with its name. Trajectory is exempt: it is advisory, repo-wide, and emits neither.
 2. **Merge by `dkey`.** Findings with the same `dkey`, or the same path and `rule_id` within ±3 lines, are one finding: keep the highest `sev`, OR the `blocking` flags, union the domains.
 3. **Demote** each `conf=low` finding with `blocking=y` to `blocking=n`, tagged "(low-confidence)".
 4. **Coverage gaps** = in-scope files no reviewer marked `read-fully`.
