@@ -176,11 +176,7 @@ When all `- [ ]` tasks are `- [x]`:
 1. **Spawn `review-all`** across the full branch diff against the plan's base ref. Surface its findings as one final cross-cutting review.
 2. **Verify the Behavior delta** (if the plan has one, captured in step 1). For each `ADDED` / `MODIFIED` entry, run its `Acceptance:` criterion against the built branch and confirm it holds. Per-task verification proved the mechanisms ran; acceptance criteria prove the behavior. Surface any unmet criterion as a blocker — do not declare the plan done with an unsatisfied acceptance criterion.
 3. **Surface the nits file** (`./.plans/nits.md`). Ask: address now, defer, or discard?
-4. **Do NOT auto-create the PR** (per `defer-external-orchestration`). Print the suggested command, e.g.:
-   ```
-   gh pr create --draft --title "<plan title>" --body "<...>"
-   ```
-   Wait for the user to run it.
+4. **Do NOT auto-create the PR** (per `defer-external-orchestration`). Suggest `/create-pr`, which fills the repo's PR template from the branch and asks for approval before posting. Wait for the user to run it.
 
 ---
 

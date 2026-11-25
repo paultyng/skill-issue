@@ -52,15 +52,9 @@ Push the current branch:
 git push -u origin HEAD
 ```
 
-If a PR exists for the current branch, update its title and description to reflect the current state:
+Run [create-pr](../create-pr/SKILL.md) for the PR title and body. It opens a draft PR if none exists. If one exists, it rewrites the title and body to match the current state, using the repo's template and contributing docs, runs the repo's check script, and prints the PR URL. Do not call `gh pr edit --body-file` with a free-form body.
 
-```bash
-gh pr edit --title "<title>" --body-file /tmp/pr-body.md
-```
-
-For PRs with diffs over ~20 files or ~500 lines, **delegate body authoring to a subagent** (`model: sonnet` per `subagent-model-routing` — PR-body authoring from a non-trivial diff requires real synthesis reasoning) per `parallelize-subagents` and `subagent-prompt-contract`: paste the commit list and `git diff --stat` inline, ask for a summary section + bullet list of notable changes capped at ~200 words, and have the subagent return with the four-state Status line. Main writes `/tmp/pr-body.md` from the summary. Small PRs stay inline.
-
-If no PR exists, run [create-pr](../create-pr/SKILL.md) to open one.
+For PRs with diffs over ~20 files or ~500 lines, **delegate the change summary to a subagent** (`model: sonnet` per `subagent-model-routing`; PR-body authoring from a non-trivial diff requires real synthesis reasoning) per `parallelize-subagents` and `subagent-prompt-contract`: paste the commit list and `git diff --stat` inline, ask for a summary section + bullet list of notable changes capped at ~200 words, and have the subagent return with the four-state Status line. Main fills the template's sections from that summary in create-pr step 4. Small PRs stay inline.
 
 ## 5. Suggest Reviewers
 

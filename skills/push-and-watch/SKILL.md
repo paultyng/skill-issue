@@ -30,11 +30,7 @@ Check whether a PR already exists for the current branch:
 gh pr view --json url 2>/dev/null
 ```
 
-If no PR exists, create one in draft mode:
-
-```bash
-gh pr create --draft --fill
-```
+If no PR exists, run [create-pr](../create-pr/SKILL.md). It fills the repo's PR template and asks for approval before it creates the draft. Do not use `gh pr create --fill`, which skips the template.
 
 Report the PR URL.
 
