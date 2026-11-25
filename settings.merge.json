@@ -68,6 +68,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/verify-on-stop.sh",
+            "timeout": 600
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
