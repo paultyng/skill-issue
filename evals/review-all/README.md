@@ -43,3 +43,16 @@ The fixture holds a hostile hook and an MCP config on purpose. So `run.sh` loads
 | P0/P1 on control | `SUMMARY.md` | Rows with severity `CRITICAL` or `HIGH` |
 
 The checks are text matches. A `0/n` for one defect is a lead to read the `SUMMARY.md`, not proof of a miss.
+
+## Results
+
+First measurement, 2026-11-26: 5 planted and 3 control runs, about $41 in total and 2 to 6 minutes per run.
+
+- **Hit rate:** 24 of 25 planted defects were found in 5 of 5 runs. P1-a was found every time, but it was merged into one finding in only 3 of 5 runs. The 2 runs that kept two rows also skipped the summarizer subagent.
+- **Dispatch:** the same 13 review domains and the `payments` lens ran in all 8 runs, and the `docs` lens never ran. The summarizer subagent ran in only 5 of 8 runs, although the skill requires it.
+- **Verdicts:** no flips. All planted runs and all control runs are blocking.
+- **Control:** 5 to 10 P0/P1 rows per run. Two causes:
+  - The coverage reviewer rates missing tests as `CRITICAL` or `HIGH` and blocking.
+  - The control branch still holds real defects that were not planted: an unresolvable `acme/widgets` dependency with fake `go.sum` hashes, `Valid("", "")` returning true, and retries with an empty idempotency key.
+
+  Until the control branch is clean, the control verdict does not measure false positives.

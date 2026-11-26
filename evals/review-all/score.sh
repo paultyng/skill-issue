@@ -33,7 +33,10 @@ dispatch() {
   jq -r 'select(.type == "assistant" and .parent_tool_use_id == null) | .message.content[]?
     | select(.type == "tool_use" and (.name == "Agent" or .name == "Task"))
     | .input.description // "other" | ascii_downcase
-    | if test("\\blens\\b") then "lens:" + (capture("(?<id>[a-z0-9-]+) lens").id // "?")
+    | if test("\\blens\\b") then "lens:" + ((capture("(?<id>[a-z0-9-]+) lens") // capture("lens:? (?<id>[a-z0-9-]+)")).id // "?")
+      elif test("depend") then "dependency"
+      elif test("summar") then "summarizer"
+      elif test("coverage") then "coverage"
       else sub(" (review|evaluation|check)$"; "") | gsub(" "; "-") end' "$1" 2>/dev/null | sort || true
 }
 
