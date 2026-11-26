@@ -27,16 +27,14 @@ cites() {
   }'
 }
 
-# dispatch <stream.jsonl>: one label per Agent call (lens:<id>, a skill name, or other).
+# dispatch <stream.jsonl>: one label per top-level subagent, from its description
+# ("Payments lens review" -> lens:payments, "Security review" -> security).
 dispatch() {
-  jq -r 'select(.type == "assistant") | .message.content[]?
+  jq -r 'select(.type == "assistant" and .parent_tool_use_id == null) | .message.content[]?
     | select(.type == "tool_use" and (.name == "Agent" or .name == "Task"))
-    | ((.input.description // "") + " " + (.input.prompt // "")) | gsub("\n"; " ")' "$1" 2>/dev/null |
-    while IFS= read -r p; do
-      l=$(grep -o -i -E 'lens[ :`"]+[a-z]+' <<<"$p" | head -1 | sed -E 's/^[Ll]ens[ :`"]+/lens:/' || true)
-      [ -n "$l" ] || l=$(grep -o -E 'review-[a-z-]+|evaluate-dependency' <<<"$p" | head -1 || true)
-      echo "${l:-other}"
-    done | sort
+    | .input.description // "other" | ascii_downcase
+    | if test("\\blens\\b") then "lens:" + (capture("(?<id>[a-z0-9-]+) lens").id // "?")
+      else sub(" (review|evaluation|check)$"; "") | gsub(" "; "-") end' "$1" 2>/dev/null | sort || true
 }
 
 hitlog=$(mktemp)
@@ -60,7 +58,7 @@ for d in "$out"/runs/*/; do
   case $run in planted-*) ;; *) continue ;; esac
   while IFS=$'\t' read -r id file line kind kw; do
     case $kind in
-      finding) n=$(finding_rows "$s" | cites "$file" "$line" | wc -l) ;;
+      finding) n=$(finding_rows "$s" | awk -F"|" '$2 !~ /^ *coverage *$/' | cites "$file" "$line" | wc -l) ;;
       merged) n=$(finding_rows "$s" | cites "$file" "$line" | wc -l); [ "$n" -eq 1 ] || n=0 ;;
       coverage) n=$(grep -c -E "COVERAGE \| file=$file \| status=(read-fully|skimmed)" "$d/stream.jsonl" || true) ;;
       lens-flagged) n=$(awk '/^## /{f = ($0 ~ /^## Not checked/)} f' "$s" | grep -i lens | grep -c -i -w "$kw" || true) ;;
@@ -78,7 +76,7 @@ done < <(tail -n +2 "$tsv")
 
 printf '\n## Stability\n\n'
 for br in planted control; do
-  sets=$(for f in "$out"/runs/"$br"-*/dispatch.txt; do sort -u "$f" | paste -s -d, -; done | sort | uniq -c | wc -l | tr -d ' ')
-  verdicts=$(cat "$out"/runs/"$br"-*/blocking.txt 2>/dev/null | awk '{print ($1 > 0 ? "blocking" : "clear")}' | sort | uniq -c | awk '{printf "%s%s %s", sep, $1, $2; sep=", "}')
+  sets=$(for f in "$out"/runs/"$br"-*/dispatch.txt; do [ -e "$f" ] || continue; sort -u "$f" | paste -s -d, -; done | sort | uniq -c | wc -l | tr -d ' ') || sets=0
+  verdicts=$(cat "$out"/runs/"$br"-*/blocking.txt 2>/dev/null | awk '{print ($1 > 0 ? "blocking" : "clear")}' | sort | uniq -c | awk '{printf "%s%s %s", sep, $1, $2; sep=", "}') || true
   printf -- '- %s: %s distinct dispatch set(s); verdicts: %s\n' "$br" "$sets" "${verdicts:-none}"
 done

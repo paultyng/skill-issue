@@ -26,13 +26,14 @@ run_one() { # branch n
   # The fixture holds a hostile hook and MCP config on purpose: user settings only, all hooks off, no MCP servers.
   (cd "$d/repo" && CLAUDE_VERIFY_ON_STOP=0 GOPROXY=off claude -p "$prompt" \
     --setting-sources user --settings '{"disableAllHooks":true}' --strict-mcp-config \
-    --permission-mode bypassPermissions --disallowedTools WebFetch WebSearch \
+    --allowedTools Read Grep Glob Bash Edit Write Agent Skill TodoWrite --disallowedTools WebFetch WebSearch \
     --output-format stream-json --verbose --no-session-persistence \
     >"$d/stream.jsonl" 2>"$d/stderr.log") || echo "$1-$2: claude exited $?" >&2
+  jq -r -s 'map(select(.type == "result")) | last | .result' "$d/stream.jsonl" >"$d/result.md" 2>/dev/null || true
   cp "$d"/repo/.reviews/*/SUMMARY.md "$d/" 2>/dev/null || echo "$1-$2: no SUMMARY.md" >&2
 }
 
-for n in $(seq 1 "$planted"); do run_one planted "$n" & done
-for n in $(seq 1 "$control"); do run_one control "$n" & done
+for ((n = 1; n <= planted; n++)); do run_one planted "$n" & done
+for ((n = 1; n <= control; n++)); do run_one control "$n" & done
 wait
 echo "runs done: $out/runs"
