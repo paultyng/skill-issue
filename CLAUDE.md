@@ -23,7 +23,7 @@ Use `/create-skill` and `/create-rule` respectively. Do not author SKILL.md or r
 - `~/.claude/` is populated by `./install.sh` running from this canonical clone.
 - Edits to `skills/`, `rules/`, `scripts/`, and top-level files in this repo flow into `~/.claude/` on each install.
 - Personal/local skills/rules/scripts in `~/.claude/` are preserved (never deleted).
-- `settings.json` is jq-merged: specific keys (`model`, `effortLevel`, `statusLine`, `enabledPlugins`, `extraKnownMarketplaces`, `permissions.allow`, `hooks`) flow from `settings.merge.json`; everything else stays user-local.
+- `settings.json` is jq-merged: `model`, `effortLevel`, `statusLine` are replaced from `settings.merge.json`; `enabledPlugins`, `extraKnownMarketplaces`, `permissions.allow`, and `hooks` are merged (canonical entries win, local-only entries kept); everything else stays user-local.
 
 ## Portability
 

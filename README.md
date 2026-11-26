@@ -68,7 +68,7 @@ Every mode supports `--dry-run`:
 
 ### Settings merge
 
-`settings.merge.json` in the canonical clone is jq-merged into `~/.claude/settings.json`. Keys `model`, `effortLevel`, `statusLine`, `enabledPlugins`, `extraKnownMarketplaces` replace user values. `permissions.allow` is unioned and deduped. `hooks` merge per-event, per-matcher: canonical entries replace user entries with matching matchers; user entries with non-overlapping matchers (and entirely user-only events) pass through.
+`settings.merge.json` in the canonical clone is jq-merged into `~/.claude/settings.json`. Keys `model`, `effortLevel`, `statusLine` replace user values. `enabledPlugins` and `extraKnownMarketplaces` merge per entry: canonical entries win, and plugins or marketplaces enabled only locally are kept. `permissions.allow` is unioned and deduped. `hooks` merge per-event, per-matcher: canonical entries replace user entries with matching matchers; user entries with non-overlapping matchers (and entirely user-only events) pass through.
 
 ## Skills
 

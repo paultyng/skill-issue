@@ -10,7 +10,9 @@ BACKUP=0
 
 SYNC_DIRS=(skills rules scripts)
 TOP_LEVEL_FILES=(CLAUDE.md)
-SHARED_KEYS_REPLACE=(model effortLevel statusLine enabledPlugins extraKnownMarketplaces)
+SHARED_KEYS_REPLACE=(model effortLevel statusLine)
+# Object keys merged per entry: canonical entries win, user-only entries are kept.
+SHARED_KEYS_MERGE=(enabledPlugins extraKnownMarketplaces)
 
 usage() {
   cat <<EOF
@@ -149,6 +151,9 @@ merge_settings() {
   local jq_replace=""
   for key in "${SHARED_KEYS_REPLACE[@]}"; do
     jq_replace+="| if (\$c | has(\"${key}\")) then .${key} = \$c.${key} else . end "
+  done
+  for key in "${SHARED_KEYS_MERGE[@]}"; do
+    jq_replace+="| if (\$c | has(\"${key}\")) then .${key} = ((.${key} // {}) + \$c.${key}) else . end "
   done
 
   local jq_program
