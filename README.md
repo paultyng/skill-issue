@@ -132,6 +132,15 @@ Custom status line scripts (`scripts/statusline.sh` / `scripts/statusline.ps1`) 
 
 Inspired by [ClaudeCodeStatusLine](https://github.com/daniel3303/ClaudeCodeStatusLine).
 
+## Verify on stop
+
+A `Stop` hook (`scripts/verify-on-stop.sh`) builds and tests the repo before the agent ends its turn, when code changed since the last stop. If the build or tests fail, the hook blocks the stop and sends the failure output back to the agent.
+
+- It uses the repo's Taskfile `build` and `test` tasks. Without them, it uses `go build ./...` and `go test ./...`. Other repos are skipped.
+- If a full run takes longer than 2 minutes, later runs in that repo test only the Go packages with changed files.
+- It does not run again on an unchanged tree, and it reports a given failure only once.
+- To turn it off for a session, set `CLAUDE_VERIFY_ON_STOP=0`.
+
 ## Suggested MCP Servers
 
 Some skills expect these MCP servers to be available. All are optional -- skills degrade gracefully without them.
